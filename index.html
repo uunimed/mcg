@@ -255,12 +255,18 @@
             background-color: #27ae60 !important;
             color: white !important;
             font-weight: 600;
-            cursor: pointer;
         }
 
-        .shift-cell:hover {
+        .shift-cell input {
+            background-color: #27ae60 !important;
+            color: white !important;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.3) !important;
+        }
+
+        .shift-cell input:focus {
             background-color: #219653 !important;
-            transform: scale(1.05);
+            border-color: white !important;
         }
 
         .date-header {
@@ -285,7 +291,7 @@
             font-weight: 600;
         }
 
-        input[type="number"] {
+        .table-input {
             width: 70px;
             padding: 8px;
             border: 2px solid #ddd;
@@ -293,14 +299,15 @@
             text-align: center;
             font-size: 14px;
             background: transparent;
-            color: inherit;
+            color: #333;
+            transition: all 0.3s;
         }
 
-        input[type="number"]:focus {
+        .table-input:focus {
             border-color: #3498db;
             outline: none;
             background: white;
-            color: #333;
+            transform: scale(1.05);
         }
 
         input[type="checkbox"] {
@@ -431,7 +438,7 @@
             padding: 30px;
             border-radius: 15px;
             width: 90%;
-            max-width: 800px;
+            max-width: 600px;
             max-height: 80vh;
             overflow-y: auto;
         }
@@ -440,10 +447,12 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
             gap: 10px;
-            margin-top: 20px;
+            margin: 20px 0;
             padding: 20px;
             background: #f8f9fa;
             border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .date-cell-select {
@@ -501,6 +510,17 @@
             border: 2px solid #ddd;
             border-radius: 6px;
             font-size: 14px;
+        }
+
+        .insurance-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 6px;
+            border: 1px solid #ffeaa7;
         }
 
         /* Popup Box */
@@ -588,28 +608,6 @@
             color: #666;
         }
 
-        /* Edit cell popup */
-        .edit-popup {
-            position: absolute;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            z-index: 100;
-            min-width: 200px;
-            display: none;
-        }
-
-        .edit-popup h4 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .edit-popup input {
-            width: 100px;
-            margin: 5px 0;
-        }
-
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -627,6 +625,17 @@
             
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .dates-grid {
+                grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+                gap: 5px;
+            }
+            
+            .date-cell-select {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
             }
         }
     </style>
@@ -676,9 +685,9 @@
                         <i class="fas fa-plus"></i> ახალი თვე
                     </button>
                     <button class="control-btn btn-warning" onclick="showAddShiftModal()">
-                        <i class="fas fa-calendar-plus"></i> ახალი მორიგეობა
+                        <i class="fas fa-calendar-plus"></i> მორიგეობების დამატება
                     </button>
-                    <button class="control-btn btn-primary" onclick="showOtherMonths()">
+                    <button class="control-btn btn-primary" onclick="showOtherMonthsModal()">
                         <i class="fas fa-calendar-alt"></i> სხვა თვეების ნახვა
                     </button>
                 </div>
@@ -731,7 +740,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>სხვა თვეების ნახვა</h3>
-                <button class="close-modal" onclick="closeOtherMonths()">
+                <button class="close-modal" onclick="closeOtherMonthsModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -796,7 +805,7 @@
     <div class="modal" id="addShiftModal">
         <div class="modal-content shift-modal-content">
             <div class="modal-header">
-                <h3>მორიგეობის დამატება</h3>
+                <h3>მორიგეობების დამატება</h3>
                 <button class="close-modal" onclick="closeAddShiftModal()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -807,65 +816,26 @@
                 <div class="dates-grid" id="datesGrid">
                     <!-- Dates will be generated here -->
                 </div>
+                
+                <div style="margin-top: 20px; text-align: left;">
+                    <div class="insurance-check">
+                        <input type="checkbox" id="shiftInsurance">
+                        <label for="shiftInsurance" style="margin: 0; font-weight: 600; color: #856404;">
+                            ამ თვის დაზღვევა (გამოაკლდება 100 ₾)
+                        </label>
+                    </div>
+                </div>
             </div>
             
-            <div class="shift-form" id="shiftForm" style="display: none;">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>თარიღი</label>
-                        <input type="text" id="selectedDate" class="form-control" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>მორიგეობა (საათები)</label>
-                        <input type="number" id="shiftDuty" class="form-control" min="0" step="0.5" value="0">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>ობსერვაცია</label>
-                        <input type="number" id="shiftObs" class="form-control" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>ჰემოტრანსფუზია</label>
-                        <input type="number" id="shiftTrans" class="form-control" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>დღის სტაციონარი</label>
-                        <input type="number" id="shiftStation" class="form-control" min="0" value="0">
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button class="btn btn-success" onclick="saveShiftData()">
-                        <i class="fas fa-save"></i> შენახვა
-                    </button>
-                    <button class="btn btn-danger" onclick="closeAddShiftModal()">
-                        <i class="fas fa-times"></i> გაუქმება
-                    </button>
-                </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-success" onclick="saveSelectedDates()">
+                    <i class="fas fa-save"></i> შენახვა
+                </button>
+                <button class="btn btn-danger" onclick="closeAddShiftModal()">
+                    <i class="fas fa-times"></i> გაუქმება
+                </button>
             </div>
         </div>
-    </div>
-
-    <!-- Edit Cell Popup -->
-    <div class="edit-popup" id="editPopup">
-        <h4 id="editDate">თარიღი</h4>
-        <div>
-            <label>მორიგეობა:</label>
-            <input type="number" id="editDuty" min="0" step="0.5" value="0">
-        </div>
-        <div>
-            <label>ობსერვაცია:</label>
-            <input type="number" id="editObs" min="0" value="0">
-        </div>
-        <div>
-            <label>ჰემოტრანსფუზია:</label>
-            <input type="number" id="editTrans" min="0" value="0">
-        </div>
-        <div>
-            <label>დღის სტაციონარი:</label>
-            <input type="number" id="editStation" min="0" value="0">
-        </div>
-        <button class="btn btn-success" onclick="saveEdit()" style="margin-top: 10px; width: 100%;">შენახვა</button>
     </div>
 
     <!-- Popup Box -->
@@ -885,8 +855,7 @@
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-        let selectedDateForEdit = null;
-        let selectedDateForShift = null;
+        let selectedDates = [];
         
         // Georgian month names
         const georgianMonths = [
@@ -981,47 +950,79 @@
             // Add insurance column
             tableHeader.innerHTML += '<th class="type-header">დაზღვევა</th>';
             
-            // Create rows
+            // Create rows with editable inputs
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
             
             // Row 1: მორიგეობა (საათები)
-            let row1 = '<tr><td class="type-header" onclick="editCell(0, -1)">მორიგეობა (საათები)</td>';
+            let row1 = '<tr><td class="type-header">მორიგეობა (საათები)</td>';
             for (let day = 1; day <= daysInMonth; day++) {
                 const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
                 const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
                 const cellClass = hasShift ? 'shift-cell' : '';
-                row1 += `<td class="${cellClass}" onclick="editCell(${day}, 0)">${shiftData.duty || 0}</td>`;
+                row1 += `
+                    <td class="${cellClass}">
+                        <input type="number" class="table-input" 
+                               value="${shiftData.duty || 0}" 
+                               min="0" step="0.5"
+                               onchange="updateShiftData(${day}, 'duty', this.value)"
+                               style="width: 60px;">
+                    </td>
+                `;
             }
             row1 += `<td><input type="checkbox" ${monthData.insurance ? 'checked' : ''} onchange="toggleInsurance(${month}, ${year}, this.checked)"></td></tr>`;
             
             // Row 2: ობსერვაცია
-            let row2 = '<tr><td class="type-header" onclick="editCell(0, -2)">ობსერვაცია</td>';
+            let row2 = '<tr><td class="type-header">ობსერვაცია</td>';
             for (let day = 1; day <= daysInMonth; day++) {
                 const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
                 const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
                 const cellClass = hasShift ? 'shift-cell' : '';
-                row2 += `<td class="${cellClass}" onclick="editCell(${day}, 1)">${shiftData.obs || 0}</td>`;
+                row2 += `
+                    <td class="${cellClass}">
+                        <input type="number" class="table-input" 
+                               value="${shiftData.obs || 0}" 
+                               min="0"
+                               onchange="updateShiftData(${day}, 'obs', this.value)"
+                               style="width: 60px;">
+                    </td>
+                `;
             }
             row2 += `<td></td></tr>`;
             
             // Row 3: ჰემოტრანსფუზია
-            let row3 = '<tr><td class="type-header" onclick="editCell(0, -3)">ჰემოტრანსფუზია</td>';
+            let row3 = '<tr><td class="type-header">ჰემოტრანსფუზია</td>';
             for (let day = 1; day <= daysInMonth; day++) {
                 const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
                 const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
                 const cellClass = hasShift ? 'shift-cell' : '';
-                row3 += `<td class="${cellClass}" onclick="editCell(${day}, 2)">${shiftData.trans || 0}</td>`;
+                row3 += `
+                    <td class="${cellClass}">
+                        <input type="number" class="table-input" 
+                               value="${shiftData.trans || 0}" 
+                               min="0"
+                               onchange="updateShiftData(${day}, 'trans', this.value)"
+                               style="width: 60px;">
+                    </td>
+                `;
             }
             row3 += `<td></td></tr>`;
             
             // Row 4: დღის სტაციონარი
-            let row4 = '<tr><td class="type-header" onclick="editCell(0, -4)">დღის სტაციონარი</td>';
+            let row4 = '<tr><td class="type-header">დღის სტაციონარი</td>';
             for (let day = 1; day <= daysInMonth; day++) {
                 const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
                 const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
                 const cellClass = hasShift ? 'shift-cell' : '';
-                row4 += `<td class="${cellClass}" onclick="editCell(${day}, 3)">${shiftData.station || 0}</td>`;
+                row4 += `
+                    <td class="${cellClass}">
+                        <input type="number" class="table-input" 
+                               value="${shiftData.station || 0}" 
+                               min="0"
+                               onchange="updateShiftData(${day}, 'station', this.value)"
+                               style="width: 60px;">
+                    </td>
+                `;
             }
             row4 += `<td></td></tr>`;
             
@@ -1031,52 +1032,35 @@
             calculateTotal(monthKey);
         }
 
-        // Edit cell function
-        function editCell(day, type) {
-            if (day === 0) return;
-            
+        // Update shift data from table inputs
+        function updateShiftData(day, type, value) {
             const monthKey = `${currentYear}-${currentMonth}`;
-            const monthData = monthlyData[monthKey];
-            if (!monthData) return;
-            
-            const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
-            
-            // Show edit popup
-            const editPopup = document.getElementById('editPopup');
-            editPopup.style.display = 'block';
-            editPopup.style.left = (event.pageX + 10) + 'px';
-            editPopup.style.top = (event.pageY + 10) + 'px';
-            
-            document.getElementById('editDate').textContent = `თარიღი: ${day}/${currentMonth + 1}`;
-            document.getElementById('editDuty').value = shiftData.duty;
-            document.getElementById('editObs').value = shiftData.obs;
-            document.getElementById('editTrans').value = shiftData.trans;
-            document.getElementById('editStation').value = shiftData.station;
-            
-            selectedDateForEdit = { day: day, monthKey: monthKey };
-        }
-
-        // Save edit
-        function saveEdit() {
-            if (!selectedDateForEdit) return;
-            
-            const day = selectedDateForEdit.day;
-            const monthKey = selectedDateForEdit.monthKey;
-            
             if (!monthlyData[monthKey]) {
                 monthlyData[monthKey] = { shifts: {}, insurance: false, actualAmount: 0 };
             }
             
-            monthlyData[monthKey].shifts[day] = {
-                duty: parseFloat(document.getElementById('editDuty').value) || 0,
-                obs: parseInt(document.getElementById('editObs').value) || 0,
-                trans: parseInt(document.getElementById('editTrans').value) || 0,
-                station: parseInt(document.getElementById('editStation').value) || 0
-            };
+            if (!monthlyData[monthKey].shifts[day]) {
+                monthlyData[monthKey].shifts[day] = { duty: 0, obs: 0, trans: 0, station: 0 };
+            }
             
-            document.getElementById('editPopup').style.display = 'none';
-            loadCurrentMonth();
-            showPopup("მონაცემები შენახულია!", "success");
+            monthlyData[monthKey].shifts[day][type] = parseFloat(value) || 0;
+            calculateTotal(monthKey);
+            saveData();
+            
+            // Update cell color
+            const shiftData = monthlyData[monthKey].shifts[day];
+            const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
+            
+            // Find and update the cell
+            const rowIndex = type === 'duty' ? 0 : type === 'obs' ? 1 : type === 'trans' ? 2 : 3;
+            const cell = document.querySelectorAll(`#tableBody tr`)[rowIndex].cells[day];
+            if (hasShift) {
+                cell.classList.add('shift-cell');
+                cell.querySelector('input').classList.add('shift-cell');
+            } else {
+                cell.classList.remove('shift-cell');
+                cell.querySelector('input').classList.remove('shift-cell');
+            }
         }
 
         // Calculate total for a month
@@ -1111,10 +1095,11 @@
             }
             monthlyData[monthKey].insurance = isChecked;
             calculateTotal(monthKey);
+            saveData();
         }
 
         // Show other months modal
-        function showOtherMonths() {
+        function showOtherMonthsModal() {
             const monthsContainer = document.getElementById('monthsContainer');
             const globalStats = document.getElementById('globalStats');
             
@@ -1194,7 +1179,7 @@
                 
                 expectedAmounts.push(expectedTotal);
                 if (expectedTotal > maxExpected) maxExpected = expectedTotal;
-                if (expectedTotal < minExpected) minExpected = expectedTotal;
+                if (expectedTotal < minExpected && expectedTotal > 0) minExpected = expectedTotal;
                 
                 // Add actual if exists
                 if (monthData.actualAmount > 0) {
@@ -1211,9 +1196,13 @@
                 minActual = minExpected;
             }
             
+            // Fix min values if they're still at default
+            if (minActual === 999999) minActual = 0;
+            if (minExpected === 999999) minExpected = 0;
+            
             globalStats.innerHTML = `
                 <div class="stat-card">
-                    <h4>ჩარიცხული ხელფასი</h4>
+                    <h4>ექთნად მუშაობის პერიოდში ჩარიცხული ხელფასი</h4>
                     <div class="value">${totalEarned.toFixed(2)} ₾</div>
                     <div style="font-size: 12px; color: #666;">ყველა თვის სულ</div>
                 </div>
@@ -1245,7 +1234,7 @@
         }
 
         // Close other months modal
-        function closeOtherMonths() {
+        function closeOtherMonthsModal() {
             document.getElementById('otherMonthsModal').style.display = 'none';
         }
 
@@ -1290,8 +1279,11 @@
             const datesGrid = document.getElementById('datesGrid');
             datesGrid.innerHTML = '';
             
-            // Get existing shift days
-            const existingShifts = monthlyData[monthKey].shifts || {};
+            selectedDates = [];
+            
+            // Load existing insurance status
+            const monthData = monthlyData[monthKey] || { insurance: false };
+            document.getElementById('shiftInsurance').checked = monthData.insurance || false;
             
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateCell = document.createElement('div');
@@ -1299,38 +1291,23 @@
                 dateCell.textContent = day;
                 dateCell.onclick = function() {
                     // Toggle selection
-                    this.classList.toggle('selected');
-                    selectedDateForShift = day;
-                    
-                    // Show shift form
-                    document.getElementById('shiftForm').style.display = 'block';
-                    document.getElementById('selectedDate').value = `${day}/${currentMonth + 1}`;
-                    
-                    // Load existing data if any
-                    if (existingShifts[day]) {
-                        document.getElementById('shiftDuty').value = existingShifts[day].duty || 0;
-                        document.getElementById('shiftObs').value = existingShifts[day].obs || 0;
-                        document.getElementById('shiftTrans').value = existingShifts[day].trans || 0;
-                        document.getElementById('shiftStation').value = existingShifts[day].station || 0;
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        const index = selectedDates.indexOf(day);
+                        if (index > -1) {
+                            selectedDates.splice(index, 1);
+                        }
                     } else {
-                        document.getElementById('shiftDuty').value = 0;
-                        document.getElementById('shiftObs').value = 0;
-                        document.getElementById('shiftTrans').value = 0;
-                        document.getElementById('shiftStation').value = 0;
+                        this.classList.add('selected');
+                        selectedDates.push(day);
                     }
                 };
                 
-                // Mark if already has shift
-                if (existingShifts[day]) {
-                    dateCell.classList.add('selected');
-                    dateCell.style.background = '#27ae60';
-                    dateCell.style.color = 'white';
-                }
+                // Don't auto-select first date
                 
                 datesGrid.appendChild(dateCell);
             }
             
-            document.getElementById('shiftForm').style.display = 'none';
             document.getElementById('addShiftModal').style.display = 'flex';
         }
 
@@ -1339,26 +1316,26 @@
             document.getElementById('addShiftModal').style.display = 'none';
         }
 
-        // Save shift data
-        function saveShiftData() {
-            if (!selectedDateForShift) {
-                showPopup("აირჩიეთ თარიღი!", "error");
-                return;
+        // Save selected dates and insurance
+        function saveSelectedDates() {
+            const monthKey = `${currentYear}-${currentMonth}`;
+            const insuranceChecked = document.getElementById('shiftInsurance').checked;
+            
+            // Update insurance status
+            if (monthlyData[monthKey]) {
+                monthlyData[monthKey].insurance = insuranceChecked;
             }
             
-            const day = selectedDateForShift;
-            const monthKey = `${currentYear}-${currentMonth}`;
-            
-            monthlyData[monthKey].shifts[day] = {
-                duty: parseFloat(document.getElementById('shiftDuty').value) || 0,
-                obs: parseInt(document.getElementById('shiftObs').value) || 0,
-                trans: parseInt(document.getElementById('shiftTrans').value) || 0,
-                station: parseInt(document.getElementById('shiftStation').value) || 0
-            };
+            // Mark selected dates with empty shift data if not exists
+            selectedDates.forEach(day => {
+                if (!monthlyData[monthKey].shifts[day]) {
+                    monthlyData[monthKey].shifts[day] = { duty: 0, obs: 0, trans: 0, station: 0 };
+                }
+            });
             
             loadCurrentMonth();
             closeAddShiftModal();
-            showPopup(`მორიგეობა დაემატა ${day}/${currentMonth + 1} თარიღზე`, "success");
+            showPopup(`${selectedDates.length} თარიღი დამატებულია და დაზღვევა ${insuranceChecked ? 'აქტიურია' : 'არააქტიურია'}`, "success");
         }
 
         // Save data to localStorage
@@ -1386,13 +1363,6 @@
             // Set default year to current year
             document.getElementById('newYear').value = currentDate.getFullYear();
             document.getElementById('newMonth').value = currentDate.getMonth();
-            
-            // Close edit popup when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!document.getElementById('editPopup').contains(e.target)) {
-                    document.getElementById('editPopup').style.display = 'none';
-                }
-            });
         };
     </script>
 </body>
