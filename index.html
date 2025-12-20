@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediClubGeorgia - მორიგეობის გამომუშავება</title>
+    <title>MediClubGeorgia - ხელფასის კალკულატორი</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -42,22 +42,29 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 
+        /* Header outside container */
+        .main-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            width: 95%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .main-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
         h1 {
             font-size: 28px;
             color: #333;
             margin-bottom: 20px;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 30px;
-            text-align: center;
-        }
-
-        .header h2 {
-            font-size: 24px;
-            font-weight: 600;
         }
 
         .input-group {
@@ -108,7 +115,7 @@
             padding: 20px;
         }
 
-        .month-selector {
+        .controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -118,71 +125,61 @@
             border-radius: 10px;
         }
 
-        .month-nav {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .nav-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
         .current-month {
             font-size: 20px;
             font-weight: 600;
             color: #333;
         }
 
-        .other-months-btn {
-            background: #764ba2;
-            color: white;
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
             border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #764ba2;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
         }
 
         /* Earning Panel */
         .earning-panel {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #4cd964 0%, #5ac8fa 100%);
             color: white;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            text-align: center;
         }
 
         .total-earning {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 700;
-        }
-
-        .insurance-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 8px;
-        }
-
-        .insurance-toggle.active {
-            background: rgba(255,255,255,0.4);
         }
 
         /* Table */
@@ -191,6 +188,7 @@
             background: white;
             border-radius: 10px;
             border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
         }
 
         table {
@@ -205,6 +203,8 @@
             font-weight: 600;
             color: #333;
             border-bottom: 2px solid #e0e0e0;
+            position: sticky;
+            top: 0;
         }
 
         td {
@@ -213,20 +213,33 @@
             border-bottom: 1px solid #f0f0f0;
         }
 
-        .type-header {
+        .shift-cell {
+            background-color: #28a745 !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .date-header {
             background: #667eea;
             color: white;
             font-weight: 600;
         }
 
-        .date-cell {
+        .type-header {
+            background: #764ba2;
+            color: white;
             font-weight: 600;
+            min-width: 120px;
+        }
+
+        .insurance-cell {
+            background-color: #ffc107;
             color: #333;
-            background: #f8f9fa;
+            font-weight: 600;
         }
 
         input[type="number"] {
-            width: 80px;
+            width: 70px;
             padding: 8px;
             border: 2px solid #ddd;
             border-radius: 6px;
@@ -239,6 +252,12 @@
             outline: none;
         }
 
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
         /* Modal */
         .modal {
             display: none;
@@ -247,7 +266,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -258,7 +277,7 @@
             padding: 30px;
             border-radius: 15px;
             width: 90%;
-            max-width: 800px;
+            max-width: 1000px;
             max-height: 80vh;
             overflow-y: auto;
         }
@@ -268,6 +287,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
         .modal-header h3 {
@@ -283,73 +304,107 @@
             color: #666;
         }
 
-        .month-grid {
+        .months-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
 
-        .month-card {
+        .month-table-container {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .month-header {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .month-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .month-table th, .month-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .month-table th {
             background: #f8f9fa;
+        }
+
+        .no-data {
             padding: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: transform 0.2s;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Add Month Modal */
+        .add-month-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        /* Popup Box */
+        .popup-box {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            z-index: 1001;
+            min-width: 300px;
             text-align: center;
         }
 
-        .month-card:hover {
-            transform: translateY(-5px);
-            background: #e9ecef;
-        }
-
-        .month-card h4 {
+        .popup-box h3 {
+            margin-bottom: 15px;
             color: #333;
-            margin-bottom: 10px;
         }
 
-        .month-card .amount {
-            font-size: 20px;
-            font-weight: 700;
-            color: #667eea;
+        .popup-box p {
+            margin-bottom: 20px;
+            color: #666;
         }
 
-        /* Popup */
-        .popup {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 1001;
-            animation: slideIn 0.3s ease-out;
+        .popup-box .btn {
+            width: auto;
+            min-width: 100px;
+        }
+
+        .popup-overlay {
             display: none;
-        }
-
-        .popup.success {
-            background: linear-gradient(135deg, #4cd964 0%, #5ac8fa 100%);
-        }
-
-        .popup.error {
-            background: linear-gradient(135deg, #ff2d55 0%, #ff9500 100%);
-        }
-
-        .popup.info {
-            background: linear-gradient(135deg, #5ac8fa 0%, #007aff 100%);
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
         }
 
         /* Logout */
@@ -385,6 +440,13 @@
             margin-right: 5px;
             color: #667eea;
         }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -411,61 +473,57 @@
         </button>
     </div>
 
+    <!-- Header outside container -->
+    <div class="main-header" id="mainHeader" style="display: none;">
+        <h1>MediClubGeorgia-ში მუშაობის დროს ყოველთვიურად გამომუშავებული ხელფასის რაოდენობა</h1>
+        <p style="opacity: 0.9; margin-top: 10px;">გამოთვლილი თარიღების დახმარებით, როდესაც შესრულდა მორიგეობა კონკრეტულ თვეში</p>
+    </div>
+
     <!-- Main App -->
     <div class="main-container" id="mainApp">
         <button class="logout-btn" onclick="logout()">
             <i class="fas fa-sign-out-alt"></i> გასვლა
         </button>
 
-        <div class="header">
-            <h2>MediClubGeorgia-ში მუშაობის დროს ყოველთვიურად გამომუშავებული ხელფასის რაოდენობა</h2>
-        </div>
-
         <div class="content">
-            <!-- Month Selector -->
-            <div class="month-selector">
-                <div class="month-nav">
-                    <button class="nav-btn" onclick="changeMonth(-1)">
-                        <i class="fas fa-chevron-left"></i>
+            <!-- Controls -->
+            <div class="controls">
+                <div class="current-month" id="currentMonth">სექტემბერი 2024</div>
+                <div class="control-buttons">
+                    <button class="control-btn btn-primary" onclick="showAddMonthModal()">
+                        <i class="fas fa-plus"></i> ახალი თვე
                     </button>
-                    <div class="current-month" id="currentMonth">სექტემბერი 2024</div>
-                    <button class="nav-btn" onclick="changeMonth(1)">
-                        <i class="fas fa-chevron-right"></i>
+                    <button class="control-btn btn-secondary" onclick="showOtherMonths()">
+                        <i class="fas fa-calendar-alt"></i> სხვა თვეების ნახვა
                     </button>
                 </div>
-                <button class="other-months-btn" onclick="showOtherMonths()">
-                    <i class="fas fa-calendar-alt"></i> სხვა თვეების დათვალიერება
-                </button>
             </div>
 
             <!-- Earning Panel -->
             <div class="earning-panel">
-                <div>
-                    <div style="font-size: 14px; opacity: 0.9;">მთლიანი გამომუშავება</div>
-                    <div class="total-earning" id="totalEarning">0.00 ₾</div>
-                </div>
-                <div class="insurance-toggle" id="insuranceToggle" onclick="toggleInsurance()">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>დაზღვევა</span>
-                </div>
+                <div style="font-size: 14px; opacity: 0.9;">მთლიანი გამომუშავება</div>
+                <div class="total-earning" id="totalEarning">0.00 ₾</div>
             </div>
 
             <!-- Main Table -->
             <div class="table-container">
-                <table>
+                <table id="mainTable">
                     <thead>
-                        <tr>
-                            <th class="type-header">თარიღი</th>
-                            <th class="type-header">მორიგეობა (საათები)</th>
-                            <th class="type-header">ობსერვაცია</th>
-                            <th class="type-header">ჰემოტრანსფუზია</th>
-                            <th class="type-header">დღის სტაციონარი</th>
+                        <tr id="tableHeader">
+                            <!-- Header will be generated here -->
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <!-- Table rows will be generated here -->
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Add Shift Button -->
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button class="control-btn btn-success" onclick="showAddShiftModal()" style="padding: 10px 30px;">
+                    <i class="fas fa-plus-circle"></i> ახალი მორიგეობა
+                </button>
             </div>
 
             <!-- Prices Info -->
@@ -482,6 +540,9 @@
                 <div class="price-item">
                     <i class="fas fa-bed"></i> 1 დღის სტაციონარი = 10 ₾
                 </div>
+                <div class="price-item">
+                    <i class="fas fa-shield-alt"></i> დაზღვევა = -100 ₾
+                </div>
             </div>
         </div>
     </div>
@@ -490,19 +551,127 @@
     <div class="modal" id="otherMonthsModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>სხვა თვეების დათვალიერება</h3>
+                <h3>სხვა თვეების ნახვა</h3>
                 <button class="close-modal" onclick="closeOtherMonths()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="month-grid" id="monthsGrid">
-                <!-- Month cards will be generated here -->
+            <div id="monthsContainer">
+                <!-- Month tables will be generated here -->
             </div>
         </div>
     </div>
 
-    <!-- Popup -->
-    <div class="popup" id="popup"></div>
+    <!-- Add Month Modal -->
+    <div class="modal" id="addMonthModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>ახალი თვის დამატება</h3>
+                <button class="close-modal" onclick="closeAddMonthModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="add-month-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>თვე</label>
+                        <select id="newMonth" class="form-control" style="width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #ddd;">
+                            <option value="0">იანვარი</option>
+                            <option value="1">თებერვალი</option>
+                            <option value="2">მარტი</option>
+                            <option value="3">აპრილი</option>
+                            <option value="4">მაისი</option>
+                            <option value="5">ივნისი</option>
+                            <option value="6">ივლისი</option>
+                            <option value="7">აგვისტო</option>
+                            <option value="8">სექტემბერი</option>
+                            <option value="9">ოქტომბერი</option>
+                            <option value="10">ნოემბერი</option>
+                            <option value="11">დეკემბერი</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>წელი</label>
+                        <input type="number" id="newYear" class="form-control" min="2020" max="2030" value="2024">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="addNewMonth()">
+                        <i class="fas fa-plus"></i> დამატება
+                    </button>
+                    <button class="btn btn-danger" onclick="closeAddMonthModal()">
+                        <i class="fas fa-times"></i> გაუქმება
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Shift Modal -->
+    <div class="modal" id="addShiftModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>ახალი მორიგეობის დამატება</h3>
+                <button class="close-modal" onclick="closeAddShiftModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="add-month-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>თარიღი</label>
+                        <select id="shiftDate" class="form-control" style="width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #ddd;">
+                            <!-- Dates will be populated here -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>მორიგეობა (საათები)</label>
+                        <input type="number" id="shiftDuty" class="form-control" min="0" step="0.5" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>ობსერვაცია</label>
+                        <input type="number" id="shiftObs" class="form-control" min="0" value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ჰემოტრანსფუზია</label>
+                        <input type="number" id="shiftTrans" class="form-control" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>დღის სტაციონარი</label>
+                        <input type="number" id="shiftStation" class="form-control" min="0" value="0">
+                    </div>
+                </div>
+                <div class="form-row" style="align-items: center;">
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="shiftInsurance">
+                            დაზღვევა (-100 ₾)
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="addNewShift()">
+                        <i class="fas fa-plus"></i> დამატება
+                    </button>
+                    <button class="btn btn-danger" onclick="closeAddShiftModal()">
+                        <i class="fas fa-times"></i> გაუქმება
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Box -->
+    <div class="popup-overlay" id="popupOverlay"></div>
+    <div class="popup-box" id="popupBox">
+        <h3 id="popupTitle">შეტყობინება</h3>
+        <p id="popupMessage">ეს არის შეტყობინება</p>
+        <button class="btn btn-primary" onclick="closePopup()">კარგი</button>
+    </div>
 
     <script>
         // User credentials
@@ -513,15 +682,15 @@
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-        let insuranceActive = false;
-        let monthlyData = {};
-        let allMonthsData = {};
-
+        
         // Georgian month names
         const georgianMonths = [
             "იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი",
             "ივლისი", "აგვისტო", "სექტემბერი", "ოქტომბერი", "ნოემბერი", "დეკემბერი"
         ];
+
+        // Data structure
+        let monthlyData = {};
 
         // Login function
         function login() {
@@ -530,9 +699,10 @@
             
             if (username === USERNAME && password === PASSWORD) {
                 document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('mainHeader').style.display = 'block';
                 document.getElementById('mainApp').style.display = 'block';
                 loadData();
-                updateTable();
+                loadCurrentMonth();
                 showPopup("მოგესალმებით, ალექს!", "success");
             } else {
                 showPopup("არასწორი მომხმარებელი ან პაროლი!", "error");
@@ -542,6 +712,7 @@
         // Logout function
         function logout() {
             document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('mainHeader').style.display = 'none';
             document.getElementById('mainApp').style.display = 'none';
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
@@ -549,69 +720,130 @@
 
         // Show popup message
         function showPopup(message, type = "info") {
-            const popup = document.getElementById('popup');
-            popup.textContent = message;
-            popup.className = `popup ${type}`;
-            popup.style.display = 'block';
+            const popupBox = document.getElementById('popupBox');
+            const popupOverlay = document.getElementById('popupOverlay');
+            const popupTitle = document.getElementById('popupTitle');
+            const popupMessage = document.getElementById('popupMessage');
             
-            setTimeout(() => {
-                popup.style.display = 'none';
-            }, 3000);
-        }
-
-        // Change month
-        function changeMonth(direction) {
-            currentMonth += direction;
+            popupMessage.textContent = message;
             
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            } else if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
+            if (type === "error") {
+                popupTitle.textContent = "შეცდომა!";
+                popupTitle.style.color = "#dc3545";
+            } else if (type === "success") {
+                popupTitle.textContent = "წარმატება!";
+                popupTitle.style.color = "#28a745";
+            } else {
+                popupTitle.textContent = "ინფორმაცია";
+                popupTitle.style.color = "#667eea";
             }
             
-            updateMonthDisplay();
-            updateTable();
+            popupOverlay.style.display = 'block';
+            popupBox.style.display = 'block';
         }
 
-        // Update month display
-        function updateMonthDisplay() {
+        // Close popup
+        function closePopup() {
+            document.getElementById('popupOverlay').style.display = 'none';
+            document.getElementById('popupBox').style.display = 'none';
+        }
+
+        // Load current month data
+        function loadCurrentMonth() {
+            const monthKey = `${currentYear}-${currentMonth}`;
             const monthName = georgianMonths[currentMonth];
             document.getElementById('currentMonth').textContent = `${monthName} ${currentYear}`;
+            
+            // Create table
+            createMonthTable(monthKey);
         }
 
-        // Toggle insurance
-        function toggleInsurance() {
-            insuranceActive = !insuranceActive;
-            const toggle = document.getElementById('insuranceToggle');
+        // Create table for a month
+        function createMonthTable(monthKey) {
+            const monthData = monthlyData[monthKey] || { shifts: {}, insurance: false };
+            const [year, month] = monthKey.split('-').map(Number);
+            const daysInMonth = new Date(year, parseInt(month) + 1, 0).getDate();
             
-            if (insuranceActive) {
-                toggle.classList.add('active');
-                showPopup("დაზღვევა აქტიურია (-100 ₾)", "info");
-            } else {
-                toggle.classList.remove('active');
-                showPopup("დაზღვევა არააქტიურია", "info");
+            // Create header
+            const tableHeader = document.getElementById('tableHeader');
+            tableHeader.innerHTML = '<th class="type-header">თარიღი</th>';
+            
+            // Add date columns
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${day}/${month + 1}`;
+                tableHeader.innerHTML += `<th class="date-header">${dateStr}</th>`;
             }
             
-            calculateTotal();
+            // Add insurance column
+            tableHeader.innerHTML += '<th class="type-header">დაზღვევა</th>';
+            
+            // Create rows
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            // Row 1: მორიგეობა (საათები)
+            let row1 = '<tr><td class="type-header">მორიგეობა (საათები)</td>';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
+                const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
+                const cellClass = hasShift ? 'shift-cell' : '';
+                row1 += `<td class="${cellClass}">${shiftData.duty || 0}</td>`;
+            }
+            row1 += `<td><input type="checkbox" ${monthData.insurance ? 'checked' : ''} onchange="toggleInsurance(${month}, ${year}, this.checked)"></td></tr>`;
+            
+            // Row 2: ობსერვაცია
+            let row2 = '<tr><td class="type-header">ობსერვაცია</td>';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
+                const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
+                const cellClass = hasShift ? 'shift-cell' : '';
+                row2 += `<td class="${cellClass}">${shiftData.obs || 0}</td>`;
+            }
+            row2 += `<td></td></tr>`;
+            
+            // Row 3: ჰემოტრანსფუზია
+            let row3 = '<tr><td class="type-header">ჰემოტრანსფუზია</td>';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
+                const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
+                const cellClass = hasShift ? 'shift-cell' : '';
+                row3 += `<td class="${cellClass}">${shiftData.trans || 0}</td>`;
+            }
+            row3 += `<td></td></tr>`;
+            
+            // Row 4: დღის სტაციონარი
+            let row4 = '<tr><td class="type-header">დღის სტაციონარი</td>';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
+                const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
+                const cellClass = hasShift ? 'shift-cell' : '';
+                row4 += `<td class="${cellClass}">${shiftData.station || 0}</td>`;
+            }
+            row4 += `<td></td></tr>`;
+            
+            tableBody.innerHTML = row1 + row2 + row3 + row4;
+            
+            // Calculate total
+            calculateTotal(monthKey);
         }
 
-        // Calculate total earning
-        function calculateTotal() {
-            let total = 0;
-            const rows = document.querySelectorAll('#tableBody tr');
+        // Calculate total for a month
+        function calculateTotal(monthKey) {
+            const monthData = monthlyData[monthKey];
+            if (!monthData) {
+                document.getElementById('totalEarning').textContent = '0.00 ₾';
+                return;
+            }
             
-            rows.forEach(row => {
-                const dutyHours = parseFloat(row.querySelector('.duty-hours').value) || 0;
-                const observations = parseFloat(row.querySelector('.observations').value) || 0;
-                const transfusions = parseFloat(row.querySelector('.transfusions').value) || 0;
-                const dayStationary = parseFloat(row.querySelector('.day-stationary').value) || 0;
-                
-                total += (dutyHours * 5.84) + (observations * 7) + (transfusions * 5) + (dayStationary * 10);
+            let total = 0;
+            
+            // Calculate from shifts
+            Object.values(monthData.shifts).forEach(shift => {
+                total += (shift.duty * 5.84) + (shift.obs * 7) + (shift.trans * 5) + (shift.station * 10);
             });
             
-            if (insuranceActive) {
+            // Subtract insurance if active
+            if (monthData.insurance) {
                 total -= 100;
             }
             
@@ -619,109 +851,83 @@
             saveData();
         }
 
-        // Update table for current month
-        function updateTable() {
-            const monthKey = `${currentYear}-${currentMonth}`;
-            
+        // Toggle insurance for a month
+        function toggleInsurance(month, year, isChecked) {
+            const monthKey = `${year}-${month}`;
             if (!monthlyData[monthKey]) {
-                monthlyData[monthKey] = {};
+                monthlyData[monthKey] = { shifts: {}, insurance: false };
             }
+            monthlyData[monthKey].insurance = isChecked;
+            calculateTotal(monthKey);
             
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayKey = day.toString();
-                const dayData = monthlyData[monthKey][dayKey] || { duty: 0, obs: 0, trans: 0, station: 0 };
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="date-cell">${day}</td>
-                    <td>
-                        <input type="number" min="0" step="0.5" value="${dayData.duty}" 
-                               class="duty-hours" onchange="updateDayData(${day}, 'duty', this.value)">
-                    </td>
-                    <td>
-                        <input type="number" min="0" value="${dayData.obs}" 
-                               class="observations" onchange="updateDayData(${day}, 'obs', this.value)">
-                    </td>
-                    <td>
-                        <input type="number" min="0" value="${dayData.trans}" 
-                               class="transfusions" onchange="updateDayData(${day}, 'trans', this.value)">
-                    </td>
-                    <td>
-                        <input type="number" min="0" value="${dayData.station}" 
-                               class="day-stationary" onchange="updateDayData(${day}, 'station', this.value)">
-                    </td>
-                `;
-                tableBody.appendChild(row);
+            if (isChecked) {
+                showPopup("დაზღვევა აქტიურია ამ თვისთვის", "info");
             }
-            
-            updateMonthDisplay();
-            calculateTotal();
-        }
-
-        // Update day data
-        function updateDayData(day, type, value) {
-            const monthKey = `${currentYear}-${currentMonth}`;
-            
-            if (!monthlyData[monthKey]) {
-                monthlyData[monthKey] = {};
-            }
-            
-            if (!monthlyData[monthKey][day]) {
-                monthlyData[monthKey][day] = { duty: 0, obs: 0, trans: 0, station: 0 };
-            }
-            
-            monthlyData[monthKey][day][type] = parseFloat(value) || 0;
-            calculateTotal();
         }
 
         // Show other months modal
         function showOtherMonths() {
-            const monthsGrid = document.getElementById('monthsGrid');
-            monthsGrid.innerHTML = '';
+            const monthsContainer = document.getElementById('monthsContainer');
+            monthsContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> იტვირთება...</div>';
             
-            // Generate data for all months if not exists
-            for (let year = 2024; year <= currentYear; year++) {
-                for (let month = 0; month < 12; month++) {
-                    if (year === currentYear && month > currentMonth) break;
-                    
-                    const monthKey = `${year}-${month}`;
-                    let total = 0;
-                    
-                    if (monthlyData[monthKey]) {
-                        Object.values(monthlyData[monthKey]).forEach(dayData => {
-                            total += (dayData.duty * 5.84) + (dayData.obs * 7) + 
-                                    (dayData.trans * 5) + (dayData.station * 10);
+            setTimeout(() => {
+                monthsContainer.innerHTML = '';
+                
+                // Get all months with data
+                const monthKeys = Object.keys(monthlyData).sort().reverse();
+                
+                if (monthKeys.length === 0) {
+                    monthsContainer.innerHTML = '<div class="no-data">სხვა თვეების მონაცემები ჯერ არ არის შენახული</div>';
+                } else {
+                    monthKeys.forEach(monthKey => {
+                        const [year, month] = monthKey.split('-').map(Number);
+                        const monthName = georgianMonths[month];
+                        const monthData = monthlyData[monthKey];
+                        
+                        // Calculate total for this month
+                        let monthTotal = 0;
+                        Object.values(monthData.shifts).forEach(shift => {
+                            monthTotal += (shift.duty * 5.84) + (shift.obs * 7) + (shift.trans * 5) + (shift.station * 10);
                         });
-                    }
-                    
-                    if (total > 0) {
+                        if (monthData.insurance) monthTotal -= 100;
+                        
                         const monthCard = document.createElement('div');
-                        monthCard.className = 'month-card';
+                        monthCard.className = 'month-table-container';
                         monthCard.innerHTML = `
-                            <h4>${georgianMonths[month]} ${year}</h4>
-                            <div class="amount">${total.toFixed(2)} ₾</div>
+                            <div class="month-header">
+                                ${monthName} ${year} - სულ: ${monthTotal.toFixed(2)} ₾
+                            </div>
+                            <table class="month-table">
+                                <thead>
+                                    <tr>
+                                        <th>თარიღი</th>
+                                        <th>მორიგეობა</th>
+                                        <th>ობსერვაცია</th>
+                                        <th>ჰემოტრანსფ.</th>
+                                        <th>სტაციონარი</th>
+                                        <th>დაზღვევა</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${Object.entries(monthData.shifts).map(([day, shift]) => `
+                                        <tr>
+                                            <td>${day}/${parseInt(month)+1}</td>
+                                            <td>${shift.duty}</td>
+                                            <td>${shift.obs}</td>
+                                            <td>${shift.trans}</td>
+                                            <td>${shift.station}</td>
+                                            <td>${monthData.insurance ? 'კი' : 'არა'}</td>
+                                        </tr>
+                                    `).join('') || '<tr><td colspan="6" style="text-align: center; color: #666;">მონაცემები არ არის</td></tr>'}
+                                </tbody>
+                            </table>
                         `;
-                        monthCard.onclick = () => {
-                            currentMonth = month;
-                            currentYear = year;
-                            updateTable();
-                            closeOtherMonths();
-                            showPopup(`${georgianMonths[month]} ${year} იხილება`, "info");
-                        };
-                        monthsGrid.appendChild(monthCard);
-                    }
+                        monthsContainer.appendChild(monthCard);
+                    });
                 }
-            }
-            
-            if (monthsGrid.children.length === 0) {
-                monthsGrid.innerHTML = '<p style="color: #666; text-align: center; width: 100%;">სხვა თვეების მონაცემები ჯერ არ არის შენახული</p>';
-            }
-            
-            document.getElementById('otherMonthsModal').style.display = 'flex';
+                
+                document.getElementById('otherMonthsModal').style.display = 'flex';
+            }, 500);
         }
 
         // Close other months modal
@@ -729,44 +935,118 @@
             document.getElementById('otherMonthsModal').style.display = 'none';
         }
 
+        // Show add month modal
+        function showAddMonthModal() {
+            document.getElementById('addMonthModal').style.display = 'flex';
+        }
+
+        // Close add month modal
+        function closeAddMonthModal() {
+            document.getElementById('addMonthModal').style.display = 'none';
+        }
+
+        // Add new month
+        function addNewMonth() {
+            const month = parseInt(document.getElementById('newMonth').value);
+            const year = parseInt(document.getElementById('newYear').value);
+            const monthKey = `${year}-${month}`;
+            
+            if (monthlyData[monthKey]) {
+                showPopup("ეს თვე უკვე არსებობს!", "error");
+                return;
+            }
+            
+            monthlyData[monthKey] = { shifts: {}, insurance: false };
+            currentMonth = month;
+            currentYear = year;
+            loadCurrentMonth();
+            closeAddMonthModal();
+            showPopup(`ახალი თვე დაემატა: ${georgianMonths[month]} ${year}`, "success");
+        }
+
+        // Show add shift modal
+        function showAddShiftModal() {
+            const monthKey = `${currentYear}-${currentMonth}`;
+            if (!monthlyData[monthKey]) {
+                showPopup("ჯერ შექმენით ამ თვის ცხრილი!", "error");
+                return;
+            }
+            
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const shiftDateSelect = document.getElementById('shiftDate');
+            shiftDateSelect.innerHTML = '';
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const option = document.createElement('option');
+                option.value = day;
+                option.textContent = `${day}/${currentMonth + 1}`;
+                shiftDateSelect.appendChild(option);
+            }
+            
+            document.getElementById('addShiftModal').style.display = 'flex';
+        }
+
+        // Close add shift modal
+        function closeAddShiftModal() {
+            document.getElementById('addShiftModal').style.display = 'none';
+        }
+
+        // Add new shift
+        function addNewShift() {
+            const day = parseInt(document.getElementById('shiftDate').value);
+            const duty = parseFloat(document.getElementById('shiftDuty').value) || 0;
+            const obs = parseInt(document.getElementById('shiftObs').value) || 0;
+            const trans = parseInt(document.getElementById('shiftTrans').value) || 0;
+            const station = parseInt(document.getElementById('shiftStation').value) || 0;
+            const insurance = document.getElementById('shiftInsurance').checked;
+            
+            const monthKey = `${currentYear}-${currentMonth}`;
+            
+            if (!monthlyData[monthKey].shifts[day]) {
+                monthlyData[monthKey].shifts[day] = { duty: 0, obs: 0, trans: 0, station: 0 };
+            }
+            
+            monthlyData[monthKey].shifts[day] = {
+                duty: monthlyData[monthKey].shifts[day].duty + duty,
+                obs: monthlyData[monthKey].shifts[day].obs + obs,
+                trans: monthlyData[monthKey].shifts[day].trans + trans,
+                station: monthlyData[monthKey].shifts[day].station + station
+            };
+            
+            if (insurance) {
+                monthlyData[monthKey].insurance = true;
+            }
+            
+            loadCurrentMonth();
+            closeAddShiftModal();
+            showPopup(`მორიგეობა დაემატა ${day}/${currentMonth + 1} თარიღზე`, "success");
+        }
+
         // Save data to localStorage
         function saveData() {
-            const data = {
-                monthlyData: monthlyData,
-                insuranceActive: insuranceActive,
-                currentMonth: currentMonth,
-                currentYear: currentYear
-            };
-            localStorage.setItem('mediClubData', JSON.stringify(data));
+            localStorage.setItem('mediClubData', JSON.stringify(monthlyData));
         }
 
         // Load data from localStorage
         function loadData() {
             const savedData = localStorage.getItem('mediClubData');
             if (savedData) {
-                const data = JSON.parse(savedData);
-                monthlyData = data.monthlyData || {};
-                insuranceActive = data.insuranceActive || false;
-                currentMonth = data.currentMonth || currentDate.getMonth();
-                currentYear = data.currentYear || currentDate.getFullYear();
-                
-                // Update insurance toggle
-                if (insuranceActive) {
-                    document.getElementById('insuranceToggle').classList.add('active');
-                }
+                monthlyData = JSON.parse(savedData);
             }
         }
 
         // Initialize
         window.onload = function() {
-            updateMonthDisplay();
-            
             // Add event listener for Enter key in login
             document.getElementById('password').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     login();
                 }
             });
+            
+            // Set default year to current year
+            document.getElementById('newYear').value = currentDate.getFullYear();
+            document.getElementById('newMonth').value = currentDate.getMonth();
         };
     </script>
 </body>
