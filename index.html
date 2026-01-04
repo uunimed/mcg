@@ -1549,14 +1549,14 @@ thead tr {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
             
-            // Row 1: მორიგეობა (საათები)
-            let row1 = '<tr><td class="type-header">მორიგეობა (საათები)</td>';
-            for (let day = 1; day <= daysInMonth; day++) {
-                const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
-                const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
-                const cellClass = hasShift ? 'shift-cell' : '';
-                const inputValue = shiftData.duty > 0 ? shiftData.duty : '';
-row1 += `
+// Row 1: მორიგეობა (საათები)
+let row1 = '<tr><td class="type-header">მორიგეობა (საათები)</td>';
+for (let day = 1; day <= daysInMonth; day++) {
+    const shiftExists = monthData.shifts && monthData.shifts[day];
+    const shiftData = shiftExists ? monthData.shifts[day] : { duty: 0, obs: 0, trans: 0, station: 0 };
+    const cellClass = shiftExists ? 'shift-cell' : '';
+    const inputValue = shiftData.duty > 0 ? shiftData.duty : '';
+    row1 += `
     <td class="${cellClass}">
         <input type="number" class="table-input ${inputValue === '' ? 'empty-input' : ''}" 
                value="${inputValue}" 
@@ -1568,75 +1568,75 @@ row1 += `
                style="width: 60px;">
     </td>
 `;
-            }
-            row1 += `</tr>`;
-            
-            // Row 2: ობსერვაცია
-            let row2 = '<tr><td class="type-header">ობსერვაცია</td>';
-            for (let day = 1; day <= daysInMonth; day++) {
-                const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
-                const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
-                const cellClass = hasShift ? 'shift-cell' : '';
-                const inputValue = shiftData.obs > 0 ? shiftData.obs : '';
-                row2 += `
-                    <td class="${cellClass}">
-                        <input type="number" class="table-input ${inputValue === '' ? 'empty-input' : ''}" 
-                               value="${inputValue}" 
-                               min="0"
-                               onchange="updateShiftData(${day}, 'obs', this.value)"
-                               onfocus="if(this.value==='')this.value=''"
-                               onblur="if(this.value==='')this.classList.add('empty-input');else this.classList.remove('empty-input')"
-                               placeholder="0"
-                               style="width: 60px;">
-                    </td>
-                `;
-            }
-            row2 += `</tr>`;
-            
-            // Row 3: ჰემოტრანსფუზია
-            let row3 = '<tr><td class="type-header">ჰემოტრანსფუზია</td>';
-            for (let day = 1; day <= daysInMonth; day++) {
-                const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
-                const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
-                const cellClass = hasShift ? 'shift-cell' : '';
-                const inputValue = shiftData.trans > 0 ? shiftData.trans : '';
-                row3 += `
-                    <td class="${cellClass}">
-                        <input type="number" class="table-input ${inputValue === '' ? 'empty-input' : ''}" 
-                               value="${inputValue}" 
-                               min="0"
-                               onchange="updateShiftData(${day}, 'trans', this.value)"
-                               onfocus="if(this.value==='')this.value=''"
-                               onblur="if(this.value==='')this.classList.add('empty-input');else this.classList.remove('empty-input')"
-                               placeholder="0"
-                               style="width: 60px;">
-                    </td>
-                `;
-            }
-            row3 += `</tr>`;
-            
-            // Row 4: დღის სტაციონარი
-            let row4 = '<tr><td class="type-header">დღის სტაციონარი</td>';
-            for (let day = 1; day <= daysInMonth; day++) {
-                const shiftData = monthData.shifts[day] || { duty: 0, obs: 0, trans: 0, station: 0 };
-                const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
-                const cellClass = hasShift ? 'shift-cell' : '';
-                const inputValue = shiftData.station > 0 ? shiftData.station : '';
-                row4 += `
-                    <td class="${cellClass}">
-                        <input type="number" class="table-input ${inputValue === '' ? 'empty-input' : ''}" 
-                               value="${inputValue}" 
-                               min="0"
-                               onchange="updateShiftData(${day}, 'station', this.value)"
-                               onfocus="if(this.value==='')this.value=''"
-                               onblur="if(this.value==='')this.classList.add('empty-input');else this.classList.remove('empty-input')"
-                               placeholder="0"
-                               style="width: 60px;">
-                    </td>
-                `;
-            }
-            row4 += `</tr>`;
-            
+}
+row1 += `</tr>`;
+
+// Row 2: ობსერვაცია
+let row2 = '<tr><td class="type-header">ობსერვაცია</td>';
+for (let day = 1; day <= daysInMonth; day++) {
+    const shiftExists = monthData.shifts && monthData.shifts[day];
+    const shiftData = shiftExists ? monthData.shifts[day] : { duty: 0, obs: 0, trans: 0, station: 0 };
+    const cellClass = shiftExists ? 'shift-cell' : '';
+    const inputValue = shiftData.obs > 0 ? shiftData.obs : '';
+    row2 += `
+        <td class="${cellClass}">
+            <input type="number" class="table-input ${inputValue === '' ? 'empty-input' : ''}" 
+                   value="${inputValue}" 
+                   min="0"
+                   onchange="updateShiftData(${day}, 'obs', this.value)"
+                   onfocus="if(this.value==='')this.value=''"
+                   onblur="if(this.value==='')this.classList.add('empty-input');else this.classList.remove('empty-input')"
+                   placeholder="0"
+                   style="width: 60px;">
+        </td>
+    `;
+}
+row2 += `</tr>`;
+
+// Row 3: ჰემოტრანსფუზია
+let row3 = '<tr><td class="type-header">ჰემოტრანსფუზია</td>';
+for (let day = 1; day <= daysInMonth; day++) {
+    const shiftExists = monthData.shifts && monthData.shifts[day];
+    const shiftData = shiftExists ? monthData.shifts[day] : { duty: 0, obs: 0, trans: 0, station: 0 };
+    const cellClass = shiftExists ? 'shift-cell' : '';
+    const inputValue = shiftData.trans > 0 ? shiftData.trans : '';
+    row3 += `
+        <td class="${cellClass}">
+            <input type="number" class="table-input ${inputValue === '' ? 'empty-input' : ''}" 
+                   value="${inputValue}" 
+                   min="0"
+                   onchange="updateShiftData(${day}, 'trans', this.value)"
+                   onfocus="if(this.value==='')this.value=''"
+                   onblur="if(this.value==='')this.classList.add('empty-input');else this.classList.remove('empty-input')"
+                   placeholder="0"
+                   style="width: 60px;">
+        </td>
+    `;
+}
+row3 += `</tr>`;
+
+// Row 4: დღის სტაციონარი
+let row4 = '<tr><td class="type-header">დღის სტაციონარი</td>';
+for (let day = 1; day <= daysInMonth; day++) {
+    const shiftExists = monthData.shifts && monthData.shifts[day];
+    const shiftData = shiftExists ? monthData.shifts[day] : { duty: 0, obs: 0, trans: 0, station: 0 };
+    const cellClass = shiftExists ? 'shift-cell' : '';
+    const inputValue = shiftData.station > 0 ? shiftData.station : '';
+    row4 += `
+        <td class="${cellClass}">
+            <input type="number" class="table-input ${inputValue === '' ? 'empty-input' : ''}" 
+                   value="${inputValue}" 
+                   min="0"
+                   onchange="updateShiftData(${day}, 'station', this.value)"
+                   onfocus="if(this.value==='')this.value=''"
+                   onblur="if(this.value==='')this.classList.add('empty-input');else this.classList.remove('empty-input')"
+                   placeholder="0"
+                   style="width: 60px;">
+        </td>
+    `;
+}
+row4 += `</tr>`;
+
             tableBody.innerHTML = row1 + row2 + row3 + row4;
             
             // Calculate total
@@ -1913,13 +1913,11 @@ function showAddShiftModal() {
             
             // Mark dates that already have shifts
 const existingShifts = monthData.shifts || {};
-const existingShiftDays = [];
+const existingShiftDays = Object.keys(existingShifts).map(day => parseInt(day));
 Object.keys(existingShifts).forEach(day => {
-    const shiftData = existingShifts[day];
-    // Only mark as selected if there's any data (not all zeros)
-    if (shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0) {
-        existingShiftDays.push(parseInt(day));
-    }
+    // Mark as selected if there's an entry in the shifts object
+    // (even if all values are zero)
+    existingShiftDays.push(parseInt(day));
 });
             
             for (let day = 1; day <= daysInMonth; day++) {
@@ -1988,8 +1986,16 @@ function saveSelectedDates() {
     // Add/keep shift data for selected dates
     selectedDates.forEach(day => {
         if (!monthlyData[monthKey].shifts[day]) {
-            monthlyData[monthKey].shifts[day] = { duty: 0, obs: 0, trans: 0, station: 0 };
+            // Initialize with all zeros - user will fill in the hours later
+            monthlyData[monthKey].shifts[day] = { 
+                duty: 0,
+                obs: 0, 
+                trans: 0, 
+                station: 0 
+            };
         }
+        // If shift already exists, keep whatever values are there
+        // (even if they're all zeros)
     });
     
     // Save data
