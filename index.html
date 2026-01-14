@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediClubGeorgia - ხელფასის კალკულატორი</title>
+    <title>MediClubGeorgia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -1955,15 +1955,20 @@
                     <!-- Dates will be generated here -->
                 </div>
                 
-                <div style="margin-top: 20px; text-align: left;">
-                    <div class="insurance-check">
-                        <input type="checkbox" id="shiftInsurance">
-                        <label for="shiftInsurance" style="margin: 0; font-weight: 600; color: #856404;">
-                            ამ თვის დაზღვევა (გამოაკლდება 100 ₾)
-                        </label>
-                    </div>
-                </div>
-            </div>
+<div style="margin-top: 20px; text-align: left;">
+    <div class="insurance-check">
+        <input type="checkbox" id="shiftInsurance">
+        <label for="shiftInsurance" style="margin: 0; font-weight: 600; color: #856404;">
+            ამ თვის დაზღვევა (გამოაკლდება 100 ₾)
+        </label>
+    </div>
+    <div class="insurance-check" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+        <input type="checkbox" id="shiftFitpass">
+        <label for="shiftFitpass" style="margin: 0; font-weight: 600; color: #155724;">
+            ამ თვის Fitpass (გამოაკლდება 85 ₾)
+        </label>
+    </div>
+</div>
             
             <div style="display: flex; gap: 15px; margin-top: 30px;">
                 <button class="enhanced-btn enhanced-btn-success" onclick="saveSelectedDates()">
@@ -2073,6 +2078,32 @@
                 }
             }
         }
+
+// Price configuration based on date
+function getPricesForDate(year, month) {
+    // Convert to numbers if they're strings
+    year = parseInt(year);
+    month = parseInt(month);
+    
+    // Check if date is before May 2025 (April 2025 and older)
+    // month is 0-indexed, so 4 = May
+    if (year < 2025 || (year === 2025 && month < 4)) {
+        return {
+            duty: 5,      // მორიგეობა
+            obs: 5,       // ობსერვაცია
+            trans: 10,    // ჰემოტრანსფუზია
+            station: 10   // დღის სტაციონარი
+        };
+    }
+    
+    // For May 2025 and newer
+    return {
+        duty: 5.84,    // მორიგეობა
+        obs: 7,        // ობსერვაცია
+        trans: 5,      // ჰემოტრანსფუზია
+        station: 10    // დღის სტაციონარი
+    };
+}
 
         // Logout function
         function logout() {
@@ -2336,29 +2367,37 @@
             }
         }
 
-        // Calculate total for a month
-        function calculateTotal(monthKey) {
-            const monthData = monthlyData[monthKey];
-            if (!monthData) {
-                document.getElementById('totalEarning').textContent = '0.00 ₾';
-                return;
-            }
-            
-            let total = 0;
-            
-            // Calculate from shifts
-            Object.values(monthData.shifts).forEach(shift => {
-                total += (shift.duty * 5.84) + (shift.obs * 7) + (shift.trans * 5) + (shift.station * 10);
-            });
-            
-            // Subtract insurance if active
-            if (monthData.insurance) {
-                total -= 100;
-            }
-            
-            document.getElementById('totalEarning').textContent = total.toFixed(2) + ' ₾';
-            saveData();
-        }
+// Calculate total for a month
+function calculateTotal(monthKey) {
+    const monthData = monthlyData[monthKey];
+    if (!monthData) {
+        document.getElementById('totalEarning').textContent = '0.00 ₾';
+        return;
+    }
+    
+    const [year, month] = monthKey.split('-').map(Number);
+    const prices = getPricesForDate(year, month);
+    
+    let total = 0;
+    
+    // Calculate from shifts
+    Object.values(monthData.shifts).forEach(shift => {
+        total += (shift.duty * prices.duty) + 
+                (shift.obs * prices.obs) + 
+                (shift.trans * prices.trans) + 
+                (shift.station * prices.station);
+    });
+    
+    // Apply insurance or Fitpass deduction
+    if (monthData.insuranceType === 'fitpass') {
+        total -= 85; // Fitpass deduction
+    } else if (monthData.insuranceType === 'insurance') {
+        total -= 100; // Regular insurance deduction
+    }
+    
+    document.getElementById('totalEarning').textContent = total.toFixed(2) + ' ₾';
+    saveData();
+}
 
         // Toggle insurance for a month
         function toggleInsurance(month, year, isChecked) {
@@ -2378,8 +2417,8 @@ function showOtherMonthsModal() {
     // Calculate global statistics
     calculateGlobalStats();
     
-monthsContainer.innerHTML = '<div class="loading" style="color: rgba(255,255,255,0.7);"><i class="fas fa-spinner fa-spin"></i> იტვირთება...</div>';
-
+    monthsContainer.innerHTML = '<div class="loading" style="color: rgba(255,255,255,0.7);"><i class="fas fa-spinner fa-spin"></i> იტვირთება...</div>';
+    
     setTimeout(() => {
         monthsContainer.innerHTML = '';
         
@@ -2387,8 +2426,8 @@ monthsContainer.innerHTML = '<div class="loading" style="color: rgba(255,255,255
         const monthKeys = Object.keys(monthlyData).sort().reverse();
         
         if (monthKeys.length === 0) {
-monthsContainer.innerHTML = '<div class="no-data" style="color: rgba(255,255,255,0.7);">თვეების მონაცემები ჯერ არ არის შეტანილი</div>';
-} else {
+            monthsContainer.innerHTML = '<div class="no-data" style="color: rgba(255,255,255,0.7);">თვეების მონაცემები ჯერ არ არის შეტანილი</div>';
+        } else {
             monthKeys.forEach(monthKey => {
                 const [year, month] = monthKey.split('-').map(Number);
                 const monthName = georgianMonths[month];
@@ -2438,74 +2477,83 @@ monthsContainer.innerHTML = '<div class="no-data" style="color: rgba(255,255,255
                     tableHTML += row;
                 });
                 
-                // Calculate total row
+                // Calculate total with correct pricing
+                const prices = getPricesForDate(year, month);
                 let expectedTotal = 0;
                 for (let day = 1; day <= daysInMonth; day++) {
                     const shiftData = monthData.shifts && monthData.shifts[day];
                     if (shiftData) {
-                        expectedTotal += (shiftData.duty * 5.84) + (shiftData.obs * 7) + 
-                                        (shiftData.trans * 5) + (shiftData.station * 10);
+                        expectedTotal += (shiftData.duty * prices.duty) + 
+                                       (shiftData.obs * prices.obs) + 
+                                       (shiftData.trans * prices.trans) + 
+                                       (shiftData.station * prices.station);
                     }
                 }
                 
-                // Add insurance deduction
-                if (monthData.insurance) {
+                // Apply insurance deduction
+                if (monthData.insuranceType === 'fitpass') {
+                    expectedTotal -= 85;
+                } else if (monthData.insuranceType === 'insurance') {
                     expectedTotal -= 100;
                 }
                 
-// Create month card
-const monthCard = document.createElement('div');
-monthCard.className = 'month-table-card';
-
-monthCard.innerHTML = `
-    <div class="month-table-header">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="font-size: 18px; font-weight: 600;">
-                    ${monthName} ${year}
-                </div>
-                ${monthData.insurance ? '<span class="insurance-info">დაზღვევა: -100₾</span>' : ''}
-            </div>
-            <button class="delete-month-btn" onclick="showDeleteConfirmation('${monthKey}')">
-                <i class="fas fa-trash"></i> თვის წაშლა
-            </button>
-        </div>
-    </div>
-    <div class="month-table-content">
-        <table class="months-table">
-            ${tableHTML}
-        </table>
-        
-        <!-- Add expected amount display outside the table -->
-        <div class="expected-amount-display" style="
-            text-align: right;
-            font-size: 22px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-top: 10px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 2px solid #3498db;">
-            <span style="opacity: 0.8; margin-right: 10px;">მოსალოდნელი თანხა:</span>
-            <span style="color: #27ae60;">${expectedTotal.toFixed(2)} ₾</span>
-        </div>
-        
-        <div class="actual-amount-section">
-            <div class="actual-amount-input-container">
-                <div class="actual-amount-label">ჩარიცხული თანხა:</div>
-                <input type="number" 
-                       class="actual-amount-input" 
-                       value="${monthData.actualAmount || 0}" 
-                       oninput="updateActualAmount('${monthKey}', this.value)"
-                       placeholder="შეიყვანეთ ჩარიცხული თანხა">
-                <div class="actual-amount-display" id="actualDisplay-${monthKey}">
-                    ${(monthData.actualAmount || 0).toFixed(2)} ₾
-                </div>
-            </div>
-        </div>
-    </div>
-`;
+                // Create month card
+                const monthCard = document.createElement('div');
+                monthCard.className = 'month-table-card';
+                
+                monthCard.innerHTML = `
+                    <div class="month-table-header">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="font-size: 18px; font-weight: 600;">
+                                    ${monthName} ${year}
+                                </div>
+                                ${monthData.insuranceType === 'fitpass' ? 
+                                    '<span class="insurance-info">Fitpass: -85₾</span>' : 
+                                    monthData.insuranceType === 'insurance' ? 
+                                    '<span class="insurance-info">დაზღვევა: -100₾</span>' : 
+                                    ''}
+                            </div>
+                            <button class="delete-month-btn" onclick="showDeleteConfirmation('${monthKey}')">
+                                <i class="fas fa-trash"></i> თვის წაშლა
+                            </button>
+                        </div>
+                    </div>
+                    <div class="month-table-content">
+                        <table class="months-table">
+                            ${tableHTML}
+                        </table>
+                        
+                        <!-- Add expected amount display outside the table -->
+                        <div class="expected-amount-display" style="
+                            text-align: right;
+                            font-size: 22px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin-top: 10px;
+                            padding: 15px;
+                            background: #f8f9fa;
+                            border-radius: 8px;
+                            border: 2px solid #3498db;">
+                            <span style="opacity: 0.8; margin-right: 10px;">მოსალოდნელი თანხა:</span>
+                            <span style="color: #27ae60;">${expectedTotal.toFixed(2)} ₾</span>
+                        </div>
+                        
+                        <div class="actual-amount-section">
+                            <div class="actual-amount-input-container">
+                                <div class="actual-amount-label">ჩარიცხული თანხა:</div>
+                                <input type="number" 
+                                       class="actual-amount-input" 
+                                       value="${monthData.actualAmount || 0}" 
+                                       oninput="updateActualAmount('${monthKey}', this.value)"
+                                       placeholder="შეიყვანეთ ჩარიცხული თანხა">
+                                <div class="actual-amount-display" id="actualDisplay-${monthKey}">
+                                    ${(monthData.actualAmount || 0).toFixed(2)} ₾
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
                 
                 monthsContainer.appendChild(monthCard);
             });
@@ -2531,75 +2579,87 @@ function updateActualAmount(monthKey, amount) {
     calculateGlobalStats();
 }
 
-        // Calculate global statistics
-        function calculateGlobalStats() {
-            const globalStats = document.getElementById('globalStats');
-            
-            let totalEarned = 0;
-            let actualAmounts = [];
-            let expectedAmounts = [];
-            let maxActual = 0;
-            let minActual = 999999;
-            let maxExpected = 0;
-            let minExpected = 999999;
-            
-            Object.values(monthlyData).forEach(monthData => {
-                // Calculate expected
-                let expectedTotal = 0;
-                Object.values(monthData.shifts).forEach(shift => {
-                    expectedTotal += (shift.duty * 5.84) + (shift.obs * 7) + (shift.trans * 5) + (shift.station * 10);
-                });
-                if (monthData.insurance) expectedTotal -= 100;
-                
-                expectedAmounts.push(expectedTotal);
-                if (expectedTotal > maxExpected) maxExpected = expectedTotal;
-                if (expectedTotal < minExpected && expectedTotal > 0) minExpected = expectedTotal;
-                
-                // Add actual if exists
-                if (monthData.actualAmount > 0) {
-                    totalEarned += monthData.actualAmount;
-                    actualAmounts.push(monthData.actualAmount);
-                    if (monthData.actualAmount > maxActual) maxActual = monthData.actualAmount;
-                    if (monthData.actualAmount < minActual) minActual = monthData.actualAmount;
-                }
-            });
-            
-            // If no actual amounts, use expected for min/max
-            if (actualAmounts.length === 0) {
-                maxActual = maxExpected;
-                minActual = minExpected;
-            }
-            
-            // Fix min values if they're still at default
-            if (minActual === 999999) minActual = 0;
-            if (minExpected === 999999) minExpected = 0;
-            
-globalStats.innerHTML = `
-    <div class="stats-grid">
-        <div class="stat-card total-salary-card">
-            <h4>ექთნად მუშაობის პერიოდში ჩარიცხული ხელფასი</h4>
-            <div class="value">${totalEarned.toFixed(2)} ₾</div>
-            <div class="subtext">ყველა თვის</div>
-        </div>
-        <div class="stat-card">
-            <h4>მაქსიმალური ჩარიცხული</h4>
-            <div class="value">${maxActual.toFixed(2)} ₾</div>
-        </div>
-        <div class="stat-card">
-            <h4>მინიმალური ჩარიცხული</h4>
-            <div class="value">${minActual.toFixed(2)} ₾</div>
-        </div>
-        <div class="stat-card">
-            <h4>მაქსიმალური (მოლოდინი)</h4>
-            <div class="value">${maxExpected.toFixed(2)} ₾</div>
-        </div>
-        <div class="stat-card">
-            <h4>მინიმალური (მოლოდინი)</h4>
-            <div class="value">${minExpected.toFixed(2)} ₾</div>
-        </div>
-    </div>
-`;
+// Calculate global statistics
+function calculateGlobalStats() {
+    const globalStats = document.getElementById('globalStats');
+    
+    let totalEarned = 0;
+    let actualAmounts = [];
+    let expectedAmounts = [];
+    let maxActual = 0;
+    let minActual = 999999;
+    let maxExpected = 0;
+    let minExpected = 999999;
+    
+    Object.entries(monthlyData).forEach(([monthKey, monthData]) => {
+        const [year, month] = monthKey.split('-').map(Number);
+        const prices = getPricesForDate(year, month);
+        
+        // Calculate expected
+        let expectedTotal = 0;
+        Object.values(monthData.shifts).forEach(shift => {
+            expectedTotal += (shift.duty * prices.duty) + 
+                           (shift.obs * prices.obs) + 
+                           (shift.trans * prices.trans) + 
+                           (shift.station * prices.station);
+        });
+        
+        // Apply insurance deduction
+        if (monthData.insuranceType === 'fitpass') {
+            expectedTotal -= 85; // Fitpass deduction
+        } else if (monthData.insuranceType === 'insurance') {
+            expectedTotal -= 100; // Regular insurance deduction
         }
+        
+        expectedAmounts.push(expectedTotal);
+        if (expectedTotal > maxExpected) maxExpected = expectedTotal;
+        if (expectedTotal < minExpected && expectedTotal > 0) minExpected = expectedTotal;
+        
+        // Add actual if exists
+        if (monthData.actualAmount > 0) {
+            totalEarned += monthData.actualAmount;
+            actualAmounts.push(monthData.actualAmount);
+            if (monthData.actualAmount > maxActual) maxActual = monthData.actualAmount;
+            if (monthData.actualAmount < minActual) minActual = monthData.actualAmount;
+        }
+    });
+    
+    // If no actual amounts, use expected for min/max
+    if (actualAmounts.length === 0) {
+        maxActual = maxExpected;
+        minActual = minExpected;
+    }
+    
+    // Fix min values if they're still at default
+    if (minActual === 999999) minActual = 0;
+    if (minExpected === 999999) minExpected = 0;
+    
+    globalStats.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card total-salary-card">
+                <h4>ექთნად მუშაობის პერიოდში ჩარიცხული ხელფასი</h4>
+                <div class="value">${totalEarned.toFixed(2)} ₾</div>
+                <div class="subtext">ყველა თვის</div>
+            </div>
+            <div class="stat-card">
+                <h4>მაქსიმალური ჩარიცხული</h4>
+                <div class="value">${maxActual.toFixed(2)} ₾</div>
+            </div>
+            <div class="stat-card">
+                <h4>მინიმალური ჩარიცხული</h4>
+                <div class="value">${minActual.toFixed(2)} ₾</div>
+            </div>
+            <div class="stat-card">
+                <h4>მაქსიმალური (მოლოდინი)</h4>
+                <div class="value">${maxExpected.toFixed(2)} ₾</div>
+            </div>
+            <div class="stat-card">
+                <h4>მინიმალური (მოლოდინი)</h4>
+                <div class="value">${minExpected.toFixed(2)} ₾</div>
+            </div>
+        </div>
+    `;
+}
 
         // Update actual amount for a month
         function updateActualAmount(monthKey, amount) {
@@ -2643,129 +2703,178 @@ globalStats.innerHTML = `
             showPopup(`ახალი თვე დაემატა: ${georgianMonths[month]} ${year}`, "success");
         }
 
-        // Show add shift modal
-        function showAddShiftModal() {
-            // Update modal title with current month
-            const modalTitle = document.querySelector('#addShiftModal .modal-header h3');
-            if (modalTitle) {
-                const monthName = georgianMonths[currentMonth];
-                modalTitle.innerHTML = `<i class="fas fa-calendar-plus"></i> მორიგეობების დამატება თვისთვის - ${monthName} ${currentYear}`;
-            }
-            
-            const monthKey = `${currentYear}-${currentMonth}`;
-            if (!monthlyData[monthKey]) {
-                showPopup("ჯერ შექმენით ამ თვის ცხრილი!", "error");
-                return;
-            }
-            
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const datesGrid = document.getElementById('datesGrid');
-            datesGrid.innerHTML = '';
-            
-            selectedDates = [];
-            
-            // Load existing insurance status
-            const monthData = monthlyData[monthKey] || { insurance: false };
-            document.getElementById('shiftInsurance').checked = monthData.insurance || false;
-            
-            // Mark dates that already have shifts
-            const existingShifts = monthData.shifts || {};
-            const existingShiftDays = Object.keys(existingShifts).map(day => parseInt(day));
-            Object.keys(existingShifts).forEach(day => {
-                // Mark as selected if there's an entry in the shifts object
-                // (even if all values are zero)
-                existingShiftDays.push(parseInt(day));
-            });
-            
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateCell = document.createElement('div');
-                dateCell.className = 'date-cell-select';
-                dateCell.textContent = day;
-                
-                // Check if this date already has shifts
-                if (existingShiftDays.includes(day)) {
-                    dateCell.classList.add('selected');
-                    selectedDates.push(day);
-                }
-                
-                dateCell.onclick = function() {
-                    // Toggle selection
-                    if (this.classList.contains('selected')) {
-                        this.classList.remove('selected');
-                        const index = selectedDates.indexOf(day);
-                        if (index > -1) {
-                            selectedDates.splice(index, 1);
-                        }
-                    } else {
-                        this.classList.add('selected');
-                        selectedDates.push(day);
-                    }
-                };
-                
-                datesGrid.appendChild(dateCell);
-            }
-            
-            document.getElementById('addShiftModal').style.display = 'flex';
+// Show add shift modal
+function showAddShiftModal() {
+    // Update modal title with current month
+    const modalTitle = document.querySelector('#addShiftModal .modal-header h3');
+    if (modalTitle) {
+        const monthName = georgianMonths[currentMonth];
+        modalTitle.innerHTML = `<i class="fas fa-calendar-plus"></i> მორიგეობების დამატება თვისთვის - ${monthName} ${currentYear}`;
+    }
+    
+    const monthKey = `${currentYear}-${currentMonth}`;
+    if (!monthlyData[monthKey]) {
+        showPopup("ჯერ შექმენით ამ თვის ცხრილი!", "error");
+        return;
+    }
+    
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const datesGrid = document.getElementById('datesGrid');
+    datesGrid.innerHTML = '';
+    
+    selectedDates = [];
+    
+    // Load existing insurance status
+    const monthData = monthlyData[monthKey] || { insuranceType: 'none' };
+    document.getElementById('shiftInsurance').checked = monthData.insuranceType === 'insurance';
+    document.getElementById('shiftFitpass').checked = monthData.insuranceType === 'fitpass';
+    
+    // Mark dates that already have shifts
+    const existingShifts = monthData.shifts || {};
+    const existingShiftDays = Object.keys(existingShifts).map(day => parseInt(day));
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateCell = document.createElement('div');
+        dateCell.className = 'date-cell-select';
+        dateCell.textContent = day;
+        
+        // Check if this date already has shifts
+        if (existingShiftDays.includes(day)) {
+            dateCell.classList.add('selected');
+            selectedDates.push(day);
         }
+        
+        dateCell.onclick = function() {
+            // Toggle selection
+            if (this.classList.contains('selected')) {
+                this.classList.remove('selected');
+                const index = selectedDates.indexOf(day);
+                if (index > -1) {
+                    selectedDates.splice(index, 1);
+                }
+            } else {
+                this.classList.add('selected');
+                selectedDates.push(day);
+            }
+        };
+        
+        datesGrid.appendChild(dateCell);
+    }
+    
+    document.getElementById('addShiftModal').style.display = 'flex';
+}
 
         // Close add shift modal
         function closeAddShiftModal() {
             document.getElementById('addShiftModal').style.display = 'none';
         }
 
-        // Save selected dates and insurance
-        function saveSelectedDates() {
-            const monthKey = `${currentYear}-${currentMonth}`;
-            const insuranceChecked = document.getElementById('shiftInsurance').checked;
-            
-            // Ensure month data exists
-            if (!monthlyData[monthKey]) {
-                monthlyData[monthKey] = { shifts: {}, insurance: false, actualAmount: 0 };
-            }
-            
-            // Update insurance status
-            monthlyData[monthKey].insurance = insuranceChecked;
-            
-            // Initialize shifts object if it doesn't exist
-            if (!monthlyData[monthKey].shifts) {
-                monthlyData[monthKey].shifts = {};
-            }
-            
-            // Clear existing shift data for ALL days first
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            for (let day = 1; day <= daysInMonth; day++) {
-                // Remove shift data if day is not in selectedDates
-                if (!selectedDates.includes(day)) {
-                    delete monthlyData[monthKey].shifts[day];
-                }
-            }
-            
-            // Add/keep shift data for selected dates
-            selectedDates.forEach(day => {
-                if (!monthlyData[monthKey].shifts[day]) {
-                    // Initialize with all zeros - user will fill in the hours later
-                    monthlyData[monthKey].shifts[day] = { 
-                        duty: 0,
-                        obs: 0, 
-                        trans: 0, 
-                        station: 0 
-                    };
-                }
-                // If shift already exists, keep whatever values are there
-                // (even if they're all zeros)
-            });
-            
-            // Save data
-            saveData();
-            
-            // Refresh the table
-            createMonthTable(monthKey);
-            closeAddShiftModal();
-            showPopup(`${selectedDates.length} თარიღი დამატებულია და დაზღვევა ${insuranceChecked ? 'აქტიურია' : 'არააქტიურია'}`, "success");
+// Add migration for existing data
+function migrateExistingData() {
+    let needsSave = false;
+    
+    Object.keys(monthlyData).forEach(monthKey => {
+        const monthData = monthlyData[monthKey];
+        
+        // Convert old insurance boolean to new insuranceType
+        if (monthData.insurance === true || monthData.insurance === false) {
+            monthData.insuranceType = monthData.insurance ? 'insurance' : 'none';
+            delete monthData.insurance;
+            needsSave = true;
         }
+        
+        // Ensure insuranceType exists
+        if (!monthData.insuranceType) {
+            monthData.insuranceType = 'none';
+            needsSave = true;
+        }
+    });
+    
+    if (needsSave) {
+        saveData();
+        console.log("Data migrated to new format");
+    }
+}
 
-// Variables for delete functionality
-let monthToDelete = null;
+// Update loadData function
+function loadData() {
+    const savedData = localStorage.getItem('mediClubData');
+    if (savedData) {
+        monthlyData = JSON.parse(savedData);
+        // Migrate existing data
+        migrateExistingData();
+    }
+}
+
+// Save selected dates and insurance
+function saveSelectedDates() {
+    const monthKey = `${currentYear}-${currentMonth}`;
+    const insuranceChecked = document.getElementById('shiftInsurance').checked;
+    const fitpassChecked = document.getElementById('shiftFitpass').checked;
+    
+    // Determine insurance type
+    let insuranceType = 'none';
+    if (fitpassChecked) {
+        insuranceType = 'fitpass';
+    } else if (insuranceChecked) {
+        insuranceType = 'insurance';
+    }
+    
+    // Ensure month data exists
+    if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { shifts: {}, insuranceType: 'none', actualAmount: 0 };
+    }
+    
+    // Update insurance status
+    monthlyData[monthKey].insuranceType = insuranceType;
+    
+    // Initialize shifts object if it doesn't exist
+    if (!monthlyData[monthKey].shifts) {
+        monthlyData[monthKey].shifts = {};
+    }
+    
+    // Clear existing shift data for ALL days first
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+        // Remove shift data if day is not in selectedDates
+        if (!selectedDates.includes(day)) {
+            delete monthlyData[monthKey].shifts[day];
+        }
+    }
+    
+    // Add/keep shift data for selected dates
+    selectedDates.forEach(day => {
+        if (!monthlyData[monthKey].shifts[day]) {
+            // Initialize with all zeros - user will fill in the hours later
+            monthlyData[monthKey].shifts[day] = { 
+                duty: 0,
+                obs: 0, 
+                trans: 0, 
+                station: 0 
+            };
+        }
+        // If shift already exists, keep whatever values are there
+        // (even if they're all zeros)
+    });
+    
+    // Save data
+    saveData();
+    
+    // Refresh the table
+    createMonthTable(monthKey);
+    closeAddShiftModal();
+    
+    let message = `${selectedDates.length} თარიღი დამატებულია`;
+    if (insuranceType === 'fitpass') {
+        message += ' და Fitpass აქტიურია (-85₾)';
+    } else if (insuranceType === 'insurance') {
+        message += ' და დაზღვევა აქტიურია (-100₾)';
+    } else {
+        message += ' და დაზღვევა არააქტიურია';
+    }
+    
+    showPopup(message, "success");
+}
 
 // Function to show delete confirmation
 function showDeleteConfirmation(monthKey) {
