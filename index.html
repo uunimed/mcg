@@ -2422,8 +2422,19 @@ function showOtherMonthsModal() {
     setTimeout(() => {
         monthsContainer.innerHTML = '';
         
-        // Get all months with data
-        const monthKeys = Object.keys(monthlyData).sort().reverse();
+const monthKeys = Object.keys(monthlyData).sort((a, b) => {
+    // Split the keys into year and month parts
+    const [yearA, monthA] = a.split('-').map(Number);
+    const [yearB, monthB] = b.split('-').map(Number);
+    
+    // First compare years (descending - newest first)
+    if (yearB !== yearA) {
+        return yearB - yearA;
+    }
+    
+    // If same year, compare months (descending - newest first)
+    return monthB - monthA;
+});
         
         if (monthKeys.length === 0) {
             monthsContainer.innerHTML = '<div class="no-data" style="color: rgba(255,255,255,0.7);">თვეების მონაცემები ჯერ არ არის შეტანილი</div>';
