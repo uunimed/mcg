@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediClubGeorgia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -775,7 +778,7 @@
             border-radius: 12px;
             padding: 15px;
             font-size: 16px;
-            transition: all 0.3s;
+            transition: all 0.s;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -1707,9 +1710,56 @@
             }
 
         }
+
+        /* Firebase Status Indicator */
+        .firebase-status {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+
+        .firebase-status.online {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+
+        .firebase-status.offline {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .firebase-status.syncing {
+            background: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+            border: 1px solid #f39c12;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
+    <!-- Firebase Status Indicator -->
+    <div class="firebase-status offline" id="firebaseStatus">
+        <i class="fas fa-circle"></i>
+        <span>Offline</span>
+    </div>
+
     <!-- Header -->
     <div class="main-header" id="mainHeader" style="display: none;">
         <h1>MediClubGeorgia-ში მუშაობის დროს ყოველთვიურად გამომუშავებული სარგოს რაოდენობა</h1>
@@ -1785,6 +1835,9 @@
                     </button>
                     <button class="enhanced-control-btn enhanced-control-btn-primary" onclick="showOtherMonthsModal()">
                         <i class="fas fa-calendar-alt"></i> ისტორია
+                    </button>
+                    <button class="enhanced-control-btn enhanced-control-btn-primary" onclick="syncWithFirebase()" id="syncBtn">
+                        <i class="fas fa-sync-alt"></i> სინქრონიზაცია
                     </button>
                 </div>
             </div>
@@ -1990,6 +2043,24 @@
     </div>
 
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMhwUewGrm8MIjMvSgzeFWPbCB5rb0Gkw",
+            authDomain: "shifts-458e4.firebaseapp.com",
+            databaseURL: "https://shifts-458e4-default-rtdb.firebaseio.com",
+            projectId: "shifts-458e4",
+            storageBucket: "shifts-458e4.firebasestorage.app",
+            messagingSenderId: "163282853813",
+            appId: "1:163282853813:web:8b4b98da9ed244571d43fc",
+            measurementId: "G-QGXHJKHL6C"
+        };
+
+        // Initialize Firebase
+        let db;
+        let isFirebaseConnected = false;
+        let userId = null;
+        let monthToDelete = null;
+
         // User credentials
         const USERNAME = "alex";
         const PASSWORD = "2911";
@@ -2008,12 +2079,61 @@
 
         // Data structure
         let monthlyData = {};
+        let isSyncing = false;
+
+        // Initialize Firebase
+        function initializeFirebase() {
+            try {
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                
+                // Set up connection state listener
+                const connectedRef = db.ref(".info/connected");
+                connectedRef.on("value", function(snap) {
+                    if (snap.val() === true) {
+                        isFirebaseConnected = true;
+                        updateFirebaseStatus('online');
+                        console.log("Firebase connected");
+                    } else {
+                        isFirebaseConnected = false;
+                        updateFirebaseStatus('offline');
+                        console.log("Firebase disconnected");
+                    }
+                });
+                
+                return true;
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                updateFirebaseStatus('offline');
+                return false;
+            }
+        }
+
+        // Update Firebase status indicator
+        function updateFirebaseStatus(status) {
+            const statusElement = document.getElementById('firebaseStatus');
+            if (statusElement) {
+                statusElement.className = `firebase-status ${status}`;
+                
+                switch(status) {
+                    case 'online':
+                        statusElement.innerHTML = '<i class="fas fa-circle"></i><span>Online</span>';
+                        break;
+                    case 'offline':
+                        statusElement.innerHTML = '<i class="fas fa-circle"></i><span>Offline</span>';
+                        break;
+                    case 'syncing':
+                        statusElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Syncing...</span>';
+                        break;
+                }
+            }
+        }
 
         // Login function
         function login() {
             let username, password;
             
-            // Try to get values from new login structure first
             const newUsername = document.getElementById('username');
             const newPassword = document.getElementById('password');
             
@@ -2021,21 +2141,13 @@
                 username = newUsername.value;
                 password = newPassword.value;
             } else {
-                // If new structure not found, try old structure
-                const oldUsername = document.getElementById('username');
-                const oldPassword = document.getElementById('password');
-                
-                if (oldUsername && oldPassword) {
-                    username = oldUsername.value;
-                    password = oldPassword.value;
-                } else {
-                    // If neither found, show error
-                    showPopup("შეცდომა: ვერ მოიძებნა შესვლის ფორმა", "error");
-                    return;
-                }
+                showPopup("შეცდომა: ვერ მოიძებნა შესვლის ფორმა", "error");
+                return;
             }
             
             if (username === USERNAME && password === PASSWORD) {
+                userId = username; // Use username as user ID
+                
                 // Hide login page
                 const loginPage = document.getElementById('loginPage');
                 if (loginPage) {
@@ -2046,32 +2158,34 @@
                 document.getElementById('mainHeader').style.display = 'block';
                 document.getElementById('mainApp').style.display = 'block';
                 
-                // Load data
-                loadData();
-                loadCurrentMonth();
+                // Initialize Firebase
+                if (initializeFirebase()) {
+                    // Load data from Firebase
+                    loadDataFromFirebase();
+                } else {
+                    // Fallback to local storage
+                    loadDataFromLocalStorage();
+                }
                 
                 // Set logged in flag
                 localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('username', username);
                 
                 // Show welcome message
+                showPopup(`კეთილი იყოს თქვენი მობრძანება, ${username}!`, "success");
+                
             } else {
                 showPopup("არასწორი მომხმარებელი ან პაროლი!", "error");
                 
-                // Clear password field
                 if (newPassword) {
                     newPassword.value = '';
                     newPassword.focus();
-                } else if (oldPassword) {
-                    oldPassword.value = '';
-                    oldPassword.focus();
                 }
                 
-                // Add error animation if available
                 const loginContainer = document.querySelector('.login-container');
                 if (loginContainer && loginContainer.classList) {
                     loginContainer.classList.add('error-animation');
                     
-                    // Remove animation after it completes
                     setTimeout(() => {
                         loginContainer.classList.remove('error-animation');
                     }, 500);
@@ -2079,14 +2193,122 @@
             }
         }
 
+        // Load data from Firebase
+        function loadDataFromFirebase() {
+            if (!db || !userId) return;
+            
+            updateFirebaseStatus('syncing');
+            
+            db.ref(`users/${userId}/monthlyData`).once('value')
+                .then((snapshot) => {
+                    const firebaseData = snapshot.val();
+                    if (firebaseData) {
+                        // Merge Firebase data with local data
+                        monthlyData = mergeData(monthlyData, firebaseData);
+                        console.log("Data loaded from Firebase");
+                    }
+                    
+                    loadCurrentMonth();
+                    updateFirebaseStatus('online');
+                })
+                .catch((error) => {
+                    console.error("Error loading from Firebase:", error);
+                    // Fallback to local storage
+                    loadDataFromLocalStorage();
+                    updateFirebaseStatus('offline');
+                });
+        }
+
+        // Load data from local storage
+        function loadDataFromLocalStorage() {
+            const savedData = localStorage.getItem('mediClubData');
+            if (savedData) {
+                monthlyData = JSON.parse(savedData);
+                migrateExistingData();
+            }
+            loadCurrentMonth();
+        }
+
+        // Merge local and Firebase data (preferring newer data)
+        function mergeData(localData, firebaseData) {
+            const merged = {...localData};
+            
+            // Get timestamps
+            const localTimestamp = localStorage.getItem('lastSyncTimestamp') || 0;
+            const firebaseTimestamp = firebaseData._timestamp || 0;
+            
+            // If Firebase data is newer, use it
+            if (firebaseTimestamp > localTimestamp) {
+                for (const monthKey in firebaseData) {
+                    if (monthKey !== '_timestamp') {
+                        merged[monthKey] = firebaseData[monthKey];
+                    }
+                }
+            } else if (firebaseTimestamp < localTimestamp) {
+                // If local data is newer, sync to Firebase
+                setTimeout(syncToFirebase, 1000);
+            }
+            
+            return merged;
+        }
+
+        // Sync data to Firebase
+        function syncToFirebase() {
+            if (!db || !userId || isSyncing) return;
+            
+            isSyncing = true;
+            updateFirebaseStatus('syncing');
+            
+            const dataToSave = {
+                ...monthlyData,
+                _timestamp: Date.now(),
+                _lastSync: new Date().toISOString(),
+                _username: userId
+            };
+            
+            db.ref(`users/${userId}/monthlyData`).set(dataToSave)
+                .then(() => {
+                    console.log("Data synced to Firebase");
+                    localStorage.setItem('lastSyncTimestamp', Date.now());
+                    updateFirebaseStatus('online');
+                    showPopup("მონაცემები წარმატებით სინქრონიზებულია!", "success");
+                })
+                .catch((error) => {
+                    console.error("Error syncing to Firebase:", error);
+                    updateFirebaseStatus('offline');
+                    showPopup("სინქრონიზაცია ვერ მოხერხდა!", "error");
+                })
+                .finally(() => {
+                    isSyncing = false;
+                });
+        }
+
+        // Sync with Firebase manually
+        function syncWithFirebase() {
+            if (!isFirebaseConnected) {
+                showPopup("ინტერნეტთან კავშირი არ არის!", "error");
+                return;
+            }
+            
+            syncToFirebase();
+        }
+
+        // Save data (both locally and to Firebase)
+        function saveData() {
+            // Save to local storage
+            localStorage.setItem('mediClubData', JSON.stringify(monthlyData));
+            
+            // Save to Firebase if connected
+            if (isFirebaseConnected && !isSyncing) {
+                setTimeout(syncToFirebase, 100);
+            }
+        }
+
 // Price configuration based on date
 function getPricesForDate(year, month) {
-    // Convert to numbers if they're strings
     year = parseInt(year);
     month = parseInt(month);
     
-    // Check if date is before May 2025 (April 2025 and older)
-    // month is 0-indexed, so 4 = May
     if (year < 2025 || (year === 2025 && month < 4)) {
         return {
             duty: 5,      // მორიგეობა
@@ -2096,7 +2318,6 @@ function getPricesForDate(year, month) {
         };
     }
     
-    // For May 2025 and newer
     return {
         duty: 5.84,    // მორიგეობა
         obs: 7,        // ობსერვაცია
@@ -2107,31 +2328,31 @@ function getPricesForDate(year, month) {
 
         // Logout function
         function logout() {
-            // Show login page
             const loginPage = document.getElementById('loginPage');
             if (loginPage) {
                 loginPage.style.display = 'flex';
             }
             
-            // Hide main content
             document.getElementById('mainHeader').style.display = 'none';
             document.getElementById('mainApp').style.display = 'none';
             
-            // Clear password field only
             const passwordField = document.getElementById('password');
             if (passwordField) {
                 passwordField.value = '';
             }
             
-            // Focus on username field
             const usernameField = document.getElementById('username');
             if (usernameField) {
                 usernameField.focus();
             }
             
-            // Clear logged in flag
             localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('username');
             
+            // Reset Firebase connection
+            if (db) {
+                db.goOffline();
+            }
         }
 
         // Add Enter key support for login
@@ -2210,7 +2431,6 @@ function getPricesForDate(year, month) {
             const monthName = georgianMonths[currentMonth];
             document.getElementById('currentMonthDisplay').innerHTML = `<span style="font-size: 14px; opacity: 0.8; font-weight: normal;">თვე:</span> ${monthName} ${currentYear}`;
             
-            // Create table
             createMonthTable(monthKey);
         }
 
@@ -2220,17 +2440,14 @@ function getPricesForDate(year, month) {
             const [year, month] = monthKey.split('-').map(Number);
             const daysInMonth = new Date(year, parseInt(month) + 1, 0).getDate();
             
-            // Create header
             const tableHeader = document.getElementById('tableHeader');
             tableHeader.innerHTML = '<th class="type-header">თარიღი</th>';
             
-            // Add date columns
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${day}`;
                 tableHeader.innerHTML += `<th class="date-header">${dateStr}</th>`;
             }
             
-            // Create rows with editable inputs
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
             
@@ -2324,7 +2541,6 @@ function getPricesForDate(year, month) {
 
             tableBody.innerHTML = row1 + row2 + row3 + row4;
             
-            // Calculate total
             calculateTotal(monthKey);
         }
 
@@ -2343,11 +2559,9 @@ function getPricesForDate(year, month) {
             calculateTotal(monthKey);
             saveData();
             
-            // Update cell color
             const shiftData = monthlyData[monthKey].shifts[day];
             const hasShift = shiftData.duty > 0 || shiftData.obs > 0 || shiftData.trans > 0 || shiftData.station > 0;
             
-            // Find and update the cell
             const rowIndex = type === 'duty' ? 0 : type === 'obs' ? 1 : type === 'trans' ? 2 : 3;
             const rows = document.querySelectorAll('#tableBody tr');
             if (rows.length > rowIndex) {
@@ -2380,7 +2594,6 @@ function calculateTotal(monthKey) {
     
     let total = 0;
     
-    // Calculate from shifts
     Object.values(monthData.shifts).forEach(shift => {
         total += (shift.duty * prices.duty) + 
                 (shift.obs * prices.obs) + 
@@ -2388,33 +2601,20 @@ function calculateTotal(monthKey) {
                 (shift.station * prices.station);
     });
     
-    // Apply insurance or Fitpass deduction
     if (monthData.insuranceType === 'fitpass') {
-        total -= 85; // Fitpass deduction
+        total -= 85;
     } else if (monthData.insuranceType === 'insurance') {
-        total -= 100; // Regular insurance deduction
+        total -= 100;
     }
     
     document.getElementById('totalEarning').textContent = total.toFixed(2) + ' ₾';
     saveData();
 }
 
-        // Toggle insurance for a month
-        function toggleInsurance(month, year, isChecked) {
-            const monthKey = `${year}-${month}`;
-            if (!monthlyData[monthKey]) {
-                monthlyData[monthKey] = { shifts: {}, insurance: false, actualAmount: 0 };
-            }
-            monthlyData[monthKey].insurance = isChecked;
-            calculateTotal(monthKey);
-            saveData();
-        }
-
 function showOtherMonthsModal() {
     const monthsContainer = document.getElementById('monthsContainer');
     const globalStats = document.getElementById('globalStats');
     
-    // Calculate global statistics
     calculateGlobalStats();
     
     monthsContainer.innerHTML = '<div class="loading" style="color: rgba(255,255,255,0.7);"><i class="fas fa-spinner fa-spin"></i> იტვირთება...</div>';
@@ -2423,16 +2623,13 @@ function showOtherMonthsModal() {
         monthsContainer.innerHTML = '';
         
 const monthKeys = Object.keys(monthlyData).sort((a, b) => {
-    // Split the keys into year and month parts
     const [yearA, monthA] = a.split('-').map(Number);
     const [yearB, monthB] = b.split('-').map(Number);
     
-    // First compare years (descending - newest first)
     if (yearB !== yearA) {
         return yearB - yearA;
     }
     
-    // If same year, compare months (descending - newest first)
     return monthB - monthA;
 });
         
@@ -2444,13 +2641,10 @@ const monthKeys = Object.keys(monthlyData).sort((a, b) => {
                 const monthName = georgianMonths[month];
                 const monthData = monthlyData[monthKey];
                 
-                // Get days in month
                 const daysInMonth = new Date(year, parseInt(month) + 1, 0).getDate();
                 
-                // Create table HTML
                 let tableHTML = '';
                 
-                // Create header row with dates
                 let headerRow = '<tr><th class="type-header">თარიღი</th>';
                 for (let day = 1; day <= daysInMonth; day++) {
                     headerRow += `<th class="date-header">${day}</th>`;
@@ -2458,7 +2652,6 @@ const monthKeys = Object.keys(monthlyData).sort((a, b) => {
                 headerRow += '</tr>';
                 tableHTML += headerRow;
                 
-                // Create rows for each type
                 const rowTypes = [
                     { key: 'duty', label: 'მორიგეობა' },
                     { key: 'obs', label: 'ობსერვაცია' },
@@ -2466,7 +2659,6 @@ const monthKeys = Object.keys(monthlyData).sort((a, b) => {
                     { key: 'station', label: 'დღის სტაციონარი' }
                 ];
                 
-                // Prepare data arrays for each row
                 const rowData = rowTypes.map(type => {
                     const data = [];
                     for (let day = 1; day <= daysInMonth; day++) {
@@ -2477,7 +2669,6 @@ const monthKeys = Object.keys(monthlyData).sort((a, b) => {
                     return data;
                 });
                 
-                // Create table rows
                 rowTypes.forEach((type, index) => {
                     let row = `<tr><td class="type-header">${type.label}</td>`;
                     rowData[index].forEach(value => {
@@ -2488,7 +2679,6 @@ const monthKeys = Object.keys(monthlyData).sort((a, b) => {
                     tableHTML += row;
                 });
                 
-                // Calculate total with correct pricing
                 const prices = getPricesForDate(year, month);
                 let expectedTotal = 0;
                 for (let day = 1; day <= daysInMonth; day++) {
@@ -2501,14 +2691,12 @@ const monthKeys = Object.keys(monthlyData).sort((a, b) => {
                     }
                 }
                 
-                // Apply insurance deduction
                 if (monthData.insuranceType === 'fitpass') {
                     expectedTotal -= 85;
                 } else if (monthData.insuranceType === 'insurance') {
                     expectedTotal -= 100;
                 }
                 
-                // Create month card
                 const monthCard = document.createElement('div');
                 monthCard.className = 'month-table-card';
                 
@@ -2535,7 +2723,6 @@ const monthKeys = Object.keys(monthlyData).sort((a, b) => {
                             ${tableHTML}
                         </table>
                         
-                        <!-- Add expected amount display outside the table -->
                         <div class="expected-amount-display" style="
                             text-align: right;
                             font-size: 22px;
@@ -2580,7 +2767,6 @@ function updateActualAmount(monthKey, amount) {
     const actualAmount = parseFloat(amount) || 0;
     monthlyData[monthKey].actualAmount = actualAmount;
     
-    // Update display instantly
     const displayElement = document.getElementById(`actualDisplay-${monthKey}`);
     if (displayElement) {
         displayElement.textContent = actualAmount.toFixed(2) + ' ₾';
@@ -2606,7 +2792,6 @@ function calculateGlobalStats() {
         const [year, month] = monthKey.split('-').map(Number);
         const prices = getPricesForDate(year, month);
         
-        // Calculate expected
         let expectedTotal = 0;
         Object.values(monthData.shifts).forEach(shift => {
             expectedTotal += (shift.duty * prices.duty) + 
@@ -2615,18 +2800,16 @@ function calculateGlobalStats() {
                            (shift.station * prices.station);
         });
         
-        // Apply insurance deduction
         if (monthData.insuranceType === 'fitpass') {
-            expectedTotal -= 85; // Fitpass deduction
+            expectedTotal -= 85;
         } else if (monthData.insuranceType === 'insurance') {
-            expectedTotal -= 100; // Regular insurance deduction
+            expectedTotal -= 100;
         }
         
         expectedAmounts.push(expectedTotal);
         if (expectedTotal > maxExpected) maxExpected = expectedTotal;
         if (expectedTotal < minExpected && expectedTotal > 0) minExpected = expectedTotal;
         
-        // Add actual if exists
         if (monthData.actualAmount > 0) {
             totalEarned += monthData.actualAmount;
             actualAmounts.push(monthData.actualAmount);
@@ -2635,13 +2818,11 @@ function calculateGlobalStats() {
         }
     });
     
-    // If no actual amounts, use expected for min/max
     if (actualAmounts.length === 0) {
         maxActual = maxExpected;
         minActual = minExpected;
     }
     
-    // Fix min values if they're still at default
     if (minActual === 999999) minActual = 0;
     if (minExpected === 999999) minExpected = 0;
     
@@ -2716,7 +2897,6 @@ function calculateGlobalStats() {
 
 // Show add shift modal
 function showAddShiftModal() {
-    // Update modal title with current month
     const modalTitle = document.querySelector('#addShiftModal .modal-header h3');
     if (modalTitle) {
         const monthName = georgianMonths[currentMonth];
@@ -2735,12 +2915,10 @@ function showAddShiftModal() {
     
     selectedDates = [];
     
-    // Load existing insurance status
     const monthData = monthlyData[monthKey] || { insuranceType: 'none' };
     document.getElementById('shiftInsurance').checked = monthData.insuranceType === 'insurance';
     document.getElementById('shiftFitpass').checked = monthData.insuranceType === 'fitpass';
     
-    // Mark dates that already have shifts
     const existingShifts = monthData.shifts || {};
     const existingShiftDays = Object.keys(existingShifts).map(day => parseInt(day));
     
@@ -2749,14 +2927,12 @@ function showAddShiftModal() {
         dateCell.className = 'date-cell-select';
         dateCell.textContent = day;
         
-        // Check if this date already has shifts
         if (existingShiftDays.includes(day)) {
             dateCell.classList.add('selected');
             selectedDates.push(day);
         }
         
         dateCell.onclick = function() {
-            // Toggle selection
             if (this.classList.contains('selected')) {
                 this.classList.remove('selected');
                 const index = selectedDates.indexOf(day);
@@ -2787,14 +2963,12 @@ function migrateExistingData() {
     Object.keys(monthlyData).forEach(monthKey => {
         const monthData = monthlyData[monthKey];
         
-        // Convert old insurance boolean to new insuranceType
         if (monthData.insurance === true || monthData.insurance === false) {
             monthData.insuranceType = monthData.insurance ? 'insurance' : 'none';
             delete monthData.insurance;
             needsSave = true;
         }
         
-        // Ensure insuranceType exists
         if (!monthData.insuranceType) {
             monthData.insuranceType = 'none';
             needsSave = true;
@@ -2807,23 +2981,12 @@ function migrateExistingData() {
     }
 }
 
-// Update loadData function
-function loadData() {
-    const savedData = localStorage.getItem('mediClubData');
-    if (savedData) {
-        monthlyData = JSON.parse(savedData);
-        // Migrate existing data
-        migrateExistingData();
-    }
-}
-
 // Save selected dates and insurance
 function saveSelectedDates() {
     const monthKey = `${currentYear}-${currentMonth}`;
     const insuranceChecked = document.getElementById('shiftInsurance').checked;
     const fitpassChecked = document.getElementById('shiftFitpass').checked;
     
-    // Determine insurance type
     let insuranceType = 'none';
     if (fitpassChecked) {
         insuranceType = 'fitpass';
@@ -2831,32 +2994,25 @@ function saveSelectedDates() {
         insuranceType = 'insurance';
     }
     
-    // Ensure month data exists
     if (!monthlyData[monthKey]) {
         monthlyData[monthKey] = { shifts: {}, insuranceType: 'none', actualAmount: 0 };
     }
     
-    // Update insurance status
     monthlyData[monthKey].insuranceType = insuranceType;
     
-    // Initialize shifts object if it doesn't exist
     if (!monthlyData[monthKey].shifts) {
         monthlyData[monthKey].shifts = {};
     }
     
-    // Clear existing shift data for ALL days first
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     for (let day = 1; day <= daysInMonth; day++) {
-        // Remove shift data if day is not in selectedDates
         if (!selectedDates.includes(day)) {
             delete monthlyData[monthKey].shifts[day];
         }
     }
     
-    // Add/keep shift data for selected dates
     selectedDates.forEach(day => {
         if (!monthlyData[monthKey].shifts[day]) {
-            // Initialize with all zeros - user will fill in the hours later
             monthlyData[monthKey].shifts[day] = { 
                 duty: 0,
                 obs: 0, 
@@ -2864,14 +3020,10 @@ function saveSelectedDates() {
                 station: 0 
             };
         }
-        // If shift already exists, keep whatever values are there
-        // (even if they're all zeros)
     });
     
-    // Save data
     saveData();
     
-    // Refresh the table
     createMonthTable(monthKey);
     closeAddShiftModal();
     
@@ -2910,19 +3062,15 @@ function confirmDeleteMonth() {
         delete monthlyData[monthToDelete];
         saveData();
         
-        // Close the confirmation modal
         closeDeleteConfirmation();
         
-        // Show success message
         showPopup("თვე წარმატებით წაიშალა!", "success");
         
-        // If deleted month is current month, navigate to previous month
         const [year, month] = monthToDelete.split('-').map(Number);
         if (currentYear === year && currentMonth === month) {
             navigateMonth(-1);
         }
         
-        // Refresh other months modal if it's open
         if (document.getElementById('otherMonthsModal').style.display === 'flex') {
             showOtherMonthsModal();
         }
@@ -2943,47 +3091,13 @@ function closeDeleteConfirmation() {
     document.getElementById('deleteConfirmModal').style.display = 'none';
 }
 
-// Function to update month card HTML to include delete button
-function addDeleteButtonToMonthCard(monthCard, monthKey) {
-    // Find the header section
-    const header = monthCard.querySelector('.month-table-header');
-    if (header) {
-        // Save the original content
-        const originalContent = header.innerHTML;
-        
-        // Wrap content in a div for layout
-        header.innerHTML = `
-            <div class="month-title">${originalContent}</div>
-            <button class="delete-month-btn" onclick="showDeleteConfirmation('${monthKey}')">
-                <i class="fas fa-trash"></i> თვის წაშლა
-            </button>
-        `;
-    }
-}
-
-        // Save data to localStorage
-        function saveData() {
-            localStorage.setItem('mediClubData', JSON.stringify(monthlyData));
-        }
-
-        // Load data from localStorage
-        function loadData() {
-            const savedData = localStorage.getItem('mediClubData');
-            if (savedData) {
-                monthlyData = JSON.parse(savedData);
-            }
-        }
-
         // Initialize
         window.onload = function() {
-            // Add Enter key support
             addEnterKeySupport();
             
-            // Set default year and month to current
             document.getElementById('newYear').value = currentDate.getFullYear();
             document.getElementById('newMonth').value = currentDate.getMonth();
             
-            // Also set the value in the enhanced modal when it opens
             const newMonthSelect = document.getElementById('newMonth');
             const newYearInput = document.getElementById('newYear');
             
@@ -2999,22 +3113,26 @@ function addDeleteButtonToMonthCard(monthCard, monthKey) {
                 });
             }
             
-            // Close delete confirmation with Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && document.getElementById('deleteConfirmModal').style.display === 'block') {
         cancelDeleteMonth();
     }
 });
 
-            // Check if user is already logged in (optional feature)
             const savedLogin = localStorage.getItem('isLoggedIn');
             if (savedLogin === 'true') {
-                // Auto login if previously logged in
+                const savedUsername = localStorage.getItem('username') || USERNAME;
+                userId = savedUsername;
+                
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('mainHeader').style.display = 'block';
                 document.getElementById('mainApp').style.display = 'block';
-                loadData();
-                loadCurrentMonth();
+                
+                if (initializeFirebase()) {
+                    loadDataFromFirebase();
+                } else {
+                    loadDataFromLocalStorage();
+                }
             }
         };
     </script>
