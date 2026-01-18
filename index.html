@@ -2093,11 +2093,11 @@
                 connectedRef.on("value", function(snap) {
                     if (snap.val() === true) {
                         isFirebaseConnected = true;
-                        updateFirebaseStatus('online');
+                        updateFirebaseStatus('');
                         console.log("Firebase connected");
                     } else {
                         isFirebaseConnected = false;
-                        updateFirebaseStatus('offline');
+                        updateFirebaseStatus('');
                         console.log("Firebase disconnected");
                     }
                 });
@@ -2105,7 +2105,7 @@
                 return true;
             } catch (error) {
                 console.error("Firebase initialization error:", error);
-                updateFirebaseStatus('offline');
+                updateFirebaseStatus('');
                 return false;
             }
         }
@@ -2124,7 +2124,7 @@
                         statusElement.innerHTML = '<i class="fas fa-circle"></i><span>Offline</span>';
                         break;
                     case 'syncing':
-                        statusElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Syncing...</span>';
+                        statusElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span></span>';
                         break;
                 }
             }
