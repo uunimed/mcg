@@ -2,201 +2,328 @@
 <html lang="ka">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yuka Georgia Clone</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>პროდუქტის სკანერი - საქართველო</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
         :root {
-            --excellent: #2ecc71;
-            --good: #f1c40f;
-            --poor: #e74c3c;
-            --bg: #f8f9fa;
+            --yuka-green: #2ecc71;
+            --yuka-yellow: #f1c40f;
+            --yuka-orange: #e67e22;
+            --yuka-red: #e74c3c;
+            --bg-gray: #f2f2f7;
+            --white: #ffffff;
         }
 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
-            font-family: 'Segoe UI', Helvetica, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-gray);
             margin: 0;
-            background-color: var(--bg);
-            color: #333;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             height: 100vh;
         }
 
-        /* Scanner Area */
-        #scanner-wrapper {
+        /* --- Header --- */
+        header {
+            background: var(--white);
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        /* --- Scanner Section --- */
+        #scanner-container {
             position: relative;
-            width: 100%;
-            height: 45vh;
+            height: 40vh;
             background: #000;
         }
 
-        #reader {
-            width: 100%;
-            height: 100%;
+        #reader { width: 100% !important; height: 100% !important; border: none !important; }
+        
+        /* Custom Scan Overlay */
+        .scan-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 260px; height: 160px;
+            border: 2px solid var(--yuka-green);
+            border-radius: 20px;
+            z-index: 10;
+            pointer-events: none;
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.5);
         }
 
-        /* Result Card (Yuka Style) */
-        #result-container {
+        .scan-overlay::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--yuka-green);
+            animation: scan-line 2s infinite linear;
+        }
+
+        @keyframes scan-line {
+            0% { top: 0; } 100% { top: 100%; }
+        }
+
+        /* --- Result Panel --- */
+        #main-content {
             flex: 1;
-            background: white;
-            margin-top: -20px;
-            border-top-left-radius: 25px;
-            border-top-right-radius: 25px;
-            padding: 25px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+            background: var(--white);
+            margin-top: -25px;
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            padding: 20px;
+            z-index: 20;
             overflow-y: auto;
-            display: none; /* hidden until scan */
+            transition: transform 0.3s ease;
         }
 
-        .product-header {
-            display: flex;
+        .status-badge {
+            display: inline-flex;
             align-items: center;
-            margin-bottom: 20px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .product-info-box {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
         }
 
         .product-img {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             object-fit: contain;
-            border-radius: 12px;
-            margin-right: 15px;
-            border: 1px solid #eee;
+            background: #f9f9f9;
+            border-radius: 15px;
+            padding: 5px;
         }
 
-        .score-pill {
-            display: inline-block;
-            padding: 4px 12px;
+        .product-details h2 { margin: 0; font-size: 1.4rem; }
+        .product-details p { margin: 5px 0; color: #666; font-size: 0.95rem; }
+
+        /* --- Ingredients/Analysis --- */
+        .analysis-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .analysis-label { display: flex; align-items: center; gap: 10px; }
+        .dot { height: 10px; width: 10px; border-radius: 50%; }
+
+        /* --- Alternatives Section --- */
+        .alternatives-container {
+            margin-top: 30px;
+            padding: 15px;
+            background: #f8fff9;
             border-radius: 20px;
-            color: white;
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .alt-section {
-            margin-top: 25px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
+            border: 1px dashed var(--yuka-green);
         }
 
         .alt-card {
             display: flex;
             align-items: center;
+            background: white;
             padding: 12px;
-            background: #fdfdfd;
-            border: 1px solid #eee;
             border-radius: 15px;
             margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
-        .alt-card img {
-            width: 50px;
-            height: 50px;
-            margin-right: 12px;
+        /* --- Tabs/Navigation --- */
+        nav {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: 10px 0;
+            border-top: 1px solid #eee;
         }
 
-        .placeholder-text {
-            text-align: center;
-            color: #888;
-            margin-top: 50px;
-        }
+        .nav-item { text-align: center; color: #888; font-size: 0.8rem; flex: 1; }
+        .nav-item.active { color: var(--yuka-green); }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="scanner-wrapper">
-        <div id="reader"></div>
+<header>პროდუქტის სკანერი</header>
+
+<div id="scanner-container">
+    <div id="reader"></div>
+    <div class="scan-overlay"></div>
+</div>
+
+<div id="main-content">
+    <div id="welcome-screen">
+        <div style="text-align: center; margin-top: 40px; color: #888;">
+            <i class="fas fa-barcode" style="font-size: 4rem; color: #ddd; margin-bottom: 15px;"></i>
+            <p>დასასკანერებლად მიუშვირეთ კამერა ბარკოდს</p>
+            <p style="font-size: 0.8rem;">მხოლოდ ქართული პროდუქცია</p>
+        </div>
     </div>
 
-    <div id="placeholder" class="placeholder-text">
-        <p>დაასკანერეთ პროდუქტის ბარკოდი</p>
-    </div>
-
-    <div id="result-container">
+    <div id="product-result" class="hidden">
+        <div id="score-badge" class="status-badge">---</div>
+        
+        <div class="product-info-box">
+            <img id="p-img" src="" class="product-img" alt="პროდუქტი">
+            <div class="product-details">
+                <h2 id="p-name">დასახელება</h2>
+                <p id="p-brand">ბრენდი</p>
+            </div>
         </div>
 
-    <script>
-        // 1. Mock Database - Only Georgian Products
-        const GEORGIAN_DB = {
-            "4860019001340": {
-                name: "ნაბეღლავი",
-                brand: "წყალი მარგებელი",
-                score: 90,
-                rating: "ბრწყინვალე",
-                color: "var(--excellent)",
-                img: "https://nabeghlavi.ge/images/product.png", // Replace with real URL
-                alt: {
-                    name: "ბაკურიანი",
-                    reason: "უფრო დაბალი მინერალიზაცია",
-                    img: "https://via.placeholder.com/50"
-                }
-            },
-            "4860001000016": {
-                name: "ბორჯომი",
-                brand: "IDS Borjomi",
-                score: 85,
-                rating: "ძალიან კარგი",
-                color: "var(--excellent)",
-                img: "https://via.placeholder.com/80",
-                alt: {
-                    name: "ლიკანი",
-                    reason: "ნაკლები გაზიფიკაცია",
-                    img: "https://via.placeholder.com/50"
-                }
-            }
-        };
+        <div class="analysis-section">
+            <div class="analysis-row">
+                <div class="analysis-label"><span class="dot" style="background:var(--yuka-green)"></span> დანამატები</div>
+                <div id="p-additives">არ არის</div>
+            </div>
+            <div class="analysis-row">
+                <div class="analysis-label"><span class="dot" style="background:var(--yuka-orange)"></span> შაქარი</div>
+                <div id="p-sugar">ზომიერი</div>
+            </div>
+        </div>
 
-        // 2. Scanner Logic
-        const html5QrCode = new Html5Qrcode("reader");
-        const qrConfig = { fps: 10, qrbox: { width: 250, height: 150 } };
+        <div class="alternatives-container">
+            <h3 style="margin:0; font-size: 1rem; color: #2c3e50;">უკეთესი არჩევანი</h3>
+            <div id="alt-list">
+                </div>
+        </div>
+    </div>
+</div>
 
-        const onScanSuccess = (decodedText) => {
-            console.log(`Code scanned: ${decodedText}`);
-            displayProduct(decodedText);
-        };
+<nav>
+    <div class="nav-item active"><i class="fas fa-search"></i><div>სკანერი</div></div>
+    <div class="nav-item" onclick="alert('ისტორია ცარიელია')"><i class="fas fa-history"></i><div>ისტორია</div></div>
+    <div class="nav-item" onclick="alert('პარამეტრები')"><i class="fas fa-cog"></i><div>პარამეტრები</div></div>
+</nav>
 
-        html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
-
-        // 3. UI Display Logic
-        function displayProduct(barcode) {
-            const container = document.getElementById('result-container');
-            const placeholder = document.getElementById('placeholder');
-            const product = GEORGIAN_DB[barcode];
-
-            placeholder.style.display = 'none';
-            container.style.display = 'block';
-
-            if (product) {
-                container.innerHTML = `
-                    <div class="product-header">
-                        <img src="${product.img}" class="product-img" onerror="this.src='https://via.placeholder.com/80'">
-                        <div>
-                            <span class="score-pill" style="background:${product.color}">${product.rating} - ${product.score}/100</span>
-                            <h2 style="margin:0">${product.name}</h2>
-                            <small style="color:#888">${product.brand}</small>
-                        </div>
-                    </div>
-                    
-                    <div class="alt-section">
-                        <h4 style="margin:0">უკეთესი ალტერნატივა:</h4>
-                        <div class="alt-card">
-                            <img src="${product.alt.img}" onerror="this.src='https://via.placeholder.com/50'">
-                            <div>
-                                <div style="font-weight:bold">${product.alt.name}</div>
-                                <div style="font-size:0.85rem; color:#2ecc71">${product.alt.reason}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <h3 style="text-align:center; color:#e74c3c;">პროდუქტი ვერ მოიძებნა</h3>
-                    <p style="text-align:center">ბარკოდი: ${barcode}<br>ეს პროდუქტი ქართულ ბაზაში არ არის.</p>
-                    <button onclick="location.reload()" style="width:100%; padding:10px; border-radius:10px; border:none; background:#4CAF50; color:white;">თავიდან სკანირება</button>
-                `;
-            }
+<script>
+    // --- 1. EXTENSIVE GEORGIAN DATABASE ---
+    // You can expand this list to thousands of lines.
+    const GE_PRODUCTS = {
+        "4860019001340": {
+            name: "ნაბეღლავი (მინის)",
+            brand: "Healthy Water",
+            score: 95,
+            rating: "ბრწყინვალე",
+            color: "var(--yuka-green)",
+            img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Nabeghlavi_Logo.png/220px-Nabeghlavi_Logo.png",
+            sugar: "0გ",
+            additives: "არ შეიცავს",
+            alts: [
+                { name: "ბაკურიანი", reason: "ნაკლები მინერალიზაცია", score: "100/100" }
+            ]
+        },
+        "4860001000016": {
+            name: "ბორჯომი",
+            brand: "IDS Borjomi",
+            score: 82,
+            rating: "ძალიან კარგი",
+            color: "var(--yuka-green)",
+            img: "https://www.borjomi.com/img/share.jpg",
+            sugar: "0გ",
+            additives: "ბუნებრივი",
+            alts: [
+                { name: "ლიკანი", reason: "უფრო მსუბუქი", score: "85/100" }
+            ]
+        },
+        "4860101960241": {
+            name: "კოკა-კოლა (ქართული)",
+            brand: "Coca-Cola Bottlers GA",
+            score: 15,
+            rating: "ცუდი",
+            color: "var(--yuka-red)",
+            img: "https://via.placeholder.com/100",
+            sugar: "10.6გ",
+            additives: "E150d, E338",
+            alts: [
+                { name: "წყალი ბაკურიანი", reason: "ჯანსაღი არჩევანი", score: "100/100" }
+            ]
         }
-    </script>
+    };
+
+    // --- 2. SCANNER ENGINE ---
+    const html5QrCode = new Html5Qrcode("reader");
+    
+    const config = { 
+        fps: 20, 
+        qrbox: { width: 260, height: 160 },
+        aspectRatio: 1.0
+    };
+
+    function startScanner() {
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config,
+            (decodedText) => {
+                // Audio Feedback
+                const audio = new Audio('https://www.soundjay.com/buttons/beep-07.mp3');
+                audio.play();
+                
+                processScan(decodedText);
+            }
+        ).catch(err => console.error("Scanner Error:", err));
+    }
+
+    // --- 3. LOGIC & DISPLAY ---
+    function processScan(barcode) {
+        const welcome = document.getElementById('welcome-screen');
+        const result = document.getElementById('product-result');
+        const product = GE_PRODUCTS[barcode];
+
+        welcome.classList.add('hidden');
+        result.classList.remove('hidden');
+
+        if (product) {
+            // Update UI
+            document.getElementById('score-badge').innerText = `${product.rating} - ${product.score}/100`;
+            document.getElementById('score-badge').style.background = product.color;
+            document.getElementById('p-name').innerText = product.name;
+            document.getElementById('p-brand').innerText = product.brand;
+            document.getElementById('p-sugar').innerText = product.sugar;
+            document.getElementById('p-additives').innerText = product.additives;
+            document.getElementById('p-img').src = product.img;
+
+            // Update Alts
+            const altList = document.getElementById('alt-list');
+            altList.innerHTML = product.alts.map(a => `
+                <div class="alt-card">
+                    <div style="flex:1">
+                        <div style="font-weight:bold">${a.name}</div>
+                        <div style="font-size:0.8rem; color:var(--yuka-green)">${a.reason}</div>
+                    </div>
+                    <div style="font-weight:bold; color:var(--yuka-green)">${a.score}</div>
+                </div>
+            `).join('');
+
+        } else {
+            alert("პროდუქტი ბაზაში ვერ მოიძებნა: " + barcode);
+        }
+    }
+
+    // Initialize on Load
+    window.addEventListener('DOMContentLoaded', startScanner);
+</script>
+
 </body>
 </html>
