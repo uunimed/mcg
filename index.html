@@ -2,1550 +2,1641 @@
 <html lang="ka">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ქართული პროდუქტების სკანერი</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProdScan - პროდუქტის შეფასება</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     <style>
-        :root {
-            --primary: #4CAF50;
-            --primary-dark: #2E7D32;
-            --secondary: #2196F3;
-            --danger: #f44336;
-            --warning: #FF9800;
-            --light: #f8f9fa;
-            --dark: #212121;
-            --gray: #757575;
-            --border-radius: 16px;
-            --box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            --box-shadow-heavy: 0 8px 24px rgba(0,0,0,0.12);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
+        /* საერთო სტილები */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: var(--dark);
-            min-height: 100vh;
-            padding: 0;
-            overflow-x: hidden;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
         }
-        
-        /* App Container */
+
         .app-container {
-            max-width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
             min-height: 100vh;
-            background: white;
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        
-        /* Header */
-        .app-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+
+        /* ჰედერი */
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
             color: white;
-            padding: 20px 16px;
+            padding: 20px;
+            text-align: center;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: var(--box-shadow);
         }
-        
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .app-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: white;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .logo-icon i {
-            font-size: 24px;
-            color: var(--primary);
-        }
-        
-        .logo-text h1 {
-            font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 2px;
-        }
-        
-        .logo-text p {
-            font-size: 12px;
-            opacity: 0.9;
-        }
-        
-        .scanner-status {
-            background: rgba(255,255,255,0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+
+        .header h1 {
+            font-size: 1.5rem;
             font-weight: 600;
+        }
+
+        .header i {
+            margin-right: 10px;
+        }
+
+        /* ტაბები */
+        .tabs {
             display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        /* Main Content */
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            min-height: calc(100vh - 80px);
-        }
-        
-        /* Scanner Section */
-        .scanner-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            background: #000;
-        }
-        
-        /* Scanner Container */
-        #scannerContainer {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-        
-        #interactive.viewport {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        
-        #interactive.viewport canvas, 
-        #interactive.viewport video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        /* Advanced Scanner Frame */
-        .scanner-frame {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 280px;
-            height: 160px;
-            border: 3px solid rgba(76, 175, 80, 0.8);
-            border-radius: var(--border-radius);
-            box-shadow: 
-                0 0 0 100vh rgba(0, 0, 0, 0.6),
-                0 0 40px rgba(76, 175, 80, 0.4),
-                inset 0 0 40px rgba(76, 175, 80, 0.2);
-            pointer-events: none;
-            z-index: 2;
-        }
-        
-        .scanner-corners {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        
-        .corner {
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            border-color: var(--primary);
-            border-style: solid;
-        }
-        
-        .corner-tl {
-            top: -2px;
-            left: -2px;
-            border-width: 4px 0 0 4px;
-            border-radius: 12px 0 0 0;
-        }
-        
-        .corner-tr {
-            top: -2px;
-            right: -2px;
-            border-width: 4px 4px 0 0;
-            border-radius: 0 12px 0 0;
-        }
-        
-        .corner-bl {
-            bottom: -2px;
-            left: -2px;
-            border-width: 0 0 4px 4px;
-            border-radius: 0 0 0 12px;
-        }
-        
-        .corner-br {
-            bottom: -2px;
-            right: -2px;
-            border-width: 0 4px 4px 0;
-            border-radius: 0 0 12px 0;
-        }
-        
-        /* Scanner Controls */
-        .scanner-controls {
-            position: absolute;
-            bottom: 24px;
-            left: 0;
-            width: 100%;
-            padding: 0 16px;
-            z-index: 10;
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-        }
-        
-        .control-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.9);
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: var(--dark);
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: var(--box-shadow-heavy);
-            backdrop-filter: blur(10px);
-        }
-        
-        .control-btn:hover {
-            transform: scale(1.1);
-        }
-        
-        .control-btn:active {
-            transform: scale(0.95);
-        }
-        
-        .control-btn.primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .control-btn.danger {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .control-btn.secondary {
-            background: var(--secondary);
-            color: white;
-        }
-        
-        /* Scanner Instructions */
-        .scanner-instructions {
-            position: absolute;
-            top: 24px;
-            left: 0;
-            width: 100%;
-            padding: 0 16px;
-            z-index: 10;
-            text-align: center;
-        }
-        
-        .instruction-box {
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            display: inline-block;
-            backdrop-filter: blur(10px);
-            max-width: 320px;
-        }
-        
-        /* Scan Detection */
-        .scan-detection {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(76,175,80,0.9) 0%, rgba(76,175,80,0) 70%);
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 0.5s ease-out;
-            z-index: 5;
-        }
-        
-        @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-        }
-        
-        /* Product Info Modal */
-        .product-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            display: none;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .modal-content {
-            background: white;
-            min-height: 100vh;
-            border-radius: 0;
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            padding-bottom: 80px;
-        }
-        
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-        
-        .modal-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 20px 16px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
             position: sticky;
-            top: 0;
-            z-index: 10;
+            top: 78px;
+            z-index: 99;
         }
-        
-        .modal-header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: 700;
-        }
-        
-        .close-modal {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* Product Content */
-        .product-content {
-            padding: 16px;
-        }
-        
-        /* Product Header */
-        .product-header-card {
-            background: linear-gradient(135deg, #f8f9fa, #e8f5e9);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: var(--box-shadow);
-        }
-        
-        .product-basic-info {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-            align-items: flex-start;
-        }
-        
-        .product-image {
-            width: 100px;
-            height: 100px;
-            border-radius: 12px;
-            overflow: hidden;
-            flex-shrink: 0;
-            background: #fff;
-            box-shadow: var(--box-shadow);
-        }
-        
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .product-text {
+
+        .tab-btn {
             flex: 1;
-        }
-        
-        .product-name {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--dark);
-            margin-bottom: 4px;
-            line-height: 1.2;
-        }
-        
-        .product-brand {
-            font-size: 16px;
-            color: var(--primary-dark);
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        .product-barcode {
-            font-family: 'Courier New', monospace;
-            background: rgba(0,0,0,0.05);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            color: var(--gray);
-            display: inline-block;
-            margin-bottom: 12px;
-        }
-        
-        /* Nutri Score */
-        .nutri-score-container {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-top: 16px;
-        }
-        
-        .nutri-score {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            font-weight: 900;
-            color: white;
-            box-shadow: var(--box-shadow);
-            flex-shrink: 0;
-        }
-        
-        .score-a { background: linear-gradient(135deg, #4CAF50, #2E7D32); }
-        .score-b { background: linear-gradient(135deg, #8BC34A, #689F38); }
-        .score-c { background: linear-gradient(135deg, #FFC107, #FFA000); }
-        .score-d { background: linear-gradient(135deg, #FF9800, #F57C00); }
-        .score-e { background: linear-gradient(135deg, #f44336, #c62828); }
-        
-        .score-info h4 {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 4px;
-        }
-        
-        .score-info p {
-            font-size: 14px;
-            color: var(--gray);
-        }
-        
-        /* Sources */
-        .sources-section {
-            margin: 24px 0;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .sources-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-        }
-        
-        .source-card {
-            background: var(--light);
-            border-radius: 12px;
-            padding: 16px;
+            padding: 15px 10px;
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            color: var(--dark);
-            transition: var(--transition);
-            border: 1px solid rgba(0,0,0,0.1);
+            gap: 5px;
         }
-        
-        .source-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--box-shadow);
-            background: white;
+
+        .tab-btn i {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
         }
-        
-        .source-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: var(--primary);
-            box-shadow: var(--box-shadow);
+
+        .tab-btn.active {
+            color: #4CAF50;
+            border-bottom: 3px solid #4CAF50;
+            background-color: white;
         }
-        
-        .source-name {
-            font-size: 14px;
-            font-weight: 600;
-            text-align: center;
+
+        .tab-btn:hover:not(.active) {
+            background-color: #e9ecef;
         }
-        
-        .source-price {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--primary-dark);
+
+        /* ტაბის კონტენტი */
+        .tab-content {
+            padding: 20px;
         }
-        
-        /* Alternatives */
-        .alternatives-section {
-            margin: 24px 0;
-        }
-        
-        .alternatives-slider {
-            display: flex;
-            gap: 16px;
-            overflow-x: auto;
-            padding: 8px 0;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
-        
-        .alternatives-slider::-webkit-scrollbar {
+
+        .tab-pane {
             display: none;
         }
-        
-        .alternative-card {
-            flex: 0 0 auto;
-            width: 160px;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: var(--box-shadow);
-            border: 1px solid rgba(0,0,0,0.1);
+
+        .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.5s;
         }
-        
-        .alternative-image {
-            width: 100%;
-            height: 100px;
-            overflow: hidden;
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        
-        .alternative-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .alternative-info {
-            padding: 12px;
-        }
-        
-        .alternative-name {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 8px;
-            line-height: 1.2;
-        }
-        
-        .alternative-score {
-            font-size: 12px;
-            font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 12px;
-            display: inline-block;
-            color: white;
-        }
-        
-        /* Product Details */
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            margin: 24px 0;
-        }
-        
-        .detail-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: var(--box-shadow);
-        }
-        
-        .detail-card h3 {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 16px;
+
+        h2 {
+            margin-bottom: 20px;
+            color: #2E7D32;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
-        
-        .ingredients-list {
-            list-style: none;
+
+        /* ისტორიის სია */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-        
-        .ingredient-item {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+
+        .history-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 5px solid #4CAF50;
         }
-        
-        .ingredient-item:last-child {
-            border-bottom: none;
+
+        .history-item.bad {
+            border-left-color: #F44336;
         }
-        
-        .ingredient-status {
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-weight: 700;
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        
-        .status-good {
-            background: rgba(76, 175, 80, 0.15);
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .scan-date {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .product-rating {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .product-rating.good {
+            background-color: #E8F5E9;
             color: #2E7D32;
         }
-        
-        .status-bad {
-            background: rgba(244, 67, 54, 0.15);
-            color: #c62828;
+
+        .product-rating.bad {
+            background-color: #FFEBEE;
+            color: #F44336;
         }
-        
-        .status-medium {
-            background: rgba(255, 193, 7, 0.15);
-            color: #FF8F00;
-        }
-        
-        .nutrition-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 8px;
-        }
-        
-        .nutrition-item {
-            background: linear-gradient(135deg, #f8f9fa, #e8e8e8);
-            border-radius: 12px;
-            padding: 16px 12px;
+
+        /* სკანირების გვერდი */
+        .scanner-container {
             text-align: center;
+            margin-bottom: 30px;
         }
-        
-        .nutrition-value {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--dark);
-            margin-bottom: 4px;
+
+        .scanner-placeholder {
+            background-color: #333;
+            color: white;
+            padding: 40px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .nutrition-label {
-            font-size: 12px;
-            color: var(--gray);
+
+        .scanner-placeholder i {
+            margin-bottom: 15px;
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .small-text {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        .scanner-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
             font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        
-        /* Loading */
-        .loading-overlay {
+
+        .scan-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .scan-btn:hover {
+            background-color: #388E3C;
+        }
+
+        .secondary-btn {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .secondary-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .scan-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            display: none;
+        }
+
+        .manual-input {
+            margin-top: 20px;
+        }
+
+        .barcode-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .barcode-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        /* ალტერნატივების გვერდი */
+        .product-comparison {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .product-card {
+            flex: 1;
+            min-width: 250px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-card.good {
+            border-top: 5px solid #4CAF50;
+        }
+
+        .product-card.bad {
+            border-top: 5px solid #F44336;
+        }
+
+        .product-status {
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .product-card.good .product-status {
+            color: #2E7D32;
+        }
+
+        .product-card.bad .product-status {
+            color: #F44336;
+        }
+
+        .product-image img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            background-color: white;
+            padding: 5px;
+        }
+
+        .product-name-card {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .score-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .product-card.good .score-circle {
+            background-color: #4CAF50;
+        }
+
+        .product-card.bad .score-circle {
+            background-color: #F44336;
+        }
+
+        .vs-text {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #666;
+            padding: 0 10px;
+        }
+
+        .alternatives-list h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .alt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* მოდალური ფანჯარა */
+        .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 2000;
-            display: none;
-            flex-direction: column;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            width: 90%;
+            max-width: 700px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            border-radius: 10px 10px 0 0;
         }
-        
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-top: 4px solid var(--primary);
+
+        .close-modal {
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #ddd;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* პროდუქტის დეტალები */
+        .product-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .product-header {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .product-detail-img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            border-radius: 10px;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .product-main-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .product-main-info p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .score-indicator {
+            margin: 20px 0;
+        }
+
+        .progress-container {
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease-in-out;
+        }
+
+        .negatives, .positives, .product-alternatives {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .negatives h4, .positives h4, .product-alternatives h4 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .negatives h4 {
+            color: #F44336;
+        }
+
+        .positives h4 {
+            color: #4CAF50;
+        }
+
+        .product-alternatives h4 {
+            color: #2196F3;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        .alternative-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .alternative-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .alternative-score {
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 15px;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
             border-radius: 50%;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
-            margin-bottom: 24px;
+            margin: 0 auto 20px;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        .loading-text {
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-        
-        .loading-sources {
+
+        .stores {
             display: flex;
-            gap: 12px;
             flex-wrap: wrap;
-            justify-content: center;
-            max-width: 300px;
+            gap: 10px;
+            margin-top: 15px;
         }
-        
-        .loading-source {
-            background: rgba(255,255,255,0.1);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+
+        .store-badge {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
         }
-        
-        /* Empty State */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-            text-align: center;
-            color: var(--gray);
-        }
-        
-        .empty-icon {
-            font-size: 64px;
-            color: #e0e0e0;
-            margin-bottom: 20px;
-        }
-        
-        .empty-text {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--dark);
-        }
-        
-        .empty-subtext {
-            font-size: 14px;
-            max-width: 300px;
-            line-height: 1.4;
-        }
-        
-        /* Footer Actions */
-        .footer-actions {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            padding: 16px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-            display: flex;
-            gap: 12px;
-            z-index: 100;
-        }
-        
-        .action-btn {
-            flex: 1;
-            padding: 16px;
-            border-radius: 12px;
-            border: none;
-            font-size: 16px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .action-btn.primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .action-btn.secondary {
-            background: var(--secondary);
-            color: white;
-        }
-        
-        /* Media Queries */
-        @media (min-width: 768px) {
-            .app-container {
-                max-width: 768px;
-                margin: 0 auto;
-                min-height: 100vh;
-                border-radius: 0;
+
+        /* რესპონსიულობა */
+        @media (max-width: 768px) {
+            .product-comparison {
+                flex-direction: column;
             }
             
-            .scanner-frame {
-                width: 400px;
-                height: 200px;
+            .vs-text {
+                order: 2;
             }
             
-            .details-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .product-card {
+                width: 100%;
             }
             
-            .footer-actions {
-                padding: 16px 32px;
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+            
+            .product-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .tabs {
+                top: 72px;
             }
         }
-        
-        /* Utility Classes */
-        .hidden {
-            display: none !important;
+
+        @media (max-width: 480px) {
+            .tab-btn {
+                font-size: 0.8rem;
+                padding: 12px 5px;
+            }
+            
+            .tab-btn i {
+                font-size: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header {
+                padding: 15px 20px;
+            }
         }
-        
-        .visible {
-            display: flex !important;
-        }
-        
-        .vibrate {
-            animation: vibrate 0.3s linear;
-        }
-        
-        @keyframes vibrate {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-2px); }
-            75% { transform: translateX(2px); }
-            100% { transform: translateX(0); }
-        }
-        
-        /* Store-specific colors */
-        .nikora { color: #FF6B00; }
-        .spar { color: #0054A6; }
-        .ori-nabiji { color: #00A651; }
-        .agrohub { color: #8BC34A; }
-        .pepela { color: #E91E63; }
-        .fresco { color: #2196F3; }
-        .wolt { color: #00C2FF; }
-        .glovo { color: #FF6B35; }
-        .bold { color: #673AB7; }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="header-content">
-                <div class="app-logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-qrcode"></i>
-                    </div>
-                    <div class="logo-text">
-                        <h1>ქართული პროდუქტების სკანერი</h1>
-                        <p>მყისიერი სკანირება • რეალური ფასები</p>
+        <!-- ზედა ნავიგაცია -->
+        <header class="header">
+            <h1><i class="fas fa-leaf"></i> ProdScan - პროდუქტის შეფასება</h1>
+        </header>
+
+        <!-- ძირითადი კონტენტი -->
+        <main class="main-content">
+            <!-- ტაბები -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="history">
+                    <i class="fas fa-history"></i> ისტორია
+                </button>
+                <button class="tab-btn" data-tab="scan">
+                    <i class="fas fa-camera"></i> სკანირება
+                </button>
+                <button class="tab-btn" data-tab="alternatives">
+                    <i class="fas fa-exchange-alt"></i> ალტერნატივები
+                </button>
+            </div>
+
+            <!-- ტაბების კონტენტი -->
+            <div class="tab-content">
+                <!-- ისტორია -->
+                <div id="history" class="tab-pane active">
+                    <h2><i class="fas fa-history"></i> სკანირების ისტორია</h2>
+                    <div class="history-list" id="historyList">
+                        <!-- ისტორიის ელემენტები დინამიურად ჩაიტვირთება -->
                     </div>
                 </div>
-                <div class="scanner-status">
-                    <i class="fas fa-circle" id="statusIcon"></i>
-                    <span id="statusText">გამორთულია</span>
+
+                <!-- სკანირება -->
+                <div id="scan" class="tab-pane">
+                    <h2><i class="fas fa-camera"></i> პროდუქტის სკანირება</h2>
+                    <div class="scanner-container">
+                        <div class="scanner-placeholder" id="scannerPlaceholder">
+                            <i class="fas fa-barcode fa-5x"></i>
+                            <p>კამერა ჩართულია. დაამიზნეთ ბარკოდი.</p>
+                            <p class="small-text">(რეალური სკანირებისთვის საჭიროა QuaggaJS ან ZXing ბიბლიოთეკები)</p>
+                        </div>
+                        <div class="scanner-controls">
+                            <button id="simulateScan" class="btn scan-btn">
+                                <i class="fas fa-camera"></i> სკანირების სიმულაცია
+                            </button>
+                            <div class="manual-input">
+                                <input type="text" class="barcode-input" id="barcodeInput" placeholder="შეიყვანეთ ბარკოდი ხელით (მაგ: 8001505005709)">
+                                <button id="searchBarcode" class="btn scan-btn">
+                                    <i class="fas fa-search"></i> პროდუქტის ძიება
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scan-result" id="scanResult">
+                        <!-- სკანირების შედეგი გამოჩნდება აქ -->
+                    </div>
+                </div>
+
+                <!-- ალტერნატივები -->
+                <div id="alternatives" class="tab-pane">
+                    <h2><i class="fas fa-exchange-alt"></i> პროდუქტის ალტერნატივები</h2>
+                    <div class="alternatives-container">
+                        <div class="product-comparison">
+                            <!-- ორიგინალი პროდუქტი -->
+                            <div class="product-card bad" id="originalProduct">
+                                <div class="product-status">
+                                    <i class="fas fa-times-circle"></i> არჩეული პროდუქტი
+                                </div>
+                                <div class="product-image">
+                                    <img src="https://via.placeholder.com/100x100/FF6B6B/FFFFFF?text=პროდუქტი" alt="პროდუქტი">
+                                </div>
+                                <div class="product-name-card">აირჩიეთ პროდუქტი</div>
+                                <div class="product-score">
+                                    <div class="score-circle">
+                                        <span class="score">-</span>
+                                    </div>
+                                </div>
+                                <div class="product-details">
+                                    <button class="btn details-btn" id="selectProductBtn">პროდუქტის არჩევა</button>
+                                </div>
+                            </div>
+
+                            <div class="vs-text">VS</div>
+
+                            <!-- ალტერნატივა -->
+                            <div class="product-card good" id="alternativeProduct">
+                                <div class="product-status">
+                                    <i class="fas fa-check-circle"></i> ალტერნატივა
+                                </div>
+                                <div class="product-image">
+                                    <img src="https://via.placeholder.com/100x100/4CAF50/FFFFFF?text=ალტერნატივა" alt="ალტერნატივა">
+                                </div>
+                                <div class="product-name-card">ალტერნატივა</div>
+                                <div class="product-score">
+                                    <div class="score-circle">
+                                        <span class="score">-</span>
+                                    </div>
+                                </div>
+                                <div class="product-details">
+                                    <p>აირჩიეთ პროდუქტი</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alternatives-list">
+                            <h3>სხვა ალტერნატივები</h3>
+                            <div class="alt-list" id="altList">
+                                <!-- ალტერნატივების სია -->
+                                <p style="text-align: center; color: #666;">აირჩიეთ პროდუქტი ალტერნატივების სანახავად</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </header>
-        
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Scanner Section -->
-            <section class="scanner-section">
-                <div id="scannerContainer">
-                    <!-- Quagga will put video here -->
-                    <div id="interactive" class="viewport"></div>
-                    
-                    <!-- Scanner Frame -->
-                    <div class="scanner-frame">
-                        <div class="scanner-corners">
-                            <div class="corner corner-tl"></div>
-                            <div class="corner corner-tr"></div>
-                            <div class="corner corner-bl"></div>
-                            <div class="corner corner-br"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Scan Detection -->
-                    <div class="scan-detection" id="scanDetection">
-                        <i class="fas fa-check" style="color: white; font-size: 32px;"></i>
-                    </div>
-                    
-                    <!-- Instructions -->
-                    <div class="scanner-instructions">
-                        <div class="instruction-box">
-                            <i class="fas fa-info-circle"></i> მიამაგრეთ შეფუთვა ჩარჩოში
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Controls -->
-                <div class="scanner-controls">
-                    <button class="control-btn primary" id="startScanner">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <button class="control-btn danger hidden" id="stopScanner">
-                        <i class="fas fa-stop"></i>
-                    </button>
-                    <button class="control-btn secondary" id="flashToggle">
-                        <i class="fas fa-bolt"></i>
-                    </button>
-                </div>
-            </section>
         </main>
-        
-        <!-- Product Modal -->
-        <div class="product-modal" id="productModal">
-            <div class="modal-content">
-                <!-- Modal Header -->
-                <div class="modal-header">
-                    <div class="modal-header-content">
-                        <div class="modal-title">პროდუქტის ინფორმაცია</div>
-                        <button class="close-modal" id="closeModal">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Product Content -->
-                <div class="product-content" id="productContent">
-                    <!-- Content will be loaded here -->
-                </div>
-                
-                <!-- Footer Actions -->
-                <div class="footer-actions">
-                    <button class="action-btn secondary" id="backToScanner">
-                        <i class="fas fa-camera"></i> სკანირება
-                    </button>
-                    <button class="action-btn primary" id="findInStores">
-                        <i class="fas fa-store"></i> იპოვე მაღაზიებში
-                    </button>
-                </div>
+    </div>
+
+    <!-- მოდალური ფანჯარა პროდუქტისთვის -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalProductName">პროდუქტის სახელი</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- პროდუქტის დეტალები ჩაიტვირთება აქ -->
             </div>
         </div>
-        
-        <!-- Loading Overlay -->
-        <div class="loading-overlay" id="loadingOverlay">
-            <div class="spinner"></div>
-            <div class="loading-text" id="loadingText">მონაცემების მოძიება...</div>
-            <div class="loading-sources">
-                <div class="loading-source"><i class="fas fa-store nikora"></i> ნიკორა</div>
-                <div class="loading-source"><i class="fas fa-shopping-cart spar"></i> სპარი</div>
-                <div class="loading-source"><i class="fas fa-leaf agrohub"></i> აგროჰაბი</div>
-                <div class="loading-source"><i class="fas fa-bolt wolt"></i> Wolt</div>
+    </div>
+
+    <!-- პროდუქტის არჩევის მოდალი -->
+    <div id="selectProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-box"></i> აირჩიეთ პროდუქტი</h2>
+                <span class="close-select-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="manual-input">
+                    <input type="text" class="barcode-input" id="selectBarcodeInput" placeholder="შეიყვანეთ პროდუქტის ბარკოდი (მაგ: 8001505005709)">
+                    <button id="selectProductSearch" class="btn scan-btn" style="width: 100%;">
+                        <i class="fas fa-search"></i> პროდუქტის ძიება
+                    </button>
+                </div>
+                <div id="selectProductResult" style="margin-top: 20px;">
+                    <!-- არჩეული პროდუქტი გამოჩნდება აქ -->
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // DOM Elements
-        const startScannerBtn = document.getElementById('startScanner');
-        const stopScannerBtn = document.getElementById('stopScanner');
-        const flashToggleBtn = document.getElementById('flashToggle');
-        const statusIcon = document.getElementById('statusIcon');
-        const statusText = document.getElementById('statusText');
-        const scanDetection = document.getElementById('scanDetection');
-        const productModal = document.getElementById('productModal');
-        const productContent = document.getElementById('productContent');
-        const closeModalBtn = document.getElementById('closeModal');
-        const backToScannerBtn = document.getElementById('backToScanner');
-        const findInStoresBtn = document.getElementById('findInStores');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const loadingText = document.getElementById('loadingText');
+        // Open Food Facts API საფუძველი
+        const OPEN_FOOD_FACTS_API = 'https://world.openfoodfacts.org/api/v0/product/';
         
-        // Variables
-        let scannerActive = false;
-        let flashOn = false;
-        let lastScannedCode = null;
-        let scanCooldown = false;
+        // საქართველოს სუპერმარკეტები
+        const GEORGIAN_STORES = [
+            "ვოლტი", "გლოვო", "კარფური", "სპარი", 
+            "ნიკორა", "ორი ნაბიჯი", "აგროჰაბი", 
+            "პეპელა", "მაგნიტი", "პოპოლი", "ფორჩუნა"
+        ];
+
+        // ლოკალური მონაცემთა ბაზა (LocalStorage-ში)
+        let scannedHistory = JSON.parse(localStorage.getItem('prodScanHistory')) || [];
         let currentProduct = null;
-        
-        // Georgian Products Database with Real Store Data
-        const georgianProducts = {
-            // Popular Georgian Products with Store Prices
-            '4860103210011': {
-                name: "ნაბეღლავი მინერალური წყალი 1ლ",
-                brand: "ნაბეღლავი",
-                image: "https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                category: "სასმელი",
-                nutriScore: "A",
-                scoreText: "შესანიშნავი - ბუნებრივი მინერალური წყალი",
-                ingredients: ["ბუნებრივი მინერალური წყალი"],
-                goodSides: ["ბუნებრივი მინერალები", "კალციუმის წყარო", "არ შეიცავს შაქარს"],
-                badSides: [],
-                nutrition: { calories: 0, protein: 0, carbs: 0, sugar: 0, fat: 0, salt: 0.01 },
-                stores: {
-                    nikora: { price: 1.20, available: true, link: "#" },
-                    spar: { price: 1.15, available: true, link: "#" },
-                    oriNabiji: { price: 1.10, available: true, link: "#" },
-                    agrohub: { price: 1.25, available: false, link: "#" },
-                    pepela: { price: 1.30, available: true, link: "#" },
-                    fresco: { price: 1.18, available: true, link: "#" },
-                    wolt: { price: 1.35, available: true, link: "#" },
-                    glovo: { price: 1.40, available: true, link: "#" }
-                },
-                alternatives: [
-                    { name: "ბორჯომი 1ლ", score: "A", price: 1.50, store: "ნიკორა", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                    { name: "ლიკანი 1ლ", score: "A", price: 1.25, store: "სპარი", image: "https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                    { name: "საბადურო 1ლ", score: "A", price: 1.15, store: "ორი ნაბიჯი", image: "https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" }
-                ]
-            },
-            
-            '4860103220010': {
-                name: "დარიჩინის რძე 3.2% 1ლ",
-                brand: "დარიჩინი",
-                image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                category: "რძის პროდუქტები",
-                nutriScore: "B",
-                scoreText: "კარგი - ცილის და კალციუმის წყარო",
-                ingredients: ["რძე", "ვიტამინი D", "ვიტამინი A"],
-                goodSides: ["კალციუმის წყარო", "ცილის წყარო", "ვიტამინი D"],
-                badSides: ["შეიცავს ლაქტოზას"],
-                nutrition: { calories: 65, protein: 3.4, carbs: 4.7, sugar: 4.7, fat: 3.6, salt: 0.1 },
-                stores: {
-                    nikora: { price: 4.20, available: true, link: "#" },
-                    spar: { price: 4.10, available: true, link: "#" },
-                    oriNabiji: { price: 4.00, available: true, link: "#" },
-                    agrohub: { price: 4.50, available: true, link: "#" },
-                    pepela: { price: 4.30, available: false, link: "#" },
-                    fresco: { price: 4.15, available: true, link: "#" },
-                    wolt: { price: 4.60, available: true, link: "#" },
-                    glovo: { price: 4.70, available: true, link: "#" }
-                },
-                alternatives: [
-                    { name: "ბადაგენის რძე 2.5%", score: "A", price: 3.90, store: "ნიკორა", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                    { name: "რძე ნაკლები ცხიმით", score: "A", price: 4.10, store: "სპარი", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                    { name: "სოიოს რძე", score: "A", price: 5.20, store: "აგროჰაბი", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" }
-                ]
-            },
-            
-            '4860103230019': {
-                name: "შოთის პური 500გრ",
-                brand: "შოთის პური",
-                image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                category: "პური",
-                nutriScore: "B",
-                scoreText: "კარგი - მთელი მარცვლეული",
-                ingredients: ["ფქვილი", "წყალი", "მარილი", "საფუარი"],
-                goodSides: ["მთელი მარცვლეული", "არ შეიცავს შაქარს", "დაბალი ცხიმი"],
-                badSides: ["მაღალი გლიკემიური ინდექსი"],
-                nutrition: { calories: 265, protein: 9, carbs: 49, sugar: 2, fat: 3, salt: 0.5 },
-                stores: {
-                    nikora: { price: 2.50, available: true, link: "#" },
-                    spar: { price: 2.45, available: true, link: "#" },
-                    oriNabiji: { price: 2.30, available: true, link: "#" },
-                    agrohub: { price: 2.80, available: true, link: "#" },
-                    pepela: { price: 2.60, available: true, link: "#" },
-                    fresco: { price: 2.40, available: true, link: "#" },
-                    wolt: { price: 2.90, available: true, link: "#" },
-                    glovo: { price: 3.00, available: true, link: "#" }
-                },
-                alternatives: [
-                    { name: "მთელი მარცვლეულის პური", score: "A", price: 3.20, store: "ნიკორა", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                    { name: "რუგული პური", score: "A", price: 3.50, store: "სპარი", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                    { name: "შავი პური", score: "B", price: 2.80, store: "ორი ნაბიჯი", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" }
-                ]
-            },
-            
-            '4860103240018': {
-                name: "სულგუნი 200გრ",
-                brand: "ქართული ყველი",
-                image: "https://images.unsplash.com/photo-1567174687330-10fbf95c5e63?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                category: "რძის პროდუქტები",
-                nutriScore: "C",
-                scoreText: "საშუალო - მაღალი მარილი და ცხიმი",
-                ingredients: ["რძე", "მარილი", "საფუარის კულტურები"],
-                goodSides: ["კალციუმის წყარო", "ცილის წყარო", "ბუნებრივი პროდუქტი"],
-                badSides: ["მაღალი მარილი", "მაღალი ცხიმი"],
-                nutrition: { calories: 320, protein: 22, carbs: 2, sugar: 1, fat: 25, salt: 1.8 },
-                stores: {
-                    nikora: { price: 8.50, available: true, link: "#" },
-                    spar: { price: 8.30, available: true, link: "#" },
-                    oriNabiji: { price: 8.00, available: true, link: "#" },
-                    agrohub: { price: 9.00, available: true, link: "#" },
-                    pepela: { price: 8.70, available: false, link: "#" },
-                    fresco: { price: 8.20, available: true, link: "#" },
-                    wolt: { price: 9.50, available: true, link: "#" },
-                    glovo: { price: 9.80, available: true, link: "#" }
-                },
-                alternatives: [
-                    { name: "იმერული ყველი", score: "B", price: 7.80, store: "ნიკორა", image: "https://images.unsplash.com/photo-1567174687330-10fbf95c5e63?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                    { name: "ნადუღი", score: "B", price: 8.20, store: "სპარი", image: "https://images.unsplash.com/photo-1567174687330-10fbf95c5e63?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                    { name: "ყველი ნაკლები მარილით", score: "A", price: 9.50, store: "აგროჰაბი", image: "https://images.unsplash.com/photo-1567174687330-10fbf95c5e63?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" }
-                ]
+        let currentAlternatives = [];
+
+        // DOM ელემენტები
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        const historyList = document.getElementById('historyList');
+        const scanResult = document.getElementById('scanResult');
+        const modal = document.getElementById('productModal');
+        const closeModal = document.querySelector('.close-modal');
+        const modalProductName = document.getElementById('modalProductName');
+        const modalBody = document.getElementById('modalBody');
+        const simulateScanBtn = document.getElementById('simulateScan');
+        const searchBarcodeBtn = document.getElementById('searchBarcode');
+        const barcodeInput = document.getElementById('barcodeInput');
+        const selectProductBtn = document.getElementById('selectProductBtn');
+        const selectProductModal = document.getElementById('selectProductModal');
+        const closeSelectModal = document.querySelector('.close-select-modal');
+        const selectBarcodeInput = document.getElementById('selectBarcodeInput');
+        const selectProductSearch = document.getElementById('selectProductSearch');
+        const selectProductResult = document.getElementById('selectProductResult');
+
+        // ტაბების გადართვა
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // აქტიური ტაბის განახლება
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // კონტენტის განახლება
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                
+                // თუ ალტერნატივების გვერდია, განაახლე
+                if (tabId === 'alternatives') {
+                    updateAlternativesPage();
+                }
+            });
+        });
+
+        // მოდალური ფანჯრის დახურვა
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        closeSelectModal.addEventListener('click', () => {
+            selectProductModal.style.display = 'none';
+        });
+
+        // მოდალური ფანჯრის დახურვა ფონზე დაჭერით
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
             }
-        };
-        
-        // Initialize Scanner
-        async function initScanner() {
+            if (e.target === selectProductModal) {
+                selectProductModal.style.display = 'none';
+            }
+        });
+
+        // ისტორიის ჩატვირთვა
+        function loadHistory() {
+            historyList.innerHTML = '';
+            
+            if (scannedHistory.length === 0) {
+                historyList.innerHTML = '<p style="text-align: center; color: #666;">ჯერ არ გაქვთ სკანირებული პროდუქტები</p>';
+                return;
+            }
+            
+            // დასორტირება ახალიდან ძველამდე
+            scannedHistory.sort((a, b) => new Date(b.scanDate) - new Date(a.scanDate));
+            
+            scannedHistory.forEach(product => {
+                const historyItem = document.createElement('div');
+                historyItem.className = `history-item ${product.score >= 50 ? 'good' : 'bad'}`;
+                historyItem.setAttribute('data-product-id', product.id);
+                
+                const scoreColor = product.score >= 80 ? '#2E7D32' : 
+                                  product.score >= 50 ? '#FF9800' : '#F44336';
+                
+                historyItem.innerHTML = `
+                    <div class="product-info">
+                        <div class="product-name">${product.name || 'უცნობი პროდუქტი'}</div>
+                        <div class="scan-date">დასკანერდა: ${formatDate(product.scanDate)}</div>
+                    </div>
+                    <div class="product-rating ${product.score >= 50 ? 'good' : 'bad'}">
+                        <i class="fas ${product.score >= 50 ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                        ${product.score >= 50 ? 'კარგი' : 'ცუდი'} (${product.score}/100)
+                    </div>
+                `;
+                
+                historyItem.addEventListener('click', () => {
+                    showProductDetails(product.id);
+                });
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        // პროდუქტის მოძიება Open Food Facts-დან
+        async function fetchProductFromAPI(barcode) {
             try {
-                showLoading("სკანერის ინიციალიზაცია...");
+                showLoading('scanResult', 'პროდუქტის მოძიება...');
                 
-                // Initialize Quagga scanner
-                await Quagga.init({
-                    inputStream: {
-                        name: "Live",
-                        type: "LiveStream",
-                        target: document.querySelector('#interactive'),
-                        constraints: {
-                            width: { min: 640 },
-                            height: { min: 480 },
-                            aspectRatio: { min: 1, max: 2 },
-                            facingMode: "environment"
-                        },
-                        area: {
-                            top: "25%",
-                            right: "15%",
-                            left: "15%",
-                            bottom: "25%"
-                        }
-                    },
-                    decoder: {
-                        readers: [
-                            "ean_reader",
-                            "ean_8_reader", 
-                            "upc_reader",
-                            "upc_e_reader",
-                            "code_128_reader",
-                            "code_39_reader"
-                        ]
-                    },
-                    locate: true,
-                    frequency: 10
-                }, function(err) {
-                    if (err) {
-                        console.error("Quagga initialization error:", err);
-                        hideLoading();
-                        alert("სკანერის ინიციალიზაცია ვერ მოხერხდა: " + err.message);
-                        return;
-                    }
-                    
-                    console.log("Quagga initialized successfully");
-                    Quagga.start();
-                    
-                    // Update UI
-                    scannerActive = true;
-                    statusIcon.style.color = "#4CAF50";
-                    statusText.textContent = "სკანირება მოქმედია";
-                    startScannerBtn.classList.add('hidden');
-                    stopScannerBtn.classList.remove('hidden');
-                    
-                    hideLoading();
-                });
+                const response = await fetch(`${OPEN_FOOD_FACTS_API}${barcode}.json`);
+                const data = await response.json();
                 
-                // Set up detection callback
-                Quagga.onDetected(function(result) {
-                    if (scanCooldown) return;
-                    
-                    const code = result.codeResult.code;
-                    if (code && code !== lastScannedCode) {
-                        lastScannedCode = code;
-                        scanCooldown = true;
-                        
-                        // Show detection feedback
-                        scanDetection.style.display = 'flex';
-                        setTimeout(() => {
-                            scanDetection.style.display = 'none';
-                        }, 500);
-                        
-                        // Vibrate if supported
-                        if (navigator.vibrate) {
-                            navigator.vibrate(100);
-                        }
-                        
-                        // Process product
-                        processProduct(code);
-                        
-                        // Reset cooldown after 1 second
-                        setTimeout(() => {
-                            scanCooldown = false;
-                        }, 1000);
-                    }
-                });
-                
-            } catch (error) {
-                console.error('Scanner error:', error);
-                hideLoading();
-                alert('კამერის წვდომა ვერ მოხერხდა. გთხოვთ, შეამოწმეთ ნებართვები.');
-            }
-        }
-        
-        // Stop scanner
-        function stopScanner() {
-            if (scannerActive && Quagga) {
-                Quagga.stop();
-                
-                // Update UI
-                scannerActive = false;
-                statusIcon.style.color = "#f44336";
-                statusText.textContent = "გამორთულია";
-                startScannerBtn.classList.remove('hidden');
-                stopScannerBtn.classList.add('hidden');
-            }
-        }
-        
-        // Process product information
-        async function processProduct(barcode) {
-            showLoading("პროდუქტის მონაცემების მოძიება...");
-            
-            // Simulate API delay
-            setTimeout(() => {
-                if (georgianProducts[barcode]) {
-                    currentProduct = georgianProducts[barcode];
-                    displayProduct(currentProduct, barcode);
+                if (data.status === 1 && data.product) {
+                    const product = processProductData(data.product, barcode);
+                    displayScanResult(product);
+                    addToHistory(product);
+                    return product;
                 } else {
-                    showProductNotFound(barcode);
+                    displayError(`ბარკოდი ${barcode} ვერ მოიძებნა ბაზაში.`);
+                    return null;
                 }
-            }, 800);
+            } catch (error) {
+                console.error('შეცდომა API-დან მონაცემების მიღებისას:', error);
+                displayError('შეცდომა მონაცემების მიღებისას. სცადეთ მოგვიანებით.');
+                return null;
+            }
         }
-        
-        // Display product information
-        function displayProduct(product, barcode) {
-            // Build product HTML
-            let html = `
-                <!-- Product Header -->
-                <div class="product-header-card">
-                    <div class="product-basic-info">
-                        <div class="product-image">
-                            <img src="${product.image}" alt="${product.name}">
-                        </div>
-                        <div class="product-text">
-                            <h2 class="product-name">${product.name}</h2>
-                            <div class="product-brand">${product.brand}</div>
-                            <div class="product-barcode">ბარკოდი: ${barcode}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="nutri-score-container">
-                        <div class="nutri-score score-${product.nutriScore.toLowerCase()}">
-                            ${product.nutriScore}
-                        </div>
-                        <div class="score-info">
-                            <h4>Nutri-Score: ${product.nutriScore}</h4>
-                            <p>${product.scoreText}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Store Prices -->
-                <div class="sources-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-store"></i>
-                        ფასები მაღაზიებში
-                    </h3>
-                    <div class="sources-grid">
-            `;
+
+        // პროდუქტის მონაცემების დამუშავება
+        function processProductData(productData, barcode) {
+            // ქულის გამოთვლა
+            const score = calculateProductScore(productData);
             
-            // Add store cards
-            const stores = [
-                { key: 'nikora', name: 'ნიკორა', icon: 'fas fa-shopping-basket' },
-                { key: 'spar', name: 'სპარი', icon: 'fas fa-cart-plus' },
-                { key: 'oriNabiji', name: 'ორი ნაბიჯი', icon: 'fas fa-walking' },
-                { key: 'agrohub', name: 'აგროჰაბი', icon: 'fas fa-leaf' },
-                { key: 'pepela', name: 'პეპელა', icon: 'fas fa-butterfly' },
-                { key: 'fresco', name: 'ფრესკო', icon: 'fas fa-apple-alt' },
-                { key: 'wolt', name: 'Wolt', icon: 'fas fa-bolt' },
-                { key: 'glovo', name: 'Glovo', icon: 'fas fa-motorcycle' }
-            ];
+            // ინგრედიენტების დამუშავება
+            const ingredientsText = productData.ingredients_text || '';
+            const ingredients = ingredientsText.split(',').map(i => i.trim()).filter(i => i);
             
-            stores.forEach(store => {
-                const storeData = product.stores[store.key];
-                if (storeData && storeData.available) {
-                    html += `
-                        <a href="${storeData.link}" class="source-card" target="_blank">
-                            <div class="source-icon ${store.key}">
-                                <i class="${store.icon}"></i>
-                            </div>
-                            <div class="source-name">${store.name}</div>
-                            <div class="source-price">₾${storeData.price.toFixed(2)}</div>
-                        </a>
-                    `;
+            // ნეგატიური მხარეების დადგენა
+            const negatives = [];
+            const positives = [];
+            
+            if (productData.nutriscore_grade) {
+                if (['a', 'b'].includes(productData.nutriscore_grade.toLowerCase())) {
+                    positives.push('კარგი ნუტრისკორი');
+                } else if (['d', 'e'].includes(productData.nutriscore_grade.toLowerCase())) {
+                    negatives.push('ცუდი ნუტრისკორი');
                 }
-            });
+            }
             
-            html += `
-                    </div>
-                </div>
+            if (productData.ingredients_analysis) {
+                if (productData.ingredients_analysis.palm_oil && productData.ingredients_analysis.palm_oil !== 'no') {
+                    negatives.push('შეიცავს ფოთლის ზეთს');
+                }
                 
-                <!-- Alternatives -->
-                <div class="alternatives-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-exchange-alt"></i>
-                        ჯანსაღი ალტერნატივები
-                    </h3>
-                    <div class="alternatives-slider">
-            `;
+                if (productData.ingredients_analysis.vegan && productData.ingredients_analysis.vegan === 'no') {
+                    negatives.push('არა ვეგანური');
+                }
+            }
             
-            // Add alternative cards
-            product.alternatives.forEach(alt => {
-                html += `
-                    <div class="alternative-card">
-                        <div class="alternative-image">
-                            <img src="${alt.image}" alt="${alt.name}">
-                        </div>
-                        <div class="alternative-info">
-                            <div class="alternative-name">${alt.name}</div>
-                            <div class="alternative-score score-${alt.score.toLowerCase()}">
-                                ${alt.score}
-                            </div>
-                            <div style="margin-top: 8px; font-size: 12px; color: #666;">
-                                <i class="fas fa-store"></i> ${alt.store} • ₾${alt.price.toFixed(2)}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
+            // შაქრის შემცველობა
+            if (productData.nutriments && productData.nutriments.sugars_100g) {
+                const sugars = productData.nutriments.sugars_100g;
+                if (sugars > 15) {
+                    negatives.push(`მაღალი შაქრის შემცველობა (${sugars}g/100g)`);
+                } else if (sugars < 5) {
+                    positives.push(`დაბალი შაქრის შემცველობა (${sugars}g/100g)`);
+                }
+            }
             
-            html += `
-                    </div>
-                </div>
-                
-                <!-- Product Details -->
-                <div class="details-grid">
-                    <!-- Ingredients -->
-                    <div class="detail-card">
-                        <h3><i class="fas fa-list-ul"></i> შემადგენლობა</h3>
-                        <ul class="ingredients-list">
-            `;
+            // მარილის შემცველობა
+            if (productData.nutriments && productData.nutriments.salt_100g) {
+                const salt = productData.nutriments.salt_100g;
+                if (salt > 1.5) {
+                    negatives.push(`მაღალი მარილის შემცველობა (${salt}g/100g)`);
+                } else if (salt < 0.3) {
+                    positives.push(`დაბალი მარილის შემცველობა (${salt}g/100g)`);
+                }
+            }
             
-            product.ingredients.forEach(ingredient => {
-                const status = getIngredientStatus(ingredient);
-                html += `
-                    <li class="ingredient-item">
-                        <span>${ingredient}</span>
-                        <span class="ingredient-status ${status.class}">${status.text}</span>
-                    </li>
-                `;
-            });
+            // რამდენიმე მაღაზიის შემთხვევითი არჩევა
+            const stores = [];
+            for (let i = 0; i < 3 && i < GEORGIAN_STORES.length; i++) {
+                stores.push(GEORGIAN_STORES[Math.floor(Math.random() * GEORGIAN_STORES.length)]);
+            }
             
-            html += `
-                        </ul>
-                    </div>
-                    
-                    <!-- Nutrition -->
-                    <div class="detail-card">
-                        <h3><i class="fas fa-chart-pie"></i> საკვები ღირებულება (100გრ)</h3>
-                        <div class="nutrition-grid">
-                            <div class="nutrition-item">
-                                <div class="nutrition-value">${product.nutrition.calories}</div>
-                                <div class="nutrition-label">კალორიები</div>
-                            </div>
-                            <div class="nutrition-item">
-                                <div class="nutrition-value">${product.nutrition.protein}გ</div>
-                                <div class="nutrition-label">ცილა</div>
-                            </div>
-                            <div class="nutrition-item">
-                                <div class="nutrition-value">${product.nutrition.carbs}გ</div>
-                                <div class="nutrition-label">ნახშირწყლები</div>
-                            </div>
-                            <div class="nutrition-item">
-                                <div class="nutrition-value">${product.nutrition.fat}გ</div>
-                                <div class="nutrition-label">ცხიმი</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Good Sides -->
-                    <div class="detail-card">
-                        <h3><i class="fas fa-thumbs-up"></i> დადებითი მხარეები</h3>
-                        <ul class="ingredients-list">
-            `;
+            // უნიკალური მაღაზიების არჩევა
+            const uniqueStores = [...new Set(stores)];
             
-            product.goodSides.forEach(side => {
-                html += `
-                    <li class="ingredient-item">
-                        <span>${side}</span>
-                        <span class="ingredient-status status-good">კარგი</span>
-                    </li>
-                `;
-            });
-            
-            html += `
-                        </ul>
-                    </div>
-                    
-                    <!-- Bad Sides -->
-                    <div class="detail-card">
-                        <h3><i class="fas fa-thumbs-down"></i> უარყოფითი მხარეები</h3>
-                        <ul class="ingredients-list">
-            `;
-            
-            product.badSides.forEach(side => {
-                html += `
-                    <li class="ingredient-item">
-                        <span>${side}</span>
-                        <span class="ingredient-status status-bad">ცუდი</span>
-                    </li>
-                `;
-            });
-            
-            html += `
-                        </ul>
-                    </div>
-                </div>
-            `;
-            
-            // Update content and show modal
-            productContent.innerHTML = html;
-            productModal.style.display = 'block';
-            
-            // Smooth scroll to top
-            productModal.scrollTop = 0;
-            
-            hideLoading();
+            return {
+                id: barcode,
+                name: productData.product_name || 'უცნობი პროდუქტი',
+                manufacturer: productData.brands || 'უცნობი მწარმოებელი',
+                score: score,
+                image: productData.image_url || 'https://via.placeholder.com/300x300/CCCCCC/FFFFFF?text=პროდუქტი',
+                negatives: negatives.length > 0 ? negatives : ['ინფორმაცია ნეგატიური მხარეების შესახებ არ არის ხელმისაწვდომი'],
+                positives: positives.length > 0 ? positives : ['ინფორმაცია დადებითი მხარეების შესახებ არ არის ხელმისაწვდომი'],
+                ingredients: ingredients.length > 0 ? ingredients : ['ინგრედიენტების ინფორმაცია არ არის ხელმისაწვდომი'],
+                stores: uniqueStores,
+                scanDate: new Date().toISOString().split('T')[0],
+                barcode: barcode,
+                nutriscore: productData.nutriscore_grade || 'უცნობი',
+                novaGroup: productData.nova_group || 0
+            };
         }
-        
-        // Show product not found
-        function showProductNotFound(barcode) {
-            productContent.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-search"></i>
+
+        // პროდუქტის ქულის გამოთვლა
+        function calculateProductScore(productData) {
+            let score = 70; // საწყისი ქულა
+            
+            // ნუტრისკორის მიხედვით
+            if (productData.nutriscore_grade) {
+                switch(productData.nutriscore_grade.toLowerCase()) {
+                    case 'a': score += 20; break;
+                    case 'b': score += 10; break;
+                    case 'c': score += 0; break;
+                    case 'd': score -= 10; break;
+                    case 'e': score -= 20; break;
+                }
+            }
+            
+            // NOVA ჯგუფის მიხედვით (დამუშავების დონე)
+            if (productData.nova_group) {
+                switch(productData.nova_group) {
+                    case 1: score += 15; break; // დაუმუშავებელი ან მინიმალურად დამუშავებული
+                    case 2: score += 5; break;  // დამუშავებული კულინარული ინგრედიენტები
+                    case 3: score -= 10; break; // დამუშავებული საკვები
+                    case 4: score -= 20; break; // ულტრადამუშავებული საკვები
+                }
+            }
+            
+            // დანამატების მიხედვით
+            if (productData.additives_n > 0) {
+                score -= productData.additives_n * 2;
+            }
+            
+            // შაქრის შემცველობის მიხედვით
+            if (productData.nutriments && productData.nutriments.sugars_100g) {
+                const sugars = productData.nutriments.sugars_100g;
+                if (sugars > 20) score -= 15;
+                else if (sugars > 10) score -= 10;
+                else if (sugars > 5) score -= 5;
+                else if (sugars < 2) score += 5;
+            }
+            
+            // მარილის შემცველობის მიხედვით
+            if (productData.nutriments && productData.nutriments.salt_100g) {
+                const salt = productData.nutriments.salt_100g;
+                if (salt > 1.5) score -= 10;
+                else if (salt > 1) score -= 5;
+                else if (salt < 0.3) score += 5;
+            }
+            
+            // ფოთლის ზეთის მიხედვით
+            if (productData.ingredients_analysis && productData.ingredients_analysis.palm_oil && productData.ingredients_analysis.palm_oil !== 'no') {
+                score -= 10;
+            }
+            
+            // ლიმიტების დაწესება
+            return Math.max(0, Math.min(100, Math.round(score)));
+        }
+
+        // სკანირების შედეგის ჩვენება
+        function displayScanResult(product) {
+            const scoreColor = product.score >= 80 ? '#4CAF50' : 
+                              product.score >= 50 ? '#FF9800' : '#F44336';
+            
+            scanResult.innerHTML = `
+                <div class="product-detail">
+                    <div class="product-header">
+                        <img src="${product.image}" alt="${product.name}" class="product-detail-img">
+                        <div class="product-main-info">
+                            <h3>${product.name}</h3>
+                            <p><strong>მწარმოებელი:</strong> ${product.manufacturer}</p>
+                            <p><strong>ბარკოდი:</strong> ${product.barcode}</p>
+                            <div class="stores">
+                                ${product.stores.map(store => `<span class="store-badge">${store}</span>`).join('')}
+                            </div>
+                        </div>
                     </div>
-                    <div class="empty-text">პროდუქტი ვერ მოიძებნა</div>
-                    <div class="empty-subtext">
-                        შეფუთვის კოდი: ${barcode}<br>
-                        ეს პროდუქტი არ არის ჩვენს ბაზაში.
+                    
+                    <div class="score-indicator">
+                        <h4>შეფასება: ${product.score}/100</h4>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${product.score}%; background-color: ${scoreColor};"></div>
+                        </div>
+                        <p>${product.score >= 80 ? 'შესანიშნავი პროდუქტი' : 
+                            product.score >= 60 ? 'კარგი პროდუქტი' : 
+                            product.score >= 40 ? 'საშუალო ხარისხი' : 
+                            'ცუდი პროდუქტი'}</p>
                     </div>
-                    <button class="action-btn primary" style="margin-top: 20px;" onclick="searchProductOnline('${barcode}')">
-                        <i class="fab fa-google"></i> ძიება ინტერნეტში
+                    
+                    <div class="negatives">
+                        <h4><i class="fas fa-exclamation-triangle"></i> ნეგატიური მხარეები</h4>
+                        <ul>
+                            ${product.negatives.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="positives">
+                        <h4><i class="fas fa-check-circle"></i> დადებითი მხარეები</h4>
+                        <ul>
+                            ${product.positives.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="product-alternatives">
+                        <h4><i class="fas fa-exchange-alt"></i> ინგრედიენტები</h4>
+                        <ul>
+                            ${product.ingredients.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <button class="btn scan-btn" id="saveProductBtn" style="width: 100%;">
+                        <i class="fas fa-save"></i> შენახვა ისტორიაში
                     </button>
                 </div>
             `;
-            productModal.style.display = 'block';
-            hideLoading();
-        }
-        
-        // Get ingredient status
-        function getIngredientStatus(ingredient) {
-            const lower = ingredient.toLowerCase();
             
-            if (lower.includes('შაქარი') || lower.includes('სიროფი') || lower.includes('გლუკოზა') || lower.includes('ტრანსცხიმი')) {
-                return { class: 'status-bad', text: 'ცუდი' };
+            scanResult.style.display = 'block';
+            
+            // ხმის და ვიბრაციის სიმულაცია
+            simulateScanFeedback();
+            
+            // შენახვის ღილაკის ფუნქცია
+            document.getElementById('saveProductBtn').addEventListener('click', () => {
+                addToHistory(product);
+                alert('პროდუქტი შენახულია ისტორიაში!');
+            });
+        }
+
+        // ჩატვირთვის ინდიკატორი
+        function showLoading(elementId, message = 'იტვირთება...') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>${message}</p>
+                </div>
+            `;
+            element.style.display = 'block';
+        }
+
+        // შეცდომის ჩვენება
+        function displayError(message) {
+            scanResult.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #F44336;">
+                    <i class="fas fa-exclamation-circle fa-3x" style="margin-bottom: 20px;"></i>
+                    <h3>პროდუქტი ვერ მოიძებნა</h3>
+                    <p>${message}</p>
+                    <p>სცადეთ სხვა ბარკოდი ან დაამატეთ პროდუქტი ხელით.</p>
+                </div>
+            `;
+            scanResult.style.display = 'block';
+        }
+
+        // პროდუქტის დამატება ისტორიაში
+        function addToHistory(product) {
+            // შეამოწმე არის თუ არა უკვე ისტორიაში
+            const existingIndex = scannedHistory.findIndex(p => p.id === product.id);
+            
+            if (existingIndex !== -1) {
+                // განაახლე არსებული ჩანაწერი
+                scannedHistory[existingIndex] = product;
+            } else {
+                // დაამატე ახალი
+                scannedHistory.unshift(product);
             }
             
-            if (lower.includes('ბუნებრივი') || lower.includes('ორგანული') || lower.includes('ვიტამინი') || lower.includes('მინერალი')) {
-                return { class: 'status-good', text: 'კარგი' };
+            // შენახვა LocalStorage-ში
+            localStorage.setItem('prodScanHistory', JSON.stringify(scannedHistory));
+            
+            // ისტორიის განახლება
+            loadHistory();
+        }
+
+        // ხმის და ვიბრაციის სიმულაცია
+        function simulateScanFeedback() {
+            // ხმის ეფექტი
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log('აუდიო არაა ხელმისაწვდომი');
             }
             
-            if (lower.includes('მარილი') || lower.includes('ნატრიუმი') || lower.includes('კონსერვანტი')) {
-                return { class: 'status-medium', text: 'საშუალო' };
+            // ვიბრაციის ეფექტი
+            if (navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+        }
+
+        // თარიღის ფორმატირება
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ka-GE', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // პროდუქტის დეტალების ჩვენება
+        function showProductDetails(productId) {
+            const product = scannedHistory.find(p => p.id === productId);
+            
+            if (!product) {
+                alert('პროდუქტი ვერ მოიძებნა');
+                return;
             }
             
-            return { class: 'status-medium', text: 'საშუალო' };
+            const scoreColor = product.score >= 80 ? '#4CAF50' : 
+                              product.score >= 50 ? '#FF9800' : '#F44336';
+            
+            modalProductName.textContent = product.name;
+            
+            modalBody.innerHTML = `
+                <div class="product-detail">
+                    <div class="product-header">
+                        <img src="${product.image}" alt="${product.name}" class="product-detail-img">
+                        <div class="product-main-info">
+                            <h3>${product.name}</h3>
+                            <p><strong>მწარმოებელი:</strong> ${product.manufacturer}</p>
+                            <p><strong>ბარკოდი:</strong> ${product.barcode}</p>
+                            <p><strong>დასკანერდა:</strong> ${formatDate(product.scanDate)}</p>
+                            <div class="stores">
+                                ${product.stores.map(store => `<span class="store-badge">${store}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="score-indicator">
+                        <h4>შეფასება: ${product.score}/100</h4>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${product.score}%; background-color: ${scoreColor};"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="negatives">
+                        <h4><i class="fas fa-exclamation-triangle"></i> ნეგატიური მხარეები</h4>
+                        <ul>
+                            ${product.negatives.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="positives">
+                        <h4><i class="fas fa-check-circle"></i> დადებითი მხარეები</h4>
+                        <ul>
+                            ${product.positives.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="product-alternatives">
+                        <h4><i class="fas fa-list"></i> ინგრედიენტები</h4>
+                        <ul>
+                            ${product.ingredients.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="product-alternatives">
+                        <h4><i class="fas fa-exchange-alt"></i> ალტერნატივები</h4>
+                        <div id="modalAlternativesList">
+                            <p>ალტერნატივები ჯერ არ არის ხელმისაწვდომი</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            
+            // ალტერნატივების ჩატვირთვა
+            loadAlternativesForProduct(product);
         }
-        
-        // Show loading
-        function showLoading(text) {
-            loadingText.textContent = text;
-            loadingOverlay.style.display = 'flex';
+
+        // პროდუქტის ალტერნატივების ჩატვირთვა
+        async function loadAlternativesForProduct(product) {
+            const modalAlternativesList = document.getElementById('modalAlternativesList');
+            
+            // დემო ალტერნატივები
+            const demoAlternatives = [
+                { name: "ბუნებრივი ალტერნატივა", score: 85, reason: "ნაკლები შაქარი, ბუნებრივი ინგრედიენტები" },
+                { name: "ორგანული ვერსია", score: 90, reason: "ორგანული ინგრედიენტები, არანაირი დანამატები" },
+                { name: "ლოკალური მწარმოებელი", score: 75, reason: "ლოკალურად წარმოებული, ნაკლები კონსერვანტები" }
+            ];
+            
+            modalAlternativesList.innerHTML = demoAlternatives.map(alt => `
+                <div class="alternative-item" data-score="${alt.score}">
+                    <div>
+                        <strong>${alt.name}</strong><br>
+                        <small>${alt.reason}</small>
+                    </div>
+                    <div class="alternative-score" style="background-color: ${alt.score >= 50 ? '#4CAF50' : '#F44336'}">
+                        ${alt.score}/100
+                    </div>
+                </div>
+            `).join('');
         }
-        
-        // Hide loading
-        function hideLoading() {
-            loadingOverlay.style.display = 'none';
+
+        // ალტერნატივების გვერდის განახლება
+        function updateAlternativesPage() {
+            const originalProductCard = document.getElementById('originalProduct');
+            const alternativeProductCard = document.getElementById('alternativeProduct');
+            const altList = document.getElementById('altList');
+            
+            if (currentProduct) {
+                // ორიგინალი პროდუქტის განახლება
+                const isGood = currentProduct.score >= 50;
+                originalProductCard.className = `product-card ${isGood ? 'good' : 'bad'}`;
+                originalProductCard.innerHTML = `
+                    <div class="product-status">
+                        <i class="fas ${isGood ? 'fa-check-circle' : 'fa-times-circle'}"></i> თქვენი პროდუქტი
+                    </div>
+                    <div class="product-image">
+                        <img src="${currentProduct.image}" alt="${currentProduct.name}">
+                    </div>
+                    <div class="product-name-card">${currentProduct.name.substring(0, 30)}${currentProduct.name.length > 30 ? '...' : ''}</div>
+                    <div class="product-score">
+                        <div class="score-circle" style="background-color: ${isGood ? '#4CAF50' : '#F44336'}">
+                            <span class="score">${currentProduct.score}</span>
+                        </div>
+                    </div>
+                    <div class="product-details">
+                        <p>${currentProduct.manufacturer.substring(0, 30)}${currentProduct.manufacturer.length > 30 ? '...' : ''}</p>
+                        <button class="btn details-btn" onclick="showProductDetails('${currentProduct.id}')">დეტალები</button>
+                    </div>
+                `;
+                
+                // ალტერნატივების გენერირება
+                generateAlternatives();
+                
+                // ალტერნატივების სიის განახლება
+                altList.innerHTML = currentAlternatives.map(alt => `
+                    <div class="alternative-item" onclick="selectAlternative('${alt.id}')">
+                        <div>
+                            <strong>${alt.name}</strong><br>
+                            <small>${alt.manufacturer}</small>
+                        </div>
+                        <div class="alternative-score" style="background-color: ${alt.score >= 50 ? '#4CAF50' : '#F44336'}">
+                            ${alt.score}/100
+                        </div>
+                    </div>
+                `).join('');
+            }
         }
-        
-        // Toggle flash
-        function toggleFlash() {
-            alert('Flash ფუნქციონალი მხარდაჭერილია მხოლოდ მობილურ ბრაუზერებში');
-        }
-        
-        // Search product online
-        function searchProductOnline(barcode) {
-            window.open(`https://www.google.com/search?q=${barcode}+პროდუქტი+საქართველო`, '_blank');
-        }
-        
-        // Find product in stores
-        function findProductInStores() {
+
+        // ალტერნატივების გენერირება
+        function generateAlternatives() {
             if (!currentProduct) return;
             
-            const productName = encodeURIComponent(`${currentProduct.name} ${currentProduct.brand}`);
-            window.open(`https://www.google.com/search?q=${productName}+ყიდვა+საქართველოში`, '_blank');
-        }
-        
-        // Event Listeners
-        startScannerBtn.addEventListener('click', initScanner);
-        stopScannerBtn.addEventListener('click', stopScanner);
-        flashToggleBtn.addEventListener('click', toggleFlash);
-        closeModalBtn.addEventListener('click', () => {
-            productModal.style.display = 'none';
-        });
-        backToScannerBtn.addEventListener('click', () => {
-            productModal.style.display = 'none';
-            if (!scannerActive) {
-                initScanner();
-            }
-        });
-        findInStoresBtn.addEventListener('click', findProductInStores);
-        
-        // Prevent default touch behavior
-        document.addEventListener('touchmove', (e) => {
-            if (e.scale !== 1) e.preventDefault();
-        }, { passive: false });
-        
-        // Initialize on load
-        window.addEventListener('load', () => {
-            // Check camera support
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('თქვენს ბრაუზერს არ აქვს კამერის მხარდაჭერა. გთხოვთ გამოიყენოთ Chrome ან Safari.');
-                startScannerBtn.disabled = true;
-                startScannerBtn.innerHTML = '<i class="fas fa-times"></i> არ მხარდაჭერილი';
+            currentAlternatives = [];
+            
+            // სხვადასხვა ტიპის ალტერნატივების გენერირება
+            const alternativeTypes = [
+                { name: "ორგანული ვერსია", scoreBoost: 15, prefix: "ორგანული " },
+                { name: "ლოკალური ალტერნატივა", scoreBoost: 10, prefix: "ლოკალური " },
+                { name: "დაბალი შაქრიანი", scoreBoost: 20, suffix: " (დაბალი შაქრიანი)" },
+                { name: "ვეგანური ვერსია", scoreBoost: 5, suffix: " (ვეგანური)" }
+            ];
+            
+            for (let i = 0; i < 3; i++) {
+                const type = alternativeTypes[i % alternativeTypes.length];
+                const score = Math.min(100, currentProduct.score + type.scoreBoost + Math.floor(Math.random() * 10) - 5);
+                
+                currentAlternatives.push({
+                    id: `alt_${currentProduct.id}_${i}`,
+                    name: (type.prefix || '') + currentProduct.name + (type.suffix || ''),
+                    manufacturer: currentProduct.manufacturer,
+                    score: score,
+                    image: currentProduct.image,
+                    description: `ეს არის ${type.name.toLowerCase()} ${currentProduct.name.toLowerCase()}-ისთვის`
+                });
             }
             
-            // Auto-start scanner on page load (optional)
-            // initScanner();
+            // საუკეთესო ალტერნატივის ჩვენება
+            if (currentAlternatives.length > 0) {
+                const bestAlternative = currentAlternatives.reduce((prev, current) => 
+                    (prev.score > current.score) ? prev : current
+                );
+                
+                const alternativeProductCard = document.getElementById('alternativeProduct');
+                const isGood = bestAlternative.score >= 50;
+                
+                alternativeProductCard.className = `product-card ${isGood ? 'good' : 'bad'}`;
+                alternativeProductCard.innerHTML = `
+                    <div class="product-status">
+                        <i class="fas ${isGood ? 'fa-check-circle' : 'fa-times-circle'}"></i> საუკეთესო ალტერნატივა
+                    </div>
+                    <div class="product-image">
+                        <img src="${bestAlternative.image}" alt="${bestAlternative.name}">
+                    </div>
+                    <div class="product-name-card">${bestAlternative.name.substring(0, 30)}${bestAlternative.name.length > 30 ? '...' : ''}</div>
+                    <div class="product-score">
+                        <div class="score-circle" style="background-color: ${isGood ? '#4CAF50' : '#F44336'}">
+                            <span class="score">${bestAlternative.score}</span>
+                        </div>
+                    </div>
+                    <div class="product-details">
+                        <p>${bestAlternative.manufacturer.substring(0, 30)}${bestAlternative.manufacturer.length > 30 ? '...' : ''}</p>
+                        <button class="btn details-btn" onclick="showAlternativeDetails('${bestAlternative.id}')">დეტალები</button>
+                    </div>
+                `;
+            }
+        }
+
+        // ალტერნატივის არჩევა (გლობალური ფუნქცია)
+        window.selectAlternative = function(alternativeId) {
+            const alternative = currentAlternatives.find(a => a.id === alternativeId);
+            if (alternative) {
+                // განაახლე მთავარი ალტერნატივის ბარათი
+                const alternativeProductCard = document.getElementById('alternativeProduct');
+                const isGood = alternative.score >= 50;
+                
+                alternativeProductCard.className = `product-card ${isGood ? 'good' : 'bad'}`;
+                alternativeProductCard.innerHTML = `
+                    <div class="product-status">
+                        <i class="fas ${isGood ? 'fa-check-circle' : 'fa-times-circle'}"></i> არჩეული ალტერნატივა
+                    </div>
+                    <div class="product-image">
+                        <img src="${alternative.image}" alt="${alternative.name}">
+                    </div>
+                    <div class="product-name-card">${alternative.name.substring(0, 30)}${alternative.name.length > 30 ? '...' : ''}</div>
+                    <div class="product-score">
+                        <div class="score-circle" style="background-color: ${isGood ? '#4CAF50' : '#F44336'}">
+                            <span class="score">${alternative.score}</span>
+                        </div>
+                    </div>
+                    <div class="product-details">
+                        <p>${alternative.manufacturer.substring(0, 30)}${alternative.manufacturer.length > 30 ? '...' : ''}</p>
+                        <button class="btn details-btn" onclick="showAlternativeDetails('${alternative.id}')">დეტალები</button>
+                    </div>
+                `;
+            }
+        };
+
+        // ალტერნატივის დეტალების ჩვენება (გლობალური ფუნქცია)
+        window.showAlternativeDetails = function(alternativeId) {
+            const alternative = currentAlternatives.find(a => a.id === alternativeId);
+            
+            if (alternative) {
+                modalProductName.textContent = alternative.name;
+                
+                modalBody.innerHTML = `
+                    <div class="product-detail">
+                        <div class="product-header">
+                            <img src="${alternative.image}" alt="${alternative.name}" class="product-detail-img">
+                            <div class="product-main-info">
+                                <h3>${alternative.name}</h3>
+                                <p><strong>მწარმოებელი:</strong> ${alternative.manufacturer}</p>
+                                <p><strong>შეფასება:</strong> ${alternative.score}/100</p>
+                            </div>
+                        </div>
+                        
+                        <div class="positives">
+                            <h4><i class="fas fa-check-circle"></i> რატომ არის ეს კარგი ალტერნატივა?</h4>
+                            <p>${alternative.description}</p>
+                            <ul>
+                                <li>უკეთესი ხარისხის ინგრედიენტები</li>
+                                <li>ნაკლები დამატებითი ნივთიერებები</li>
+                                <li>უფრო ჯანსაღი ალტერნატივა</li>
+                                <li>ხელმისაწვდომია საქართველოში</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="product-alternatives">
+                            <h4><i class="fas fa-store"></i> სად შეგიძლიათ შეიძინოთ</h4>
+                            <div class="stores">
+                                ${GEORGIAN_STORES.slice(0, 5).map(store => `<span class="store-badge">${store}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                modal.style.display = 'block';
+            }
+        };
+
+        // პროდუქტის არჩევის მოდალური ფანჯრის გახსნა
+        selectProductBtn.addEventListener('click', () => {
+            selectProductModal.style.display = 'block';
         });
-        
-        // Handle page visibility
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && scannerActive) {
-                stopScanner();
+
+        // პროდუქტის ძიება არჩევის მოდალურ ფანჯარაში
+        selectProductSearch.addEventListener('click', async () => {
+            const barcode = selectBarcodeInput.value.trim();
+            
+            if (!barcode) {
+                alert('გთხოვთ შეიყვანოთ ბარკოდი');
+                return;
+            }
+            
+            if (!/^\d+$/.test(barcode)) {
+                alert('ბარკოდი უნდა შედგებოდეს მხოლოდ ციფრებისგან');
+                return;
+            }
+            
+            showLoading('selectProductResult', 'პროდუქტის ძიება...');
+            
+            const product = await fetchProductFromAPI(barcode);
+            
+            if (product) {
+                selectProductResult.innerHTML = `
+                    <div class="product-detail">
+                        <div class="product-header">
+                            <img src="${product.image}" alt="${product.name}" class="product-detail-img" style="width: 100px; height: 100px;">
+                            <div class="product-main-info">
+                                <h3>${product.name}</h3>
+                                <p><strong>მწარმოებელი:</strong> ${product.manufacturer}</p>
+                                <p><strong>შეფასება:</strong> ${product.score}/100</p>
+                            </div>
+                        </div>
+                        
+                        <button class="btn scan-btn" id="setAsCurrentProduct" style="width: 100%; margin-top: 20px;">
+                            <i class="fas fa-check"></i> ამ პროდუქტის არჩევა
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('setAsCurrentProduct').addEventListener('click', () => {
+                    currentProduct = product;
+                    selectProductModal.style.display = 'none';
+                    updateAlternativesPage();
+                    
+                    // გადადი ალტერნატივების გვერდზე
+                    document.querySelector('[data-tab="alternatives"]').click();
+                });
+            }
+        });
+
+        // სკანირების სიმულაცია
+        simulateScanBtn.addEventListener('click', () => {
+            // სხვადასხვა დემო ბარკოდები
+            const demoBarcodes = [
+                '3017620422003', // Nutella
+                '7613034626844', // Coca-Cola
+                '8000500310427', // Barilla Pasta
+                '8001505005709', // Uliveto Water
+                '5449000000996', // Evian Water
+                '5000159459228', // Walkers Crisps
+                '8714100772055', // Heineken Beer
+                '5449000214911', // Orangina
+                '3033710075966', // Activia Yogurt
+                '4008400402229', // Haribo
+                '7616500080833', // Lindt Chocolate
+                '3256220251152', // Badoit Water
+                '8000500212777', // Mulino Bianco
+                '3596710003139', // Danette
+                '3033490815384', // LU Petit Beurre
+                '30177600', // Carambar
+                '8076809515564', // San Pellegrino
+                '3046920028251', // Tropicana
+                '8000500074300', // Algida Ice Cream
+                '54491472' // Pepsi
+            ];
+            
+            // შემთხვევითი ბარკოდის არჩევა
+            const randomBarcode = demoBarcodes[Math.floor(Math.random() * demoBarcodes.length)];
+            barcodeInput.value = randomBarcode;
+            
+            // პროდუქტის ძიება
+            searchBarcodeBtn.click();
+        });
+
+        // ბარკოდით პროდუქტის ძიება
+        searchBarcodeBtn.addEventListener('click', async () => {
+            const barcode = barcodeInput.value.trim();
+            
+            if (!barcode) {
+                alert('გთხოვთ შეიყვანოთ ბარკოდი');
+                return;
+            }
+            
+            if (!/^\d+$/.test(barcode)) {
+                alert('ბარკოდი უნდა შედგებოდეს მხოლოდ ციფრებისგან');
+                return;
+            }
+            
+            // პროდუქტის მოძიება
+            await fetchProductFromAPI(barcode);
+        });
+
+        // პროდუქტის ძიება Enter ღილაკით
+        barcodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchBarcodeBtn.click();
+            }
+        });
+
+        selectBarcodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                selectProductSearch.click();
+            }
+        });
+
+        // საიტის ჩატვირთვისას
+        document.addEventListener('DOMContentLoaded', () => {
+            // ისტორიის ჩატვირთვა
+            loadHistory();
+            
+            // დემო პროდუქტების დამატება თუ ისტორია ცარიელია
+            if (scannedHistory.length === 0) {
+                // დემო პროდუქტები ხელით დამატებისთვის
+                const demoProducts = [
+                    {
+                        id: '3017620422003',
+                        name: 'Nutella',
+                        manufacturer: 'Ferrero',
+                        score: 45,
+                        image: 'https://images.openfoodfacts.org/images/products/301/762/042/2003/front_fr.415.400.jpg',
+                        negatives: ['მაღალი შაქრის შემცველობა', 'პალმის ზეთი', 'დაბალი ნუტრიციული ღირებულება'],
+                        positives: ['კარგი გემო', 'მაღალი ენერგეტიკული ღირებულება'],
+                        ingredients: ['შაქარი', 'პალმის ზეთი', 'შესქელებელი', 'კაკაო', 'რძე'],
+                        stores: ['კარფური', 'ვოლტი', 'სპარი'],
+                        scanDate: '2023-10-10',
+                        barcode: '3017620422003'
+                    },
+                    {
+                        id: '5449000000996',
+                        name: 'Evian წყალი',
+                        manufacturer: 'Evian',
+                        score: 95,
+                        image: 'https://images.openfoodfacts.org/images/products/544/900/000/0996/front_en.636.400.jpg',
+                        negatives: ['პლასტიკური ბოთლი'],
+                        positives: ['ბუნებრივი მინერალური წყალი', 'არ შეიცავს დანამატებს', 'დაბალი ნატრიუმი'],
+                        ingredients: ['ბუნებრივი მინერალური წყალი'],
+                        stores: ['გლოვო', 'ნიკორა', 'ორი ნაბიჯი'],
+                        scanDate: '2023-10-12',
+                        barcode: '5449000000996'
+                    }
+                ];
+                
+                demoProducts.forEach(product => {
+                    scannedHistory.push(product);
+                });
+                
+                localStorage.setItem('prodScanHistory', JSON.stringify(scannedHistory));
+                loadHistory();
+            }
+            
+            // დემო მიმდინარე პროდუქტი
+            if (scannedHistory.length > 0) {
+                currentProduct = scannedHistory[0];
             }
         });
     </script>
