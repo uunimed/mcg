@@ -1837,7 +1837,7 @@
                         <i class="fas fa-calendar-alt"></i> ისტორია
                     </button>
                     <button class="enhanced-control-btn enhanced-control-btn-primary" onclick="syncWithFirebase()" id="syncBtn">
-                        <i class="fas fa-sync-alt"></i>
+                        <i class="fas fa-sync-alt"></i> სინქრონიზაცია
                     </button>
                 </div>
             </div>
@@ -2093,11 +2093,11 @@
                 connectedRef.on("value", function(snap) {
                     if (snap.val() === true) {
                         isFirebaseConnected = true;
-                        updateFirebaseStatus('');
+                        updateFirebaseStatus('online');
                         console.log("Firebase connected");
                     } else {
                         isFirebaseConnected = false;
-                        updateFirebaseStatus('');
+                        updateFirebaseStatus('offline');
                         console.log("Firebase disconnected");
                     }
                 });
@@ -2105,7 +2105,7 @@
                 return true;
             } catch (error) {
                 console.error("Firebase initialization error:", error);
-                updateFirebaseStatus('');
+                updateFirebaseStatus('offline');
                 return false;
             }
         }
@@ -2124,7 +2124,7 @@
                         statusElement.innerHTML = '<i class="fas fa-circle"></i><span>Offline</span>';
                         break;
                     case 'syncing':
-                        statusElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span></span>';
+                        statusElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Syncing...</span>';
                         break;
                 }
             }
