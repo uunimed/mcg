@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Product Scanner | Nutrition & Health Analyzer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/@ericblade/quagga2/dist/quagga.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -109,6 +108,7 @@
             position: relative;
             width: 100%;
             max-width: 400px;
+            height: 300px;
             margin: 0 auto;
             background: #000;
             border-radius: 10px;
@@ -117,9 +117,9 @@
             flex-grow: 1;
         }
         
-        #scanner-video {
+        #interactive {
             width: 100%;
-            height: auto;
+            height: 100%;
             display: block;
         }
         
@@ -608,6 +608,23 @@
                 text-align: center;
             }
         }
+        
+        /* Camera selection */
+        .camera-selector {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f1f1f1;
+            border-radius: 8px;
+        }
+        
+        .camera-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -630,8 +647,13 @@
             <div class="scanner-section">
                 <h2 class="scanner-title"><i class="fas fa-barcode"></i> Barcode Scanner</h2>
                 
+                <div class="camera-selector" id="cameraSelector" style="display: none;">
+                    <label for="cameraSelect">Select Camera:</label>
+                    <select id="cameraSelect"></select>
+                </div>
+                
                 <div class="scanner-container">
-                    <video id="scanner-video"></video>
+                    <div id="interactive" class="viewport"></div>
                     <div class="scanner-overlay">
                         <div class="scanner-frame">
                             <div class="scanner-line"></div>
@@ -714,10 +736,10 @@
                     </div>
                     
                     <div class="product-actions">
-                        <div class="action-btn save-btn">
+                        <div class="action-btn save-btn" id="saveProductBtn">
                             <i class="fas fa-save"></i> Save Product
                         </div>
-                        <div class="action-btn compare-btn">
+                        <div class="action-btn compare-btn" id="compareProductBtn">
                             <i class="fas fa-balance-scale"></i> Compare
                         </div>
                     </div>
@@ -751,7 +773,6 @@
 
     <script>
         // DOM Elements
-        const videoElement = document.getElementById('scanner-video');
         const startScannerBtn = document.getElementById('startScannerBtn');
         const stopScannerBtn = document.getElementById('stopScannerBtn');
         const manualSearchBtn = document.getElementById('manualSearchBtn');
@@ -774,14 +795,19 @@
         const manualSearchInput = document.getElementById('manualSearchInput');
         const modalSearchBtn = document.getElementById('modalSearchBtn');
         const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const cameraSelector = document.getElementById('cameraSelector');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const saveProductBtn = document.getElementById('saveProductBtn');
+        const compareProductBtn = document.getElementById('compareProductBtn');
         
         // Variables
         let scannerActive = false;
-        let stream = null;
+        let currentBarcode = null;
         let lastScannedCode = null;
         let scanCooldown = false;
+        let quaggaInitialized = false;
         
-        // Sample product database (in a real app, this would come from an API)
+        // Sample product database
         const sampleProducts = {
             '3017620422003': {
                 name: 'Nutella Hazelnut Spread',
@@ -901,111 +927,131 @@
             }
         };
         
-        // Initialize the barcode scanner
-        function initScanner() {
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: videoElement,
-                    constraints: {
-                        width: { min: 640, ideal: 1280, max: 1920 },
-                        height: { min: 480, ideal: 720, max: 1080 },
-                        facingMode: "environment"
-                    },
-                    area: {
-                        top: "25%",
-                        right: "10%",
-                        left: "10%",
-                        bottom: "25%"
-                    }
-                },
-                decoder: {
-                    readers: [
-                        "ean_reader",
-                        "ean_8_reader",
-                        "upc_reader",
-                        "upc_e_reader",
-                        "code_128_reader"
-                    ]
-                },
-                locate: true
-            }, function(err) {
-                if (err) {
-                    console.error("Scanner initialization failed:", err);
-                    alert("Failed to initialize barcode scanner. Please check camera permissions.");
-                    return;
-                }
-                console.log("Scanner initialized successfully");
-            });
-            
-            // Set up barcode detection callback
-            Quagga.onDetected(function(result) {
-                if (scanCooldown) return;
+        // Get available cameras
+        async function getCameras() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
                 
-                const code = result.codeResult.code;
-                if (code && code !== lastScannedCode) {
-                    lastScannedCode = code;
-                    scanCooldown = true;
-                    
-                    // Show scanning feedback
-                    scannerStatus.innerHTML = `<i class="fas fa-check-circle"></i><span>Scanned: ${code}</span>`;
-                    scannerStatus.className = "scanner-status active";
-                    
-                    // Process the scanned barcode
-                    processBarcode(code);
-                    
-                    // Reset cooldown after 3 seconds
-                    setTimeout(() => {
-                        scanCooldown = false;
-                        scannerStatus.innerHTML = `<i class="fas fa-circle"></i><span>Scanner Active</span>`;
-                    }, 3000);
+                cameraSelect.innerHTML = '';
+                videoDevices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `Camera ${cameraSelect.length + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+                
+                if (videoDevices.length > 1) {
+                    cameraSelector.style.display = 'block';
                 }
-            });
+                
+                return videoDevices;
+            } catch (error) {
+                console.error('Error getting cameras:', error);
+                return [];
+            }
         }
         
         // Start the scanner
         async function startScanner() {
             try {
-                // Request camera access
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment'
+                showLoading("Initializing camera...");
+                
+                // Get selected camera
+                const deviceId = cameraSelect.value || undefined;
+                
+                // Initialize Quagga
+                await Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector('#interactive'),
+                        constraints: {
+                            width: { min: 640 },
+                            height: { min: 480 },
+                            aspectRatio: { ideal: 1.7777777778 }, // 16:9
+                            deviceId: deviceId ? { exact: deviceId } : undefined,
+                            facingMode: "environment"
+                        }
                     },
-                    audio: false 
+                    decoder: {
+                        readers: [
+                            "ean_reader",
+                            "ean_8_reader", 
+                            "upc_reader",
+                            "upc_e_reader",
+                            "code_128_reader",
+                            "code_39_reader",
+                            "code_93_reader"
+                        ],
+                        multiple: false
+                    },
+                    locate: true,
+                    frequency: 10
+                }, function(err) {
+                    if (err) {
+                        console.error("Quagga initialization error:", err);
+                        hideLoading();
+                        alert("Failed to initialize scanner: " + err.message);
+                        return;
+                    }
+                    
+                    console.log("Quagga initialized successfully");
+                    Quagga.start();
+                    
+                    // Update UI
+                    scannerActive = true;
+                    scannerStatus.innerHTML = `<i class="fas fa-circle"></i><span>Scanner Active</span>`;
+                    scannerStatus.className = "scanner-status active";
+                    startScannerBtn.disabled = true;
+                    stopScannerBtn.disabled = false;
+                    
+                    hideLoading();
                 });
                 
-                // Initialize Quagga scanner
-                initScanner();
+                // Set up detection callback
+                Quagga.onDetected(function(result) {
+                    if (scanCooldown) return;
+                    
+                    const code = result.codeResult.code;
+                    if (code && code !== lastScannedCode) {
+                        lastScannedCode = code;
+                        scanCooldown = true;
+                        currentBarcode = code;
+                        
+                        // Show scanning feedback
+                        scannerStatus.innerHTML = `<i class="fas fa-check-circle"></i><span>Scanned: ${code}</span>`;
+                        scannerStatus.className = "scanner-status active";
+                        
+                        // Process the scanned barcode
+                        processBarcode(code);
+                        
+                        // Reset cooldown after 3 seconds
+                        setTimeout(() => {
+                            scanCooldown = false;
+                            scannerStatus.innerHTML = `<i class="fas fa-circle"></i><span>Scanner Active</span>`;
+                        }, 3000);
+                    }
+                });
                 
-                // Start Quagga
-                Quagga.start();
+                // Handle process frames
+                Quagga.onProcessed(function(result) {
+                    if (!result) return;
+                    
+                    // You can add visualization of the scanning process here
+                });
                 
-                // Update UI
-                scannerActive = true;
-                scannerStatus.innerHTML = `<i class="fas fa-circle"></i><span>Scanner Active</span>`;
-                scannerStatus.className = "scanner-status active";
-                startScannerBtn.disabled = true;
-                stopScannerBtn.disabled = false;
-                
-                console.log("Scanner started");
             } catch (error) {
                 console.error("Error starting scanner:", error);
-                alert("Could not access camera. Please check permissions.");
+                hideLoading();
+                alert("Could not access camera. Please check permissions and try again.\n\nError: " + error.message);
             }
         }
         
         // Stop the scanner
         function stopScanner() {
-            if (scannerActive) {
+            if (scannerActive && Quagga) {
                 Quagga.stop();
-                
-                // Stop video stream
-                if (stream) {
-                    const tracks = stream.getTracks();
-                    tracks.forEach(track => track.stop());
-                    stream = null;
-                }
                 
                 // Update UI
                 scannerActive = false;
@@ -1031,9 +1077,7 @@
                     // Try to fetch from Open Food Facts API
                     fetchProductFromAPI(barcode);
                 }
-                
-                hideLoading();
-            }, 1500);
+            }, 1000);
         }
         
         // Fetch product from Open Food Facts API
@@ -1042,10 +1086,11 @@
                 loadingText.textContent = "Fetching from Open Food Facts...";
                 
                 // Using Open Food Facts API
-                const response = await axios.get(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+                const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+                const data = await response.json();
                 
-                if (response.data.status === 1) {
-                    const productData = response.data.product;
+                if (data.status === 1) {
+                    const productData = data.product;
                     displayProductFromAPI(productData, barcode);
                 } else {
                     // Product not found in API, show manual entry
@@ -1068,7 +1113,7 @@
             
             // Extract ingredients
             const ingredients = productData.ingredients_text ? 
-                productData.ingredients_text.split(',').map(i => i.trim()) : 
+                productData.ingredients_text.split(',').map(i => i.trim()).filter(i => i.length > 0) : 
                 ['Ingredients information not available'];
             
             // Extract nutrition data
@@ -1087,7 +1132,7 @@
                 name: name,
                 brand: brand,
                 image: image,
-                ingredients: ingredients,
+                ingredients: ingredients.slice(0, 10), // Limit to 10 ingredients
                 goodSides: goodSides,
                 badSides: badSides,
                 nutrition: {
@@ -1103,6 +1148,7 @@
             };
             
             displayProduct(product, barcode);
+            hideLoading();
         }
         
         // Display product information
@@ -1153,13 +1199,13 @@
             
             // Create nutrition items
             const nutritionItems = [
-                { label: 'Calories', value: nutrition.calories, unit: 'kcal' },
-                { label: 'Fat', value: nutrition.fat, unit: 'g' },
-                { label: 'Saturated', value: nutrition.saturatedFat, unit: 'g' },
-                { label: 'Carbs', value: nutrition.carbs, unit: 'g' },
-                { label: 'Sugar', value: nutrition.sugar, unit: 'g' },
-                { label: 'Protein', value: nutrition.protein, unit: 'g' },
-                { label: 'Salt', value: nutrition.salt, unit: 'g' }
+                { label: 'Calories', value: Math.round(nutrition.calories) || 0, unit: 'kcal' },
+                { label: 'Fat', value: nutrition.fat ? nutrition.fat.toFixed(1) : 0, unit: 'g' },
+                { label: 'Saturated', value: nutrition.saturatedFat ? nutrition.saturatedFat.toFixed(1) : 0, unit: 'g' },
+                { label: 'Carbs', value: nutrition.carbs ? nutrition.carbs.toFixed(1) : 0, unit: 'g' },
+                { label: 'Sugar', value: nutrition.sugar ? nutrition.sugar.toFixed(1) : 0, unit: 'g' },
+                { label: 'Protein', value: nutrition.protein ? nutrition.protein.toFixed(1) : 0, unit: 'g' },
+                { label: 'Salt', value: nutrition.salt ? nutrition.salt.toFixed(2) : 0, unit: 'g' }
             ];
             
             nutritionItems.forEach(item => {
@@ -1175,6 +1221,8 @@
             // Show product info, hide placeholder
             productPlaceholder.style.display = 'none';
             productInfo.style.display = 'block';
+            
+            hideLoading();
         }
         
         // Show product not found
@@ -1187,6 +1235,7 @@
             `;
             productPlaceholder.style.display = 'flex';
             productInfo.style.display = 'none';
+            hideLoading();
         }
         
         // Update health rating display
@@ -1219,7 +1268,8 @@
             
             // Update rating text
             let ratingText = '';
-            if (rating >= 4) ratingText = 'Very Healthy';
+            if (rating >= 4.5) ratingText = 'Excellent';
+            else if (rating >= 4) ratingText = 'Very Healthy';
             else if (rating >= 3) ratingText = 'Moderately Healthy';
             else if (rating >= 2) ratingText = 'Somewhat Healthy';
             else ratingText = 'Not Very Healthy';
@@ -1232,8 +1282,8 @@
             const lowerIngredient = ingredient.toLowerCase();
             
             // Define lists of good and bad ingredients
-            const goodIngredients = ['whole grain', 'organic', 'natural', 'virgin', 'cold pressed', 'extra virgin'];
-            const badIngredients = ['artificial', 'preservative', 'hydrogenated', 'high fructose', 'aspartame', 'msg'];
+            const goodIngredients = ['whole grain', 'organic', 'natural', 'virgin', 'cold pressed', 'extra virgin', 'fruit', 'vegetable', 'nut', 'seed', 'grain'];
+            const badIngredients = ['artificial', 'preservative', 'hydrogenated', 'high fructose', 'aspartame', 'msg', 'palm oil', 'trans fat', 'monosodium glutamate'];
             
             for (const good of goodIngredients) {
                 if (lowerIngredient.includes(good)) {
@@ -1280,6 +1330,9 @@
             // Adjust based on protein
             if (nutrition.proteins_100g > 10) score += 0.5;
             
+            // Adjust based on fiber
+            if (nutrition.fiber_100g > 3) score += 0.5;
+            
             // Ensure rating is between 1 and 5
             return Math.max(1, Math.min(5, score));
         }
@@ -1290,29 +1343,29 @@
             const badSides = [];
             
             // Analyze based on nutrition values
-            if (nutrition.sugars_100g < 5) {
+            if (nutrition.sugars_100g && nutrition.sugars_100g < 5) {
                 goodSides.push('Low in sugar');
-            } else if (nutrition.sugars_100g > 15) {
+            } else if (nutrition.sugars_100g && nutrition.sugars_100g > 15) {
                 badSides.push('High in sugar');
             }
             
-            if (nutrition.saturated_fat_100g < 1) {
+            if (nutrition.saturated_fat_100g && nutrition.saturated_fat_100g < 1) {
                 goodSides.push('Low in saturated fat');
-            } else if (nutrition.saturated_fat_100g > 5) {
+            } else if (nutrition.saturated_fat_100g && nutrition.saturated_fat_100g > 5) {
                 badSides.push('High in saturated fat');
             }
             
-            if (nutrition.salt_100g < 0.3) {
+            if (nutrition.salt_100g && nutrition.salt_100g < 0.3) {
                 goodSides.push('Low in salt');
-            } else if (nutrition.salt_100g > 1.5) {
+            } else if (nutrition.salt_100g && nutrition.salt_100g > 1.5) {
                 badSides.push('High in salt');
             }
             
-            if (nutrition.proteins_100g > 10) {
+            if (nutrition.proteins_100g && nutrition.proteins_100g > 10) {
                 goodSides.push('Good source of protein');
             }
             
-            if (nutrition.fiber_100g > 3) {
+            if (nutrition.fiber_100g && nutrition.fiber_100g > 3) {
                 goodSides.push('Good source of fiber');
             }
             
@@ -1340,7 +1393,11 @@
                 badSides.push('No significant health concerns identified');
             }
             
-            return { goodSides, badSides };
+            // Limit to 3 items each
+            return { 
+                goodSides: goodSides.slice(0, 3), 
+                badSides: badSides.slice(0, 3) 
+            };
         }
         
         // Show loading overlay
@@ -1379,12 +1436,45 @@
                 } else {
                     // Search by name (simulate)
                     setTimeout(() => {
-                        // For demo, use the first sample product
+                        // For demo, use a sample product
                         const barcode = Object.keys(sampleProducts)[0];
                         displayProduct(sampleProducts[barcode], barcode);
                         hideLoading();
                     }, 1500);
                 }
+            }
+        }
+        
+        // Save product to localStorage
+        function saveProduct() {
+            if (!currentBarcode) return;
+            
+            const savedProducts = JSON.parse(localStorage.getItem('savedProducts') || '[]');
+            
+            // Check if product is already saved
+            if (!savedProducts.includes(currentBarcode)) {
+                savedProducts.push(currentBarcode);
+                localStorage.setItem('savedProducts', JSON.stringify(savedProducts));
+                
+                // Show feedback
+                const originalText = saveProductBtn.innerHTML;
+                saveProductBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                saveProductBtn.style.background = '#2ecc71';
+                
+                setTimeout(() => {
+                    saveProductBtn.innerHTML = originalText;
+                    saveProductBtn.style.background = '#3498db';
+                }, 2000);
+            } else {
+                // Already saved
+                const originalText = saveProductBtn.innerHTML;
+                saveProductBtn.innerHTML = '<i class="fas fa-check"></i> Already Saved';
+                saveProductBtn.style.background = '#f39c12';
+                
+                setTimeout(() => {
+                    saveProductBtn.innerHTML = originalText;
+                    saveProductBtn.style.background = '#3498db';
+                }, 2000);
             }
         }
         
@@ -1394,6 +1484,7 @@
         manualSearchBtn.addEventListener('click', showManualSearch);
         modalSearchBtn.addEventListener('click', performManualSearch);
         modalCancelBtn.addEventListener('click', hideManualSearch);
+        saveProductBtn.addEventListener('click', saveProduct);
         
         // Close modal when clicking outside
         manualSearchModal.addEventListener('click', (e) => {
@@ -1409,20 +1500,50 @@
             }
         });
         
+        // Camera selection change
+        cameraSelect.addEventListener('change', () => {
+            if (scannerActive) {
+                stopScanner();
+                setTimeout(startScanner, 500);
+            }
+        });
+        
         // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             console.log("Smart Product Scanner initialized");
             
             // Check for camera support
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert("Your browser doesn't support camera access. Please try Chrome, Firefox, or Edge.");
                 startScannerBtn.disabled = true;
+                startScannerBtn.innerHTML = '<i class="fas fa-times"></i> Camera Not Supported';
+                return;
+            }
+            
+            // Get available cameras
+            await getCameras();
+            
+            // Test camera access
+            try {
+                const testStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                testStream.getTracks().forEach(track => track.stop());
+                console.log("Camera access test successful");
+            } catch (error) {
+                console.warn("Camera test failed:", error);
+                // Still allow starting, might work with proper initialization
             }
         });
         
         // Stop scanner when page is hidden to save resources
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && scannerActive) {
+                stopScanner();
+            }
+        });
+        
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            if (scannerActive) {
                 stopScanner();
             }
         });
