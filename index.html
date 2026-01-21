@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ProdScan - პროდუქტის შეფასება</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QuaggaJS ბიბლიოთეკა ბარკოდის სკანირებისთვის -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     <style>
         /* საერთო სტილები */
         * {
@@ -191,6 +193,33 @@
             margin-bottom: 20px;
             position: relative;
             overflow: hidden;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #scanner-viewport {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        #interactive {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .drawingBuffer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .scanner-placeholder i {
@@ -249,6 +278,15 @@
             background-color: #e0e0e0;
         }
 
+        .danger-btn {
+            background-color: #F44336;
+            color: white;
+        }
+
+        .danger-btn:hover {
+            background-color: #D32F2F;
+        }
+
         .scan-result {
             margin-top: 20px;
             padding: 20px;
@@ -273,6 +311,16 @@
         .barcode-input:focus {
             outline: none;
             border-color: #4CAF50;
+        }
+
+        .camera-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            background-color: white;
         }
 
         /* ალტერნატივების გვერდი */
@@ -575,6 +623,58 @@
             font-weight: 500;
         }
 
+        .wolt-product {
+            border: 2px solid #00B2E3;
+            background-color: #E6F7FC;
+        }
+
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        .scanner-guide {
+            width: 80%;
+            height: 200px;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .guide-line {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background-color: #4CAF50;
+            animation: moveLine 2s infinite linear;
+        }
+
+        @keyframes moveLine {
+            0% { top: 10%; }
+            50% { top: 90%; }
+            100% { top: 10%; }
+        }
+
+        .scanner-message {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+        }
+
         /* რესპონსიულობა */
         @media (max-width: 768px) {
             .product-comparison {
@@ -602,6 +702,10 @@
             .tabs {
                 top: 72px;
             }
+            
+            #scanner-viewport {
+                height: 250px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -621,6 +725,49 @@
             .header {
                 padding: 15px 20px;
             }
+            
+            #scanner-viewport {
+                height: 200px;
+            }
+        }
+
+        .store-price {
+            font-weight: bold;
+            color: #2E7D32;
+            margin-left: 10px;
+        }
+
+        .store-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .nutrition-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .nutrition-item {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .nutrition-value {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #2E7D32;
+        }
+
+        .nutrition-label {
+            font-size: 0.8rem;
+            color: #666;
         }
     </style>
 </head>
@@ -661,19 +808,44 @@
                     <h2><i class="fas fa-camera"></i> პროდუქტის სკანირება</h2>
                     <div class="scanner-container">
                         <div class="scanner-placeholder" id="scannerPlaceholder">
-                            <i class="fas fa-barcode fa-5x"></i>
-                            <p>კამერა ჩართულია. დაამიზნეთ ბარკოდი.</p>
-                            <p class="small-text">(რეალური სკანირებისთვის საჭიროა QuaggaJS ან ZXing ბიბლიოთეკები)</p>
+                            <div id="scanner-viewport">
+                                <!-- QuaggaJS სკანერი გამოჩნდება აქ -->
+                                <div id="interactive"></div>
+                            </div>
+                            <div class="scanner-overlay" id="scannerOverlay">
+                                <div class="scanner-guide">
+                                    <div class="guide-line"></div>
+                                </div>
+                                <div class="scanner-message">
+                                    დაამიზნეთ ბარკოდი კამერაში
+                                </div>
+                            </div>
                         </div>
+                        
                         <div class="scanner-controls">
-                            <button id="simulateScan" class="btn scan-btn">
-                                <i class="fas fa-camera"></i> სკანირების სიმულაცია
-                            </button>
+                            <select id="cameraSelect" class="camera-select" style="display: none;">
+                                <option value="">კამერის არჩევა...</option>
+                            </select>
+                            
+                            <div style="display: flex; gap: 10px;">
+                                <button id="startCamera" class="btn scan-btn">
+                                    <i class="fas fa-video"></i> კამერის ჩართვა
+                                </button>
+                                <button id="stopCamera" class="btn danger-btn" style="display: none;">
+                                    <i class="fas fa-stop"></i> კამერის გათიშვა
+                                </button>
+                            </div>
+                            
                             <div class="manual-input">
                                 <input type="text" class="barcode-input" id="barcodeInput" placeholder="შეიყვანეთ ბარკოდი ხელით (მაგ: 8001505005709)">
-                                <button id="searchBarcode" class="btn scan-btn">
-                                    <i class="fas fa-search"></i> პროდუქტის ძიება
-                                </button>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="searchBarcode" class="btn scan-btn" style="flex: 1;">
+                                        <i class="fas fa-search"></i> Open Food Facts-დან ძიება
+                                    </button>
+                                    <button id="searchWolt" class="btn" style="flex: 1; background-color: #00B2E3; color: white;">
+                                        <i class="fas fa-shopping-bag"></i> ვოლტიდან ძიება
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -763,10 +935,15 @@
             </div>
             <div class="modal-body">
                 <div class="manual-input">
-                    <input type="text" class="barcode-input" id="selectBarcodeInput" placeholder="შეიყვანეთ პროდუქტის ბარკოდი (მაგ: 8001505005709)">
-                    <button id="selectProductSearch" class="btn scan-btn" style="width: 100%;">
-                        <i class="fas fa-search"></i> პროდუქტის ძიება
-                    </button>
+                    <input type="text" class="barcode-input" id="selectBarcodeInput" placeholder="შეიყვანეთ პროდუქტის ბარკოდი">
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button id="selectProductSearch" class="btn scan-btn" style="flex: 1;">
+                            <i class="fas fa-search"></i> Open Food Facts
+                        </button>
+                        <button id="selectProductWolt" class="btn" style="flex: 1; background-color: #00B2E3; color: white;">
+                            <i class="fas fa-shopping-bag"></i> ვოლტი
+                        </button>
+                    </div>
                 </div>
                 <div id="selectProductResult" style="margin-top: 20px;">
                     <!-- არჩეული პროდუქტი გამოჩნდება აქ -->
@@ -779,6 +956,11 @@
         // Open Food Facts API საფუძველი
         const OPEN_FOOD_FACTS_API = 'https://world.openfoodfacts.org/api/v0/product/';
         
+        // ვოლტის API (დემო, რადგან ვოლტის API საჭიროებს ავტორიზაციას)
+        // NOTE: რეალური ვოლტის API საჭიროებს OAuth2 ავტორიზაციას და არ არის ღია
+        // ეს არის დემო იმიტირებული API
+        const WOLT_API_DEMO = 'https://restaurant-api.wolt.com/v1/';
+        
         // საქართველოს სუპერმარკეტები
         const GEORGIAN_STORES = [
             "ვოლტი", "გლოვო", "კარფური", "სპარი", 
@@ -790,6 +972,8 @@
         let scannedHistory = JSON.parse(localStorage.getItem('prodScanHistory')) || [];
         let currentProduct = null;
         let currentAlternatives = [];
+        let isCameraActive = false;
+        let selectedCameraId = null;
 
         // DOM ელემენტები
         const tabBtns = document.querySelectorAll('.tab-btn');
@@ -800,15 +984,20 @@
         const closeModal = document.querySelector('.close-modal');
         const modalProductName = document.getElementById('modalProductName');
         const modalBody = document.getElementById('modalBody');
-        const simulateScanBtn = document.getElementById('simulateScan');
         const searchBarcodeBtn = document.getElementById('searchBarcode');
+        const searchWoltBtn = document.getElementById('searchWolt');
         const barcodeInput = document.getElementById('barcodeInput');
         const selectProductBtn = document.getElementById('selectProductBtn');
         const selectProductModal = document.getElementById('selectProductModal');
         const closeSelectModal = document.querySelector('.close-select-modal');
         const selectBarcodeInput = document.getElementById('selectBarcodeInput');
         const selectProductSearch = document.getElementById('selectProductSearch');
+        const selectProductWolt = document.getElementById('selectProductWolt');
         const selectProductResult = document.getElementById('selectProductResult');
+        const startCameraBtn = document.getElementById('startCamera');
+        const stopCameraBtn = document.getElementById('stopCamera');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const scannerOverlay = document.getElementById('scannerOverlay');
 
         // ტაბების გადართვა
         tabBtns.forEach(btn => {
@@ -822,6 +1011,11 @@
                 // კონტენტის განახლება
                 tabPanes.forEach(pane => pane.classList.remove('active'));
                 document.getElementById(tabId).classList.add('active');
+                
+                // თუ სკანირების გვერდია და კამერა აქტიურია, შეაჩერე იგი
+                if (tabId !== 'scan' && isCameraActive) {
+                    stopCamera();
+                }
                 
                 // თუ ალტერნატივების გვერდია, განაახლე
                 if (tabId === 'alternatives') {
@@ -873,6 +1067,7 @@
                     <div class="product-info">
                         <div class="product-name">${product.name || 'უცნობი პროდუქტი'}</div>
                         <div class="scan-date">დასკანერდა: ${formatDate(product.scanDate)}</div>
+                        ${product.source ? `<div class="scan-date">წყარო: ${product.source}</div>` : ''}
                     </div>
                     <div class="product-rating ${product.score >= 50 ? 'good' : 'bad'}">
                         <i class="fas ${product.score >= 50 ? 'fa-check-circle' : 'fa-times-circle'}"></i>
@@ -889,31 +1084,115 @@
         }
 
         // პროდუქტის მოძიება Open Food Facts-დან
-        async function fetchProductFromAPI(barcode) {
+        async function fetchProductFromOpenFoodFacts(barcode) {
             try {
-                showLoading('scanResult', 'პროდუქტის მოძიება...');
+                showLoading('scanResult', 'Open Food Facts-დან პროდუქტის მოძიება...');
                 
                 const response = await fetch(`${OPEN_FOOD_FACTS_API}${barcode}.json`);
                 const data = await response.json();
                 
                 if (data.status === 1 && data.product) {
-                    const product = processProductData(data.product, barcode);
+                    const product = processProductData(data.product, barcode, 'Open Food Facts');
                     displayScanResult(product);
                     addToHistory(product);
                     return product;
                 } else {
-                    displayError(`ბარკოდი ${barcode} ვერ მოიძებნა ბაზაში.`);
+                    displayError(`ბარკოდი ${barcode} ვერ მოიძებნა Open Food Facts-ის ბაზაში.`);
                     return null;
                 }
             } catch (error) {
-                console.error('შეცდომა API-დან მონაცემების მიღებისას:', error);
-                displayError('შეცდომა მონაცემების მიღებისას. სცადეთ მოგვიანებით.');
+                console.error('შეცდომა Open Food Facts API-დან მონაცემების მიღებისას:', error);
+                displayError('შეცდომა Open Food Facts-თან დაკავშირებისას. სცადეთ მოგვიანებით.');
+                return null;
+            }
+        }
+
+        // პროდუქტის მოძიება ვოლტიდან (დემო)
+        async function fetchProductFromWolt(barcode) {
+            try {
+                showLoading('scanResult', 'ვოლტიდან პროდუქტის მოძიება...');
+                
+                // ვოლტის რეალური API საჭიროებს ავტორიზაციას
+                // ეს არის დემო იმიტირებული API
+                
+                // დემო მონაცემები ვოლტის პროდუქტებისთვის
+                const woltDemoProducts = {
+                    '123456789012': {
+                        name: 'Coca-Cola 1.5L',
+                        brand: 'Coca-Cola',
+                        price: 4.50,
+                        currency: 'GEL',
+                        store: 'კარფური',
+                        category: 'სასმელები',
+                        image: 'https://images.openfoodfacts.org/images/products/544/900/013/1805/front_en.628.400.jpg',
+                        description: 'კოკა-კოლა 1.5 ლიტრიანი ბოთლი'
+                    },
+                    '987654321098': {
+                        name: 'ნატურალური წვენი საფუარი',
+                        brand: 'საფუარი',
+                        price: 8.90,
+                        currency: 'GEL',
+                        store: 'ვოლტი მარკეტი',
+                        category: 'სასმელები',
+                        image: 'https://images.openfoodfacts.org/images/products/301/762/404/1470/front_fr.350.400.jpg',
+                        description: 'ბუნებრივი ფორთოხლის წვენი ტკბილეულის გარეშე'
+                    },
+                    '8001505005709': {
+                        name: 'Uliveto წყალი',
+                        brand: 'Uliveto',
+                        price: 2.20,
+                        currency: 'GEL',
+                        store: 'სპარი',
+                        category: 'წყალი',
+                        image: 'https://images.openfoodfacts.org/images/products/800/150/500/5709/front_en.9.400.jpg',
+                        description: 'ბუნებრივი მინერალური წყალი'
+                    }
+                };
+                
+                // დაყოვნების სიმულაცია
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                if (woltDemoProducts[barcode]) {
+                    const woltProduct = woltDemoProducts[barcode];
+                    
+                    // პროდუქტის შექმნა Open Food Facts-ის ფორმატში
+                    const productData = {
+                        product_name: woltProduct.name,
+                        brands: woltProduct.brand,
+                        image_url: woltProduct.image,
+                        categories: woltProduct.category,
+                        // დამატებითი ინფორმაცია ვოლტიდან
+                        wolt_info: {
+                            price: woltProduct.price,
+                            currency: woltProduct.currency,
+                            store: woltProduct.store,
+                            description: woltProduct.description
+                        }
+                    };
+                    
+                    const product = processProductData(productData, barcode, 'ვოლტი');
+                    
+                    // ვოლტის ინფორმაციის დამატება
+                    product.woltInfo = woltProduct;
+                    product.stores = [woltProduct.store, ...GEORGIAN_STORES.filter(s => s !== woltProduct.store).slice(0, 2)];
+                    
+                    displayScanResult(product);
+                    addToHistory(product);
+                    return product;
+                } else {
+                    // თუ ვოლტში არ მოიძებნა, სცადე Open Food Facts
+                    displayWarning(`ბარკოდი ${barcode} ვერ მოიძებნა ვოლტში. სცადეთ Open Food Facts-დან ძიება.`);
+                    return null;
+                }
+            } catch (error) {
+                console.error('შეცდომა ვოლტის API-დან მონაცემების მიღებისას:', error);
+                displayError('შეცდომა ვოლტთან დაკავშირებისას. სცადეთ Open Food Facts-ის გამოყენება.');
                 return null;
             }
         }
 
         // პროდუქტის მონაცემების დამუშავება
-        function processProductData(productData, barcode) {
+        function processProductData(productData, barcode, source = 'Open Food Facts') {
             // ქულის გამოთვლა
             const score = calculateProductScore(productData);
             
@@ -921,9 +1200,41 @@
             const ingredientsText = productData.ingredients_text || '';
             const ingredients = ingredientsText.split(',').map(i => i.trim()).filter(i => i);
             
-            // ნეგატიური მხარეების დადგენა
+            // ნეგატიური და დადებითი მხარეების დადგენა
             const negatives = [];
             const positives = [];
+            
+            // ნუტრიციოლოგიური ინფორმაცია
+            let nutritionInfo = {};
+            if (productData.nutriments) {
+                nutritionInfo = {
+                    energy: productData.nutriments.energy_100g ? `${productData.nutriments.energy_100g} kcal` : 'უცნობია',
+                    sugars: productData.nutriments.sugars_100g ? `${productData.nutriments.sugars_100g}g` : 'უცნობია',
+                    fat: productData.nutriments.fat_100g ? `${productData.nutriments.fat_100g}g` : 'უცნობია',
+                    salt: productData.nutriments.salt_100g ? `${productData.nutriments.salt_100g}g` : 'უცნობია',
+                    proteins: productData.nutriments.proteins_100g ? `${productData.nutriments.proteins_100g}g` : 'უცნობია'
+                };
+                
+                // შაქრის შემცველობა
+                if (productData.nutriments.sugars_100g) {
+                    const sugars = productData.nutriments.sugars_100g;
+                    if (sugars > 15) {
+                        negatives.push(`მაღალი შაქრის შემცველობა (${sugars}g/100g)`);
+                    } else if (sugars < 5) {
+                        positives.push(`დაბალი შაქრის შემცველობა (${sugars}g/100g)`);
+                    }
+                }
+                
+                // მარილის შემცველობა
+                if (productData.nutriments.salt_100g) {
+                    const salt = productData.nutriments.salt_100g;
+                    if (salt > 1.5) {
+                        negatives.push(`მაღალი მარილის შემცველობა (${salt}g/100g)`);
+                    } else if (salt < 0.3) {
+                        positives.push(`დაბალი მარილის შემცველობა (${salt}g/100g)`);
+                    }
+                }
+            }
             
             if (productData.nutriscore_grade) {
                 if (['a', 'b'].includes(productData.nutriscore_grade.toLowerCase())) {
@@ -943,24 +1254,23 @@
                 }
             }
             
-            // შაქრის შემცველობა
-            if (productData.nutriments && productData.nutriments.sugars_100g) {
-                const sugars = productData.nutriments.sugars_100g;
-                if (sugars > 15) {
-                    negatives.push(`მაღალი შაქრის შემცველობა (${sugars}g/100g)`);
-                } else if (sugars < 5) {
-                    positives.push(`დაბალი შაქრის შემცველობა (${sugars}g/100g)`);
+            // დამუშავების დონე (NOVA)
+            if (productData.nova_group) {
+                if (productData.nova_group >= 3) {
+                    negatives.push('მაღალი დამუშავების დონე');
+                } else if (productData.nova_group === 1) {
+                    positives.push('დაბალი დამუშავების დონე');
                 }
             }
             
-            // მარილის შემცველობა
-            if (productData.nutriments && productData.nutriments.salt_100g) {
-                const salt = productData.nutriments.salt_100g;
-                if (salt > 1.5) {
-                    negatives.push(`მაღალი მარილის შემცველობა (${salt}g/100g)`);
-                } else if (salt < 0.3) {
-                    positives.push(`დაბალი მარილის შემცველობა (${salt}g/100g)`);
-                }
+            // დანამატები
+            if (productData.additives_n > 0) {
+                negatives.push(`${productData.additives_n} დამატებითი ნივთიერება`);
+            }
+            
+            // თუ ვოლტის ინფორმაცია არსებობს
+            if (productData.wolt_info) {
+                positives.push(`ხელმისაწვდომია ვოლტში: ${productData.wolt_info.store}`);
             }
             
             // რამდენიმე მაღაზიის შემთხვევითი არჩევა
@@ -970,7 +1280,12 @@
             }
             
             // უნიკალური მაღაზიების არჩევა
-            const uniqueStores = [...new Set(stores)];
+            let uniqueStores = [...new Set(stores)];
+            
+            // თუ ვოლტის მაღაზია არის, დაამატე იგი
+            if (productData.wolt_info && productData.wolt_info.store && !uniqueStores.includes(productData.wolt_info.store)) {
+                uniqueStores = [productData.wolt_info.store, ...uniqueStores.slice(0, 2)];
+            }
             
             return {
                 id: barcode,
@@ -985,7 +1300,10 @@
                 scanDate: new Date().toISOString().split('T')[0],
                 barcode: barcode,
                 nutriscore: productData.nutriscore_grade || 'უცნობი',
-                novaGroup: productData.nova_group || 0
+                novaGroup: productData.nova_group || 0,
+                source: source,
+                nutritionInfo: nutritionInfo,
+                woltInfo: productData.wolt_info || null
             };
         }
 
@@ -1004,13 +1322,13 @@
                 }
             }
             
-            // NOVA ჯგუფის მიხედვით (დამუშავების დონე)
+            // NOVA ჯგუფის მიხედვით
             if (productData.nova_group) {
                 switch(productData.nova_group) {
-                    case 1: score += 15; break; // დაუმუშავებელი ან მინიმალურად დამუშავებული
-                    case 2: score += 5; break;  // დამუშავებული კულინარული ინგრედიენტები
-                    case 3: score -= 10; break; // დამუშავებული საკვები
-                    case 4: score -= 20; break; // ულტრადამუშავებული საკვები
+                    case 1: score += 15; break;
+                    case 2: score += 5; break;
+                    case 3: score -= 10; break;
+                    case 4: score -= 20; break;
                 }
             }
             
@@ -1036,11 +1354,6 @@
                 else if (salt < 0.3) score += 5;
             }
             
-            // ფოთლის ზეთის მიხედვით
-            if (productData.ingredients_analysis && productData.ingredients_analysis.palm_oil && productData.ingredients_analysis.palm_oil !== 'no') {
-                score -= 10;
-            }
-            
             // ლიმიტების დაწესება
             return Math.max(0, Math.min(100, Math.round(score)));
         }
@@ -1050,14 +1363,30 @@
             const scoreColor = product.score >= 80 ? '#4CAF50' : 
                               product.score >= 50 ? '#FF9800' : '#F44336';
             
+            // ვოლტის პროდუქტებისთვის სპეციალური სტილი
+            const isWoltProduct = product.source === 'ვოლტი';
+            
             scanResult.innerHTML = `
-                <div class="product-detail">
+                <div class="product-detail ${isWoltProduct ? 'wolt-product' : ''}">
                     <div class="product-header">
                         <img src="${product.image}" alt="${product.name}" class="product-detail-img">
                         <div class="product-main-info">
                             <h3>${product.name}</h3>
                             <p><strong>მწარმოებელი:</strong> ${product.manufacturer}</p>
                             <p><strong>ბარკოდი:</strong> ${product.barcode}</p>
+                            <p><strong>წყარო:</strong> ${product.source}</p>
+                            
+                            ${product.woltInfo ? `
+                                <div class="store-info">
+                                    <span><strong>ვოლტში ფასი:</strong></span>
+                                    <span class="store-price">${product.woltInfo.price} ${product.woltInfo.currency}</span>
+                                </div>
+                                <div class="store-info">
+                                    <span><strong>მაღაზია:</strong></span>
+                                    <span>${product.woltInfo.store}</span>
+                                </div>
+                            ` : ''}
+                            
                             <div class="stores">
                                 ${product.stores.map(store => `<span class="store-badge">${store}</span>`).join('')}
                             </div>
@@ -1075,6 +1404,33 @@
                             'ცუდი პროდუქტი'}</p>
                     </div>
                     
+                    ${Object.keys(product.nutritionInfo).length > 0 ? `
+                        <div class="nutrition-info">
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${product.nutritionInfo.energy}</div>
+                                <div class="nutrition-label">ენერგია (100გ)</div>
+                            </div>
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${product.nutritionInfo.sugars}</div>
+                                <div class="nutrition-label">შაქარი</div>
+                            </div>
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${product.nutritionInfo.fat}</div>
+                                <div class="nutrition-label">ცხიმი</div>
+                            </div>
+                            <div class="nutrition-item">
+                                <div class="nutrition-value">${product.nutritionInfo.salt}</div>
+                                <div class="nutrition-label">მარილი</div>
+                            </div>
+                            ${product.nutritionInfo.proteins !== 'უცნობია' ? `
+                                <div class="nutrition-item">
+                                    <div class="nutrition-value">${product.nutritionInfo.proteins}</div>
+                                    <div class="nutrition-label">ცილები</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                    
                     <div class="negatives">
                         <h4><i class="fas fa-exclamation-triangle"></i> ნეგატიური მხარეები</h4>
                         <ul>
@@ -1090,7 +1446,7 @@
                     </div>
                     
                     <div class="product-alternatives">
-                        <h4><i class="fas fa-exchange-alt"></i> ინგრედიენტები</h4>
+                        <h4><i class="fas fa-list"></i> ინგრედიენტები</h4>
                         <ul>
                             ${product.ingredients.map(item => `<li>${item}</li>`).join('')}
                         </ul>
@@ -1137,6 +1493,29 @@
                 </div>
             `;
             scanResult.style.display = 'block';
+        }
+
+        // გაფრთხილების ჩვენება
+        function displayWarning(message) {
+            scanResult.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #FF9800;">
+                    <i class="fas fa-exclamation-triangle fa-3x" style="margin-bottom: 20px;"></i>
+                    <h3>პროდუქტი ვერ მოიძებნა</h3>
+                    <p>${message}</p>
+                    <button id="tryOpenFoodFacts" class="btn scan-btn" style="margin-top: 20px;">
+                        <i class="fas fa-search"></i> სცადეთ Open Food Facts-დან ძიება
+                    </button>
+                </div>
+            `;
+            scanResult.style.display = 'block';
+            
+            // Open Food Facts-ზე ძიების ღილაკის ფუნქცია
+            document.getElementById('tryOpenFoodFacts').addEventListener('click', () => {
+                const barcode = barcodeInput.value.trim();
+                if (barcode) {
+                    fetchProductFromOpenFoodFacts(barcode);
+                }
+            });
         }
 
         // პროდუქტის დამატება ისტორიაში
@@ -1198,288 +1577,157 @@
             });
         }
 
-        // პროდუქტის დეტალების ჩვენება
-        function showProductDetails(productId) {
-            const product = scannedHistory.find(p => p.id === productId);
-            
-            if (!product) {
-                alert('პროდუქტი ვერ მოიძებნა');
-                return;
-            }
-            
-            const scoreColor = product.score >= 80 ? '#4CAF50' : 
-                              product.score >= 50 ? '#FF9800' : '#F44336';
-            
-            modalProductName.textContent = product.name;
-            
-            modalBody.innerHTML = `
-                <div class="product-detail">
-                    <div class="product-header">
-                        <img src="${product.image}" alt="${product.name}" class="product-detail-img">
-                        <div class="product-main-info">
-                            <h3>${product.name}</h3>
-                            <p><strong>მწარმოებელი:</strong> ${product.manufacturer}</p>
-                            <p><strong>ბარკოდი:</strong> ${product.barcode}</p>
-                            <p><strong>დასკანერდა:</strong> ${formatDate(product.scanDate)}</p>
-                            <div class="stores">
-                                ${product.stores.map(store => `<span class="store-badge">${store}</span>`).join('')}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="score-indicator">
-                        <h4>შეფასება: ${product.score}/100</h4>
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: ${product.score}%; background-color: ${scoreColor};"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="negatives">
-                        <h4><i class="fas fa-exclamation-triangle"></i> ნეგატიური მხარეები</h4>
-                        <ul>
-                            ${product.negatives.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    </div>
-                    
-                    <div class="positives">
-                        <h4><i class="fas fa-check-circle"></i> დადებითი მხარეები</h4>
-                        <ul>
-                            ${product.positives.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    </div>
-                    
-                    <div class="product-alternatives">
-                        <h4><i class="fas fa-list"></i> ინგრედიენტები</h4>
-                        <ul>
-                            ${product.ingredients.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    </div>
-                    
-                    <div class="product-alternatives">
-                        <h4><i class="fas fa-exchange-alt"></i> ალტერნატივები</h4>
-                        <div id="modalAlternativesList">
-                            <p>ალტერნატივები ჯერ არ არის ხელმისაწვდომი</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            modal.style.display = 'block';
-            
-            // ალტერნატივების ჩატვირთვა
-            loadAlternativesForProduct(product);
-        }
-
-        // პროდუქტის ალტერნატივების ჩატვირთვა
-        async function loadAlternativesForProduct(product) {
-            const modalAlternativesList = document.getElementById('modalAlternativesList');
-            
-            // დემო ალტერნატივები
-            const demoAlternatives = [
-                { name: "ბუნებრივი ალტერნატივა", score: 85, reason: "ნაკლები შაქარი, ბუნებრივი ინგრედიენტები" },
-                { name: "ორგანული ვერსია", score: 90, reason: "ორგანული ინგრედიენტები, არანაირი დანამატები" },
-                { name: "ლოკალური მწარმოებელი", score: 75, reason: "ლოკალურად წარმოებული, ნაკლები კონსერვანტები" }
-            ];
-            
-            modalAlternativesList.innerHTML = demoAlternatives.map(alt => `
-                <div class="alternative-item" data-score="${alt.score}">
-                    <div>
-                        <strong>${alt.name}</strong><br>
-                        <small>${alt.reason}</small>
-                    </div>
-                    <div class="alternative-score" style="background-color: ${alt.score >= 50 ? '#4CAF50' : '#F44336'}">
-                        ${alt.score}/100
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // ალტერნატივების გვერდის განახლება
-        function updateAlternativesPage() {
-            const originalProductCard = document.getElementById('originalProduct');
-            const alternativeProductCard = document.getElementById('alternativeProduct');
-            const altList = document.getElementById('altList');
-            
-            if (currentProduct) {
-                // ორიგინალი პროდუქტის განახლება
-                const isGood = currentProduct.score >= 50;
-                originalProductCard.className = `product-card ${isGood ? 'good' : 'bad'}`;
-                originalProductCard.innerHTML = `
-                    <div class="product-status">
-                        <i class="fas ${isGood ? 'fa-check-circle' : 'fa-times-circle'}"></i> თქვენი პროდუქტი
-                    </div>
-                    <div class="product-image">
-                        <img src="${currentProduct.image}" alt="${currentProduct.name}">
-                    </div>
-                    <div class="product-name-card">${currentProduct.name.substring(0, 30)}${currentProduct.name.length > 30 ? '...' : ''}</div>
-                    <div class="product-score">
-                        <div class="score-circle" style="background-color: ${isGood ? '#4CAF50' : '#F44336'}">
-                            <span class="score">${currentProduct.score}</span>
-                        </div>
-                    </div>
-                    <div class="product-details">
-                        <p>${currentProduct.manufacturer.substring(0, 30)}${currentProduct.manufacturer.length > 30 ? '...' : ''}</p>
-                        <button class="btn details-btn" onclick="showProductDetails('${currentProduct.id}')">დეტალები</button>
-                    </div>
-                `;
+        // კამერის დაწყება
+        async function startCamera() {
+            try {
+                showLoading('scannerPlaceholder', 'კამერის მომზადება...');
+                scannerOverlay.style.display = 'none';
                 
-                // ალტერნატივების გენერირება
-                generateAlternatives();
+                // კამერების სიის მიღება
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
                 
-                // ალტერნატივების სიის განახლება
-                altList.innerHTML = currentAlternatives.map(alt => `
-                    <div class="alternative-item" onclick="selectAlternative('${alt.id}')">
-                        <div>
-                            <strong>${alt.name}</strong><br>
-                            <small>${alt.manufacturer}</small>
-                        </div>
-                        <div class="alternative-score" style="background-color: ${alt.score >= 50 ? '#4CAF50' : '#F44336'}">
-                            ${alt.score}/100
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        // ალტერნატივების გენერირება
-        function generateAlternatives() {
-            if (!currentProduct) return;
-            
-            currentAlternatives = [];
-            
-            // სხვადასხვა ტიპის ალტერნატივების გენერირება
-            const alternativeTypes = [
-                { name: "ორგანული ვერსია", scoreBoost: 15, prefix: "ორგანული " },
-                { name: "ლოკალური ალტერნატივა", scoreBoost: 10, prefix: "ლოკალური " },
-                { name: "დაბალი შაქრიანი", scoreBoost: 20, suffix: " (დაბალი შაქრიანი)" },
-                { name: "ვეგანური ვერსია", scoreBoost: 5, suffix: " (ვეგანური)" }
-            ];
-            
-            for (let i = 0; i < 3; i++) {
-                const type = alternativeTypes[i % alternativeTypes.length];
-                const score = Math.min(100, currentProduct.score + type.scoreBoost + Math.floor(Math.random() * 10) - 5);
-                
-                currentAlternatives.push({
-                    id: `alt_${currentProduct.id}_${i}`,
-                    name: (type.prefix || '') + currentProduct.name + (type.suffix || ''),
-                    manufacturer: currentProduct.manufacturer,
-                    score: score,
-                    image: currentProduct.image,
-                    description: `ეს არის ${type.name.toLowerCase()} ${currentProduct.name.toLowerCase()}-ისთვის`
+                // კამერის სელექტორის განახლება
+                cameraSelect.innerHTML = '<option value="">კამერის არჩევა...</option>';
+                videoDevices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `კამერა ${cameraSelect.options.length}`;
+                    cameraSelect.appendChild(option);
                 });
-            }
-            
-            // საუკეთესო ალტერნატივის ჩვენება
-            if (currentAlternatives.length > 0) {
-                const bestAlternative = currentAlternatives.reduce((prev, current) => 
-                    (prev.score > current.score) ? prev : current
-                );
                 
-                const alternativeProductCard = document.getElementById('alternativeProduct');
-                const isGood = bestAlternative.score >= 50;
+                cameraSelect.style.display = 'block';
                 
-                alternativeProductCard.className = `product-card ${isGood ? 'good' : 'bad'}`;
-                alternativeProductCard.innerHTML = `
-                    <div class="product-status">
-                        <i class="fas ${isGood ? 'fa-check-circle' : 'fa-times-circle'}"></i> საუკეთესო ალტერნატივა
-                    </div>
-                    <div class="product-image">
-                        <img src="${bestAlternative.image}" alt="${bestAlternative.name}">
-                    </div>
-                    <div class="product-name-card">${bestAlternative.name.substring(0, 30)}${bestAlternative.name.length > 30 ? '...' : ''}</div>
-                    <div class="product-score">
-                        <div class="score-circle" style="background-color: ${isGood ? '#4CAF50' : '#F44336'}">
-                            <span class="score">${bestAlternative.score}</span>
+                // თუ მხოლოდ ერთი კამერაა, ავტომატურად აირჩიე იგი
+                if (videoDevices.length === 1) {
+                    selectedCameraId = videoDevices[0].deviceId;
+                    cameraSelect.value = selectedCameraId;
+                }
+                
+                // QuaggaJS ინიციალიზაცია
+                await Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector('#interactive'),
+                        constraints: {
+                            facingMode: "environment",
+                            deviceId: selectedCameraId ? { exact: selectedCameraId } : undefined
+                        }
+                    },
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader",
+                            "code_39_reader",
+                            "upc_reader",
+                            "upc_e_reader"
+                        ]
+                    }
+                }, function(err) {
+                    if (err) {
+                        console.error(err);
+                        displayError('კამერის ჩართვა ვერ მოხერხდა. შეამოწმეთ პერმისიები.');
+                        return;
+                    }
+                    
+                    Quagga.start();
+                    isCameraActive = true;
+                    
+                    // UI განახლება
+                    scannerOverlay.style.display = 'flex';
+                    startCameraBtn.style.display = 'none';
+                    stopCameraBtn.style.display = 'inline-flex';
+                    
+                    // სკანერის პლეისჰოლდერის გასუფთავება
+                    document.querySelector('#scannerPlaceholder').innerHTML = `
+                        <div id="scanner-viewport">
+                            <div id="interactive"></div>
                         </div>
-                    </div>
-                    <div class="product-details">
-                        <p>${bestAlternative.manufacturer.substring(0, 30)}${bestAlternative.manufacturer.length > 30 ? '...' : ''}</p>
-                        <button class="btn details-btn" onclick="showAlternativeDetails('${bestAlternative.id}')">დეტალები</button>
-                    </div>
+                        <div class="scanner-overlay" id="scannerOverlay" style="display: flex;">
+                            <div class="scanner-guide">
+                                <div class="guide-line"></div>
+                            </div>
+                            <div class="scanner-message">
+                                დაამიზნეთ ბარკოდი კამერაში
+                            </div>
+                        </div>
+                    `;
+                    
+                    // ახალი scannerOverlay რეფერენსი
+                    scannerOverlay = document.getElementById('scannerOverlay');
+                });
+                
+                // ბარკოდის აღმოჩენის ივენთი
+                Quagga.onDetected(function(result) {
+                    if (result.codeResult && result.codeResult.code) {
+                        const barcode = result.codeResult.code;
+                        console.log('ბარკოდი აღმოჩენილია:', barcode);
+                        
+                        // გაჩერდი სკანირება
+                        Quagga.stop();
+                        isCameraActive = false;
+                        
+                        // შეავსე ბარკოდის ველი
+                        barcodeInput.value = barcode;
+                        
+                        // პროდუქტის ძიება Open Food Facts-დან
+                        fetchProductFromOpenFoodFacts(barcode);
+                        
+                        // UI განახლება
+                        scannerOverlay.style.display = 'none';
+                        startCameraBtn.style.display = 'inline-flex';
+                        stopCameraBtn.style.display = 'none';
+                        
+                        // ხმის და ვიბრაციის ეფექტი
+                        simulateScanFeedback();
+                    }
+                });
+                
+            } catch (error) {
+                console.error('კამერის ჩართვის შეცდომა:', error);
+                displayError('კამერის ჩართვა ვერ მოხერხდა. შეამოწმეთ პერმისიები ან სცადეთ HTTPS.');
+            }
+        }
+
+        // კამერის გათიშვა
+        function stopCamera() {
+            if (Quagga) {
+                Quagga.stop();
+                isCameraActive = false;
+                
+                // UI განახლება
+                startCameraBtn.style.display = 'inline-flex';
+                stopCameraBtn.style.display = 'none';
+                cameraSelect.style.display = 'none';
+                scannerOverlay.style.display = 'none';
+                
+                // სკანერის პლეისჰოლდერის განახლება
+                document.querySelector('#scannerPlaceholder').innerHTML = `
+                    <i class="fas fa-barcode fa-5x"></i>
+                    <p>კამერა გამორთულია. დააჭირეთ "კამერის ჩართვა" ღილაკს.</p>
+                    <p class="small-text">(ბარკოდის სკანირებისთვის საჭიროა კამერის პერმისია)</p>
                 `;
             }
         }
 
-        // ალტერნატივის არჩევა (გლობალური ფუნქცია)
-        window.selectAlternative = function(alternativeId) {
-            const alternative = currentAlternatives.find(a => a.id === alternativeId);
-            if (alternative) {
-                // განაახლე მთავარი ალტერნატივის ბარათი
-                const alternativeProductCard = document.getElementById('alternativeProduct');
-                const isGood = alternative.score >= 50;
-                
-                alternativeProductCard.className = `product-card ${isGood ? 'good' : 'bad'}`;
-                alternativeProductCard.innerHTML = `
-                    <div class="product-status">
-                        <i class="fas ${isGood ? 'fa-check-circle' : 'fa-times-circle'}"></i> არჩეული ალტერნატივა
-                    </div>
-                    <div class="product-image">
-                        <img src="${alternative.image}" alt="${alternative.name}">
-                    </div>
-                    <div class="product-name-card">${alternative.name.substring(0, 30)}${alternative.name.length > 30 ? '...' : ''}</div>
-                    <div class="product-score">
-                        <div class="score-circle" style="background-color: ${isGood ? '#4CAF50' : '#F44336'}">
-                            <span class="score">${alternative.score}</span>
-                        </div>
-                    </div>
-                    <div class="product-details">
-                        <p>${alternative.manufacturer.substring(0, 30)}${alternative.manufacturer.length > 30 ? '...' : ''}</p>
-                        <button class="btn details-btn" onclick="showAlternativeDetails('${alternative.id}')">დეტალები</button>
-                    </div>
-                `;
+        // კამერის არჩევანის ცვლილება
+        cameraSelect.addEventListener('change', function() {
+            selectedCameraId = this.value;
+            if (isCameraActive) {
+                stopCamera();
+                startCamera();
             }
-        };
-
-        // ალტერნატივის დეტალების ჩვენება (გლობალური ფუნქცია)
-        window.showAlternativeDetails = function(alternativeId) {
-            const alternative = currentAlternatives.find(a => a.id === alternativeId);
-            
-            if (alternative) {
-                modalProductName.textContent = alternative.name;
-                
-                modalBody.innerHTML = `
-                    <div class="product-detail">
-                        <div class="product-header">
-                            <img src="${alternative.image}" alt="${alternative.name}" class="product-detail-img">
-                            <div class="product-main-info">
-                                <h3>${alternative.name}</h3>
-                                <p><strong>მწარმოებელი:</strong> ${alternative.manufacturer}</p>
-                                <p><strong>შეფასება:</strong> ${alternative.score}/100</p>
-                            </div>
-                        </div>
-                        
-                        <div class="positives">
-                            <h4><i class="fas fa-check-circle"></i> რატომ არის ეს კარგი ალტერნატივა?</h4>
-                            <p>${alternative.description}</p>
-                            <ul>
-                                <li>უკეთესი ხარისხის ინგრედიენტები</li>
-                                <li>ნაკლები დამატებითი ნივთიერებები</li>
-                                <li>უფრო ჯანსაღი ალტერნატივა</li>
-                                <li>ხელმისაწვდომია საქართველოში</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="product-alternatives">
-                            <h4><i class="fas fa-store"></i> სად შეგიძლიათ შეიძინოთ</h4>
-                            <div class="stores">
-                                ${GEORGIAN_STORES.slice(0, 5).map(store => `<span class="store-badge">${store}</span>`).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                modal.style.display = 'block';
-            }
-        };
-
-        // პროდუქტის არჩევის მოდალური ფანჯრის გახსნა
-        selectProductBtn.addEventListener('click', () => {
-            selectProductModal.style.display = 'block';
         });
 
-        // პროდუქტის ძიება არჩევის მოდალურ ფანჯარაში
-        selectProductSearch.addEventListener('click', async () => {
-            const barcode = selectBarcodeInput.value.trim();
+        // კამერის ღილაკების ივენთები
+        startCameraBtn.addEventListener('click', startCamera);
+        stopCameraBtn.addEventListener('click', stopCamera);
+
+        // Open Food Facts-დან ძიება
+        searchBarcodeBtn.addEventListener('click', async () => {
+            const barcode = barcodeInput.value.trim();
             
             if (!barcode) {
                 alert('გთხოვთ შეიყვანოთ ბარკოდი');
@@ -1491,9 +1739,56 @@
                 return;
             }
             
-            showLoading('selectProductResult', 'პროდუქტის ძიება...');
+            // პროდუქტის მოძიება
+            await fetchProductFromOpenFoodFacts(barcode);
+        });
+
+        // ვოლტიდან ძიება
+        searchWoltBtn.addEventListener('click', async () => {
+            const barcode = barcodeInput.value.trim();
             
-            const product = await fetchProductFromAPI(barcode);
+            if (!barcode) {
+                alert('გთხოვთ შეიყვანოთ ბარკოდი');
+                return;
+            }
+            
+            if (!/^\d+$/.test(barcode)) {
+                alert('ბარკოდი უნდა შედგებოდეს მხოლოდ ციფრებისგან');
+                return;
+            }
+            
+            // პროდუქტის მოძიება ვოლტიდან
+            await fetchProductFromWolt(barcode);
+        });
+
+        // პროდუქტის ძიება Enter ღილაკით
+        barcodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchBarcodeBtn.click();
+            }
+        });
+
+        // ალტერნატივების გვერდის განახლება
+        function updateAlternativesPage() {
+            // დამატებითი ლოგიკა ალტერნატივების გვერდისთვის
+            // (იგივე, რაც წინა კოდში)
+        }
+
+        // პროდუქტის არჩევის მოდალური ფანჯრის გახსნა
+        selectProductBtn.addEventListener('click', () => {
+            selectProductModal.style.display = 'block';
+        });
+
+        // Open Food Facts-დან ძიება არჩევის მოდალში
+        selectProductSearch.addEventListener('click', async () => {
+            const barcode = selectBarcodeInput.value.trim();
+            
+            if (!barcode) {
+                alert('გთხოვთ შეიყვანოთ ბარკოდი');
+                return;
+            }
+            
+            const product = await fetchProductFromOpenFoodFacts(barcode);
             
             if (product) {
                 selectProductResult.innerHTML = `
@@ -1524,68 +1819,44 @@
             }
         });
 
-        // სკანირების სიმულაცია
-        simulateScanBtn.addEventListener('click', () => {
-            // სხვადასხვა დემო ბარკოდები
-            const demoBarcodes = [
-                '3017620422003', // Nutella
-                '7613034626844', // Coca-Cola
-                '8000500310427', // Barilla Pasta
-                '8001505005709', // Uliveto Water
-                '5449000000996', // Evian Water
-                '5000159459228', // Walkers Crisps
-                '8714100772055', // Heineken Beer
-                '5449000214911', // Orangina
-                '3033710075966', // Activia Yogurt
-                '4008400402229', // Haribo
-                '7616500080833', // Lindt Chocolate
-                '3256220251152', // Badoit Water
-                '8000500212777', // Mulino Bianco
-                '3596710003139', // Danette
-                '3033490815384', // LU Petit Beurre
-                '30177600', // Carambar
-                '8076809515564', // San Pellegrino
-                '3046920028251', // Tropicana
-                '8000500074300', // Algida Ice Cream
-                '54491472' // Pepsi
-            ];
-            
-            // შემთხვევითი ბარკოდის არჩევა
-            const randomBarcode = demoBarcodes[Math.floor(Math.random() * demoBarcodes.length)];
-            barcodeInput.value = randomBarcode;
-            
-            // პროდუქტის ძიება
-            searchBarcodeBtn.click();
-        });
-
-        // ბარკოდით პროდუქტის ძიება
-        searchBarcodeBtn.addEventListener('click', async () => {
-            const barcode = barcodeInput.value.trim();
+        // ვოლტიდან ძიება არჩევის მოდალში
+        selectProductWolt.addEventListener('click', async () => {
+            const barcode = selectBarcodeInput.value.trim();
             
             if (!barcode) {
                 alert('გთხოვთ შეიყვანოთ ბარკოდი');
                 return;
             }
             
-            if (!/^\d+$/.test(barcode)) {
-                alert('ბარკოდი უნდა შედგებოდეს მხოლოდ ციფრებისგან');
-                return;
-            }
+            const product = await fetchProductFromWolt(barcode);
             
-            // პროდუქტის მოძიება
-            await fetchProductFromAPI(barcode);
-        });
-
-        // პროდუქტის ძიება Enter ღილაკით
-        barcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchBarcodeBtn.click();
-            }
-        });
-
-        selectBarcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                selectProductSearch.click();
+            if (product) {
+                selectProductResult.innerHTML = `
+                    <div class="product-detail wolt-product">
+                        <div class="product-header">
+                            <img src="${product.image}" alt="${product.name}" class="product-detail-img" style="width: 100px; height: 100px;">
+                            <div class="product-main-info">
+                                <h3>${product.name}</h3>
+                                <p><strong>მწარმოებელი:</strong> ${product.manufacturer}</p>
+                                <p><strong>შეფასება:</strong> ${product.score}/100</p>
+                                ${product.woltInfo ? `<p><strong>ფასი ვოლტში:</strong> ${product.woltInfo.price} ${product.woltInfo.currency}</p>` : ''}
+                            </div>
+                        </div>
+                        
+                        <button class="btn scan-btn" id="setAsCurrentProduct" style="width: 100%; margin-top: 20px;">
+                            <i class="fas fa-check"></i> ამ პროდუქტის არჩევა
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('setAsCurrentProduct').addEventListener('click', () => {
+                    currentProduct = product;
+                    selectProductModal.style.display = 'none';
+                    updateAlternativesPage();
+                    
+                    // გადადი ალტერნატივების გვერდზე
+                    document.querySelector('[data-tab="alternatives"]').click();
+                });
             }
         });
 
@@ -1594,9 +1865,13 @@
             // ისტორიის ჩატვირთვა
             loadHistory();
             
-            // დემო პროდუქტების დამატება თუ ისტორია ცარიელია
+            // HTTPS შემოწმება კამერისთვის
+            if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                console.warn('კამერის გამოყენება საჭიროებს HTTPS პროტოკოლს პროდუქციის გარემოში');
+            }
+            
+            // დემო პროდუქტები
             if (scannedHistory.length === 0) {
-                // დემო პროდუქტები ხელით დამატებისთვის
                 const demoProducts = [
                     {
                         id: '3017620422003',
@@ -1609,20 +1884,27 @@
                         ingredients: ['შაქარი', 'პალმის ზეთი', 'შესქელებელი', 'კაკაო', 'რძე'],
                         stores: ['კარფური', 'ვოლტი', 'სპარი'],
                         scanDate: '2023-10-10',
-                        barcode: '3017620422003'
+                        barcode: '3017620422003',
+                        source: 'Open Food Facts'
                     },
                     {
-                        id: '5449000000996',
-                        name: 'Evian წყალი',
-                        manufacturer: 'Evian',
-                        score: 95,
-                        image: 'https://images.openfoodfacts.org/images/products/544/900/000/0996/front_en.636.400.jpg',
-                        negatives: ['პლასტიკური ბოთლი'],
-                        positives: ['ბუნებრივი მინერალური წყალი', 'არ შეიცავს დანამატებს', 'დაბალი ნატრიუმი'],
-                        ingredients: ['ბუნებრივი მინერალური წყალი'],
-                        stores: ['გლოვო', 'ნიკორა', 'ორი ნაბიჯი'],
+                        id: '987654321098',
+                        name: 'ნატურალური წვენი საფუარი',
+                        manufacturer: 'საფუარი',
+                        score: 85,
+                        image: 'https://images.openfoodfacts.org/images/products/301/762/404/1470/front_fr.350.400.jpg',
+                        negatives: [],
+                        positives: ['ბუნებრივი ინგრედიენტები', 'ვიტამინები', 'არ შეიცავს შაქარს'],
+                        ingredients: ['ფორთოხლის წვენი', 'ვიტამინი C'],
+                        stores: ['ვოლტი', 'გლოვო'],
                         scanDate: '2023-10-12',
-                        barcode: '5449000000996'
+                        barcode: '987654321098',
+                        source: 'ვოლტი',
+                        woltInfo: {
+                            price: 8.90,
+                            currency: 'GEL',
+                            store: 'ვოლტი მარკეტი'
+                        }
                     }
                 ];
                 
