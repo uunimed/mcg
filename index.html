@@ -14,339 +14,360 @@
         body {
             background-color: #000;
             color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Georgia', 'Times New Roman', serif;
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            width: 100%;
         }
         
-        /* Gradient background effect */
+        /* Subtle gradient background - stretched to edges */
         body::before {
             content: '';
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background: 
-                radial-gradient(circle at 20% 50%, rgba(30, 30, 60, 0.8) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(40, 30, 40, 0.6) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(20, 30, 50, 0.7) 0%, transparent 50%);
+                linear-gradient(135deg, rgba(10, 10, 20, 0.95) 0%, rgba(20, 15, 30, 0.95) 100%);
             z-index: -1;
         }
         
         .main-text {
-            font-size: 3rem;
-            font-weight: 700;
+            font-size: 3.5rem;
+            font-weight: 600;
             text-align: center;
             color: #fff;
-            line-height: 1.2;
-            text-shadow: 
-                0 0 20px rgba(255, 255, 255, 0.3),
-                0 0 40px rgba(100, 150, 255, 0.2);
-            letter-spacing: 0.5px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 1200px;
-            padding: 0 20px;
+            line-height: 1;
             white-space: nowrap;
-        }
-        
-        /* Decorative line under text */
-        .main-text::after {
-            content: '';
-            position: absolute;
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 300px;
-            height: 2px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                rgba(100, 150, 255, 0.8) 50%, 
-                transparent 100%);
+            text-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.5px;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 200px;
+            z-index: 10;
+            overflow: hidden;
+            box-sizing: border-box;
         }
         
         .animation-container {
             position: fixed;
             bottom: 0;
             left: 0;
-            width: 100%;
+            width: 100vw;
             height: 180px;
             z-index: 100;
         }
         
-        /* Floor at the very bottom */
+        /* Simple floor - stretched */
         .floor {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 60px;
-            background: 
-                linear-gradient(to top, #111 0%, #222 100%),
-                repeating-linear-gradient(
-                    90deg,
-                    transparent 0px,
-                    transparent 95px,
-                    rgba(255, 255, 255, 0.05) 95px,
-                    rgba(255, 255, 255, 0.05) 100px
-                );
+            height: 50px;
+            background: linear-gradient(to top, #111 0%, #222 100%);
         }
         
+        /* Attractive running man */
         .running-man {
             position: absolute;
-            bottom: 60px; /* Positioned right above the floor */
-            left: -100px;
-            width: 120px;
-            height: 160px;
-            animation: run 14s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+            bottom: 50px;
+            left: -150px;
+            width: 150px;
+            height: 200px;
+            animation: run 12s linear infinite;
             z-index: 10;
         }
         
-        .man-body {
-            position: absolute;
-            width: 40px;
-            height: 70px;
-            background: linear-gradient(to bottom, #3a86ff 0%, #2a76ef 100%);
-            border-radius: 20px 20px 0 0;
-            top: 30px;
-            left: 40px;
-            box-shadow: 
-                inset 0 -5px 10px rgba(0, 0, 0, 0.3),
-                0 5px 15px rgba(58, 134, 255, 0.2);
-        }
-        
+        /* HEAD - Clean and attractive */
         .head {
             position: absolute;
-            width: 50px;
-            height: 50px;
+            width: 70px;
+            height: 75px;
             background: linear-gradient(135deg, #ffcc99 0%, #e6b980 100%);
             border-radius: 50%;
-            top: 0;
-            left: 35px;
+            top: 10px;
+            left: 40px;
             box-shadow: 
                 0 4px 8px rgba(0, 0, 0, 0.3),
-                inset 0 -5px 10px rgba(0, 0, 0, 0.2);
+                inset 0 -2px 4px rgba(0, 0, 0, 0.2);
         }
         
+        /* HAIR */
+        .hair {
+            position: absolute;
+            width: 75px;
+            height: 30px;
+            background: #333;
+            border-radius: 40px 40px 0 0;
+            top: 0;
+            left: -2.5px;
+        }
+        
+        /* EYES - Removed white background */
         .eyes {
             position: absolute;
-            width: 30px;
-            height: 8px;
+            width: 45px;
+            height: 20px;
             top: 30px;
-            left: 10px;
+            left: 12px;
         }
         
         .eye {
             position: absolute;
-            width: 6px;
-            height: 6px;
-            background: #333;
+            width: 10px;
+            height: 10px;
+            background: #222;
             border-radius: 50%;
+            top: 5px;
+            animation: eyeBlink 5s infinite;
         }
         
         .eye.left {
-            left: 5px;
+            left: 10px;
         }
         
         .eye.right {
-            right: 5px;
+            right: 10px;
         }
         
+        /* SMILE - Simplified */
+        .smile {
+            position: absolute;
+            width: 30px;
+            height: 15px;
+            border-bottom: 3px solid #ff6666;
+            border-radius: 0 0 50% 50%;
+            top: 50px;
+            left: 20px;
+        }
+        
+        /* BODY - Athletic look */
+        .body {
+            position: absolute;
+            width: 50px;
+            height: 80px;
+            background: linear-gradient(to bottom, #4169E1 0%, #2E5AC1 100%);
+            border-radius: 25px 25px 0 0;
+            top: 85px;
+            left: 50px;
+            box-shadow: 
+                inset 0 -5px 10px rgba(0, 0, 0, 0.2),
+                0 5px 15px rgba(65, 105, 225, 0.3);
+        }
+        
+        /* ARMS - Both waving */
+        .arm {
+            position: absolute;
+            width: 18px;
+            height: 70px;
+            background: linear-gradient(to bottom, #4169E1 0%, #2E5AC1 100%);
+            top: 90px;
+            border-radius: 9px;
+            z-index: 5;
+            transform-origin: top center;
+        }
+        
+        .arm.left {
+            left: 30px;
+            animation: waveArmLeft 1.2s ease-in-out infinite;
+        }
+        
+        .arm.right {
+            right: 30px;
+            animation: waveArmRight 1.2s ease-in-out infinite;
+        }
+        
+        .hand {
+            position: absolute;
+            width: 20px;
+            height: 16px;
+            background: #ffcc99;
+            border-radius: 50%;
+            bottom: -4px;
+            left: -1px;
+            animation: waveHand 1.2s ease-in-out infinite;
+        }
+        
+        /* LEGS - Athletic */
         .leg {
             position: absolute;
-            width: 16px;
-            height: 50px;
-            background: linear-gradient(to bottom, #2667cc 0%, #1a56bb 100%);
-            top: 100px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            width: 20px;
+            height: 75px;
+            background: linear-gradient(to bottom, #2E5AC1 0%, #1E4AB1 100%);
+            top: 165px;
+            border-radius: 10px;
         }
         
-        .left-leg {
-            left: 40px;
+        .leg.left {
+            left: 55px;
             transform-origin: top center;
-            animation: legMove 0.7s ease-in-out infinite alternate;
+            animation: legSwing 0.6s ease-in-out infinite alternate;
         }
         
-        .right-leg {
-            right: 40px;
+        .leg.right {
+            right: 55px;
             transform-origin: top center;
-            animation: legMove 0.7s ease-in-out infinite alternate-reverse;
+            animation: legSwing 0.6s ease-in-out infinite alternate-reverse;
         }
         
         .shoe {
             position: absolute;
-            width: 20px;
-            height: 10px;
-            background: #111;
-            border-radius: 10px 10px 4px 4px;
-            bottom: -10px;
-            left: -2px;
-        }
-        
-        .arm {
-            position: absolute;
-            width: 14px;
-            height: 45px;
-            background: linear-gradient(to bottom, #3a86ff 0%, #2a76ef 100%);
-            top: 35px;
-            border-radius: 7px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        .left-arm {
-            left: 25px;
-            transform-origin: top center;
-            animation: armMove 0.7s ease-in-out infinite alternate;
-        }
-        
-        .right-arm {
-            right: 25px;
-            transform-origin: top center;
-            animation: armMove 0.7s ease-in-out infinite alternate-reverse;
-        }
-        
-        /* Running dust effect at bottom */
-        .dust {
-            position: absolute;
-            width: 35px;
+            width: 25px;
             height: 12px;
-            background: rgba(255, 255, 255, 0.15);
+            background: #222;
+            border-radius: 12px 12px 4px 4px;
+            bottom: -8px;
+            left: -2.5px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* RUNNING EFFECT - Simplified */
+        .running-effect {
+            position: absolute;
+            width: 40px;
+            height: 15px;
+            background: rgba(50, 50, 50, 0.2);
             border-radius: 50%;
-            bottom: 55px;
+            bottom: 45px;
             filter: blur(3px);
-            animation: dustEffect 0.4s ease-out infinite;
+            animation: runningEffect 0.5s ease-out infinite;
             opacity: 0;
         }
         
-        .dust-left {
+        .effect-left {
             left: 20px;
-            animation-delay: 0.35s;
+            animation-delay: 0.3s;
         }
         
-        .dust-right {
+        .effect-right {
             right: 20px;
             animation-delay: 0s;
         }
         
-        /* Dynamic background elements */
-        .background-elements {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: calc(100% - 180px); /* Don't cover the animation area */
-            pointer-events: none;
-        }
-        
-        .bg-element {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 50%;
-            animation: float 20s infinite linear;
-        }
-        
-        /* Running animation */
+        /* ANIMATIONS */
         @keyframes run {
             0% {
-                left: -120px;
-                transform: scaleX(1) translateY(0);
-            }
-            25% {
-                transform: scaleX(1) translateY(-8px);
+                left: -150px;
+                transform: scaleX(1);
             }
             49% {
-                transform: scaleX(1) translateY(0);
+                transform: scaleX(1);
             }
             50% {
-                left: calc(100% + 20px);
-                transform: scaleX(-1) translateY(0);
-            }
-            75% {
-                transform: scaleX(-1) translateY(-8px);
+                left: 100vw;
+                transform: scaleX(-1);
             }
             99% {
-                transform: scaleX(-1) translateY(0);
+                transform: scaleX(-1);
             }
             100% {
-                left: -120px;
-                transform: scaleX(1) translateY(0);
+                left: -150px;
+                transform: scaleX(1);
             }
         }
         
-        @keyframes legMove {
+        @keyframes legSwing {
             0% {
-                transform: rotate(-30deg);
+                transform: rotate(-25deg);
             }
             100% {
-                transform: rotate(40deg);
+                transform: rotate(25deg);
             }
         }
         
-        @keyframes armMove {
-            0% {
+        /* Waving animations for both arms */
+        @keyframes waveArmLeft {
+            0%, 100% {
                 transform: rotate(30deg);
             }
-            100% {
-                transform: rotate(-30deg);
+            50% {
+                transform: rotate(-20deg);
             }
         }
         
-        @keyframes dustEffect {
+        @keyframes waveArmRight {
+            0%, 100% {
+                transform: rotate(-30deg);
+            }
+            50% {
+                transform: rotate(20deg);
+            }
+        }
+        
+        @keyframes waveHand {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(10deg);
+            }
+            75% {
+                transform: rotate(-10deg);
+            }
+        }
+        
+        @keyframes runningEffect {
             0% {
                 opacity: 0;
                 transform: translateY(0) scale(0.5);
             }
             50% {
-                opacity: 0.4;
-                transform: translateY(-8px) scale(1.1);
+                opacity: 0.3;
+                transform: translateY(-10px) scale(1);
             }
             100% {
                 opacity: 0;
-                transform: translateY(-16px) scale(1.3);
+                transform: translateY(-20px) scale(1.2);
             }
         }
         
-        @keyframes float {
-            0%, 100% {
-                transform: translate(0, 0);
+        /* Eye blink animation */
+        @keyframes eyeBlink {
+            0%, 90%, 100% {
+                height: 10px;
             }
-            25% {
-                transform: translate(20px, 20px);
-            }
-            50% {
-                transform: translate(-15px, 30px);
-            }
-            75% {
-                transform: translate(30px, -10px);
+            95% {
+                height: 2px;
             }
         }
         
-        /* Responsive adjustments */
-        @media (max-width: 1024px) {
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1200px) {
+            .main-text {
+                font-size: 3rem;
+            }
+        }
+        
+        @media (max-width: 900px) {
             .main-text {
                 font-size: 2.5rem;
-                white-space: normal;
-                line-height: 1.3;
+                padding: 15px;
             }
         }
         
         @media (max-width: 768px) {
             .main-text {
-                font-size: 2rem;
+                font-size: 2.2rem;
                 white-space: normal;
-                line-height: 1.4;
+                line-height: 1.2;
+                margin-bottom: 150px;
+                padding: 10px;
             }
             
             .running-man {
-                width: 100px;
-                height: 140px;
-                bottom: 50px;
+                width: 120px;
+                height: 160px;
+                bottom: 40px;
             }
             
             .animation-container {
@@ -356,15 +377,17 @@
         
         @media (max-width: 480px) {
             .main-text {
-                font-size: 1.6rem;
+                font-size: 1.8rem;
                 white-space: normal;
-                line-height: 1.5;
+                line-height: 1.3;
+                margin-bottom: 120px;
+                padding: 8px;
             }
             
             .running-man {
-                width: 80px;
-                height: 120px;
-                bottom: 40px;
+                width: 100px;
+                height: 140px;
+                bottom: 30px;
             }
             
             .animation-container {
@@ -372,20 +395,16 @@
             }
         }
         
-        /* Smooth performance optimization */
-        .running-man, .leg, .arm, .dust {
-            will-change: transform;
+        /* Small mobile screens */
+        @media (max-width: 360px) {
+            .main-text {
+                font-size: 1.5rem;
+                padding: 5px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="background-elements">
-        <!-- Background floating elements -->
-        <div class="bg-element" style="width: 100px; height: 100px; top: 20%; left: 10%; animation-duration: 25s;"></div>
-        <div class="bg-element" style="width: 60px; height: 60px; top: 60%; left: 80%; animation-duration: 30s;"></div>
-        <div class="bg-element" style="width: 80px; height: 80px; top: 40%; left: 70%; animation-duration: 22s;"></div>
-    </div>
-    
     <div class="main-text">
         ექთანი პაციენტთანაა და გამოცხადდება პოსტთან უახლოეს დროში
     </div>
@@ -393,100 +412,140 @@
     <div class="animation-container">
         <div class="floor"></div>
         <div class="running-man">
+            <!-- Head -->
             <div class="head">
+                <div class="hair"></div>
                 <div class="eyes">
                     <div class="eye left"></div>
                     <div class="eye right"></div>
                 </div>
+                <div class="smile"></div>
             </div>
-            <div class="man-body"></div>
-            <div class="leg left-leg">
+            
+            <!-- Body -->
+            <div class="body">
+            </div>
+            
+            <!-- Arms - Both waving -->
+            <div class="arm left">
+                <div class="hand"></div>
+            </div>
+            <div class="arm right">
+                <div class="hand"></div>
+            </div>
+            
+            <!-- Legs -->
+            <div class="leg left">
                 <div class="shoe"></div>
             </div>
-            <div class="leg right-leg">
+            <div class="leg right">
                 <div class="shoe"></div>
             </div>
-            <div class="arm left-arm"></div>
-            <div class="arm right-arm"></div>
-            <div class="dust dust-left"></div>
-            <div class="dust dust-right"></div>
+            
+            <!-- Running effects -->
+            <div class="running-effect effect-left"></div>
+            <div class="running-effect effect-right"></div>
         </div>
     </div>
 
     <script>
-        // Advanced animation with smooth performance
         document.addEventListener('DOMContentLoaded', () => {
-            const runningMan = document.querySelector('.running-man');
-            
-            // Create additional dust particles dynamically
-            function createDustParticles() {
+            // Create additional running effects
+            function createRunningEffects() {
                 const container = document.querySelector('.running-man');
                 for (let i = 0; i < 4; i++) {
-                    const dust = document.createElement('div');
-                    dust.className = 'dust';
-                    dust.style.left = i % 2 === 0 ? '20px' : '85px';
-                    dust.style.animationDelay = `${i * 0.2}s`;
-                    container.appendChild(dust);
+                    const effect = document.createElement('div');
+                    effect.className = 'running-effect';
+                    effect.style.left = i % 2 === 0 ? '20px' : '110px';
+                    effect.style.animationDelay = `${i * 0.15}s`;
+                    container.appendChild(effect);
                 }
             }
             
-            // Create floating background elements dynamically
-            function createBackgroundElements() {
-                const bgContainer = document.querySelector('.background-elements');
-                for (let i = 0; i < 8; i++) {
-                    const element = document.createElement('div');
-                    element.className = 'bg-element';
-                    const size = Math.random() * 80 + 20;
-                    element.style.width = `${size}px`;
-                    element.style.height = `${size}px`;
-                    element.style.top = `${Math.random() * 80}%`;
-                    element.style.left = `${Math.random() * 100}%`;
-                    element.style.animationDuration = `${Math.random() * 20 + 15}s`;
-                    element.style.opacity = Math.random() * 0.03 + 0.01;
-                    bgContainer.appendChild(element);
-                }
-            }
-            
-            // Add subtle hover effect to text
-            const mainText = document.querySelector('.main-text');
-            mainText.addEventListener('mouseenter', () => {
-                mainText.style.transform = 'translate(-50%, -50%) scale(1.02)';
-                mainText.style.transition = 'transform 0.3s ease';
-            });
-            
-            mainText.addEventListener('mouseleave', () => {
-                mainText.style.transform = 'translate(-50%, -50%) scale(1)';
-            });
-            
-            // Parallax effect on mouse move (only for background elements)
-            document.addEventListener('mousemove', (e) => {
-                const x = e.clientX / window.innerWidth;
-                const y = e.clientY / window.innerHeight;
-                
-                const bgElements = document.querySelectorAll('.bg-element');
-                bgElements.forEach((el, index) => {
-                    const speed = 0.05 + index * 0.01;
-                    const xMove = (x - 0.5) * 30 * speed;
-                    const yMove = (y - 0.5) * 30 * speed;
-                    el.style.transform = `translate(${xMove}px, ${yMove}px)`;
+            // Add eye blink variation
+            function addEyeVariation() {
+                const eyes = document.querySelectorAll('.eye');
+                eyes.forEach(eye => {
+                    const delay = Math.random() * 3;
+                    eye.style.animationDelay = `${delay}s`;
                 });
-            });
+            }
+            
+            // Add occasional enthusiastic wave
+            function addEnthusiasticWave() {
+                const arms = document.querySelectorAll('.arm');
+                const hands = document.querySelectorAll('.hand');
+                
+                setInterval(() => {
+                    if (Math.random() > 0.7) {
+                        arms.forEach(arm => {
+                            arm.style.animationPlayState = 'paused';
+                            arm.style.animation = 'none';
+                            
+                            // Big wave
+                            if (arm.classList.contains('left')) {
+                                arm.style.transform = 'rotate(60deg)';
+                            } else {
+                                arm.style.transform = 'rotate(-60deg)';
+                            }
+                        });
+                        
+                        hands.forEach(hand => {
+                            hand.style.animationPlayState = 'paused';
+                            hand.style.animation = 'none';
+                            hand.style.transform = 'rotate(20deg)';
+                        });
+                        
+                        // Reset after wave
+                        setTimeout(() => {
+                            arms.forEach(arm => {
+                                arm.style.animation = '';
+                                arm.style.animationPlayState = 'running';
+                                arm.style.transform = '';
+                            });
+                            
+                            hands.forEach(hand => {
+                                hand.style.animation = '';
+                                hand.style.animationPlayState = 'running';
+                                hand.style.transform = '';
+                            });
+                        }, 800);
+                    }
+                }, 5000);
+            }
+            
+            // Stretch everything to edges
+            function stretchToEdges() {
+                // Ensure body takes full width
+                document.body.style.width = '100vw';
+                document.body.style.maxWidth = '100vw';
+                
+                // Ensure main text uses full width
+                const mainText = document.querySelector('.main-text');
+                mainText.style.width = '100%';
+                mainText.style.paddingLeft = '0';
+                mainText.style.paddingRight = '0';
+                mainText.style.marginLeft = '0';
+                mainText.style.marginRight = '0';
+                
+                // Adjust text for mobile
+                if (window.innerWidth <= 768) {
+                    mainText.style.whiteSpace = 'normal';
+                    mainText.style.lineHeight = '1.3';
+                } else {
+                    mainText.style.whiteSpace = 'nowrap';
+                    mainText.style.lineHeight = '1';
+                }
+            }
             
             // Initialize
-            createDustParticles();
-            createBackgroundElements();
+            createRunningEffects();
+            addEyeVariation();
+            addEnthusiasticWave();
+            stretchToEdges();
             
-            // Make text stay on one line for larger screens
-            function checkTextLine() {
-                if (window.innerWidth >= 1024) {
-                    mainText.style.whiteSpace = 'nowrap';
-                } else {
-                    mainText.style.whiteSpace = 'normal';
-                }
-            }
-            
-            window.addEventListener('resize', checkTextLine);
-            checkTextLine();
+            // Handle resize
+            window.addEventListener('resize', stretchToEdges);
         });
     </script>
 </body>
