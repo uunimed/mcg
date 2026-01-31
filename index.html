@@ -3,1029 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>კლინიკების მოსაძებნი - საქართველო</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>კლინიკების საძიებო სისტემა - საქართველო</title>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=ka"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --main-bg: #f0f2f5;
+            --primary-color: #007bff;
+            --dark-blue: #1a2a6c;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        
+
         body {
-            background-color: #f0f7ff;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--main-bg);
+            margin: 0;
             color: #333;
-            line-height: 1.6;
         }
-        
-        .container {
+
+        /* Header & Search */
+        .app-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
-        
+
         header {
-            background: linear-gradient(to right, #1e3c72, #2a5298);
-            color: white;
-            padding: 25px 0;
             text-align: center;
-            border-radius: 0 0 15px 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-        
-        header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .location-header {
-            background-color: #e6f2ff;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-        
-        .location-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .location-icon {
-            background-color: #2a5298;
+            background: linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d);
             color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-        
-        .search-section {
-            background-color: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin: 25px 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-        
-        .search-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .search-input {
-            flex: 1;
-            min-width: 300px;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: #2a5298;
-        }
-        
-        .search-btn {
-            background-color: #2a5298;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .search-btn:hover {
-            background-color: #1e3c72;
-        }
-        
-        .filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .filter-btn {
-            padding: 10px 20px;
-            background-color: #e6f2ff;
-            border: 1px solid #b3d1ff;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .filter-btn.active {
-            background-color: #2a5298;
-            color: white;
-            border-color: #2a5298;
-        }
-        
-        .filter-btn:hover {
-            background-color: #cce0ff;
-        }
-        
-        .clinics-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
-        }
-        
-        .clinic-card {
-            background-color: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .clinic-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-        }
-        
-        .clinic-header {
-            background: linear-gradient(to right, #2a5298, #4a6fb5);
-            color: white;
-            padding: 20px;
-            position: relative;
-        }
-        
-        .clinic-status {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        
-        .open {
-            background-color: #4CAF50;
-        }
-        
-        .closed {
-            background-color: #f44336;
-        }
-        
-        .clinic-name {
-            font-size: 1.4rem;
-            margin-bottom: 5px;
-        }
-        
-        .clinic-type {
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-        
-        .clinic-body {
-            padding: 20px;
-        }
-        
-        .clinic-info {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-        
-        .clinic-info i {
-            color: #2a5298;
-            margin-top: 3px;
-        }
-        
-        .services-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 5px;
-        }
-        
-        .service-tag {
-            background-color: #e6f2ff;
-            padding: 5px 10px;
+            padding: 40px 20px;
             border-radius: 15px;
-            font-size: 0.85rem;
-            color: #1e3c72;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
         }
-        
-        .clinic-footer {
-            padding: 15px 20px;
-            background-color: #f9f9f9;
-            border-top: 1px solid #eee;
+
+        .search-box {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
         }
-        
-        .details-btn, .map-btn {
-            padding: 10px 20px;
-            border-radius: 6px;
+
+        input[type="text"] {
+            width: 60%;
+            padding: 15px;
             border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            outline: none;
         }
-        
-        .details-btn {
-            background-color: #f0f7ff;
-            color: #2a5298;
-            border: 1px solid #2a5298;
-        }
-        
-        .details-btn:hover {
-            background-color: #e0eeff;
-        }
-        
-        .map-btn {
-            background-color: #2a5298;
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            background: var(--dark-blue);
             color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.3s;
         }
-        
-        .map-btn:hover {
-            background-color: #1e3c72;
+
+        button:hover {
+            background: #000;
+            transform: scale(1.05);
         }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2rem;
-            color: #2a5298;
+
+        /* Results Grid */
+        #clinic-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
         }
-        
-        .map-container {
-            margin-top: 40px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            height: 500px;
-            display: none;
+
+        .clinic-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: 0.3s;
+            border-left: 5px solid #28a745;
         }
-        
-        #map {
-            height: 100%;
-            width: 100%;
+
+        .clinic-card:hover {
+            transform: translateY(-10px);
         }
-        
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .open { background: #d4edda; color: #155724; }
+        .closed { background: #f8d7da; color: #721c24; }
+
+        /* Popup Box Styles */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
+            z-index: 1000;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            overflow-y: auto;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
         }
-        
+
         .modal-content {
-            background-color: white;
-            margin: 50px auto;
+            background: white;
+            margin: 5% auto;
             padding: 30px;
             width: 90%;
-            max-width: 800px;
-            border-radius: 12px;
+            max-width: 650px;
+            border-radius: 20px;
             position: relative;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.4s ease-out;
         }
-        
-        .close-modal {
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-btn {
             position: absolute;
+            right: 20px;
             top: 20px;
-            right: 25px;
-            font-size: 1.8rem;
+            font-size: 24px;
             cursor: pointer;
-            color: #666;
         }
-        
-        .modal-header {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .modal-body {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-        }
-        
-        .info-section {
-            margin-bottom: 20px;
-        }
-        
-        .info-section h3 {
-            color: #2a5298;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #e6f2ff;
-        }
-        
-        .doctors-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-        }
-        
-        .doctor-tag {
-            background-color: #f0f7ff;
-            padding: 10px;
-            border-radius: 6px;
-            border-left: 4px solid #2a5298;
-        }
-        
-        .rating {
-            color: #FFA500;
-            font-size: 1.2rem;
-        }
-        
-        .feature-list {
-            list-style-type: none;
-        }
-        
-        .feature-list li {
-            margin-bottom: 8px;
-            padding-left: 25px;
-            position: relative;
-        }
-        
-        .feature-list li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #4CAF50;
-            font-weight: bold;
-        }
-        
-        footer {
+
+        .map-btn {
+            display: block;
+            width: 100%;
             text-align: center;
-            margin-top: 50px;
-            padding: 20px;
-            color: #666;
-            border-top: 1px solid #e0e0e0;
-        }
-        
-        @media (max-width: 768px) {
-            .clinics-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .search-controls {
-                flex-direction: column;
-            }
-            
-            .search-input {
-                min-width: 100%;
-            }
-            
-            .modal-content {
-                width: 95%;
-                margin: 20px auto;
-                padding: 20px;
-            }
-            
-            .map-container {
-                height: 400px;
-            }
+            background: #28a745;
+            margin-top: 20px;
+            text-decoration: none;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
+
+<div class="app-container">
     <header>
-        <div class="container">
-            <h1><i class="fas fa-clinic-medical"></i> კლინიკების მოსაძებნი - საქართველო</h1>
-            <p>იპოვეთ უახლოესი კლინიკა თქვენს მდებარეობაზე დაყრდნობით ან მოძებნეთ კლინიკა სახელის, სერვისის ან მისამართის მიხედვით</p>
+        <h1>საქართველოს კლინიკების ერთიანი ბაზა</h1>
+        <p>ავტომატური ძიება თქვენს მდებარეობასთან ახლოს</p>
+        <div class="search-box">
+            <input type="text" id="manualSearch" placeholder="ჩაწერეთ კლინიკის სახელი ან ქალაქი...">
+            <button onclick="handleSearch()">ძებნა</button>
         </div>
     </header>
 
-    <main class="container">
-        <div class="location-header">
-            <div class="location-info">
-                <div class="location-icon">
-                    <i class="fas fa-map-marker-alt"></i>
-                </div>
-                <div>
-                    <h3>თქვენი მდებარეობა</h3>
-                    <p id="user-location">მდებარეობის განსაზღვრა მიმდინარეობს...</p>
-                </div>
-            </div>
-            <button id="refresh-location" class="search-btn">
-                <i class="fas fa-sync-alt"></i> განაახლეთ მდებარეობა
-            </button>
+    <div id="clinic-list">
         </div>
+</div>
 
-        <section class="search-section">
-            <h2><i class="fas fa-search"></i> კლინიკის ძიება</h2>
-            <div class="search-controls">
-                <input type="text" class="search-input" id="search-input" placeholder="შეიყვანეთ კლინიკის სახელი, სერვისი ან მისამართი...">
-                <button class="search-btn" id="search-btn">
-                    <i class="fas fa-search"></i> ძიება
-                </button>
+<div id="clinicModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div id="modalBody">
             </div>
-            
-            <div class="filters">
-                <span>ფილტრები:</span>
-                <button class="filter-btn active" data-filter="all">ყველა</button>
-                <button class="filter-btn" data-filter="open">მხოლოდ გახსნილი</button>
-                <button class="filter-btn" data-filter="24h">24/7</button>
-                <button class="filter-btn" data-filter="emergency">სასწრაფო</button>
-                <button class="filter-btn" data-filter="tbilisi">თბილისი</button>
-                <button class="filter-btn" data-filter="region">რეგიონი</button>
-            </div>
-        </section>
-
-        <div id="loading-message" class="loading">
-            <i class="fas fa-spinner fa-spin"></i> კლინიკების ძიება თქვენს მდებარეობაზე დაყრდნობით...
-        </div>
-
-        <div id="clinics-container" class="clinics-container">
-            <!-- კლინიკების ბარათები აქ გამოჩნდება -->
-        </div>
-
-        <div class="map-container" id="map-container">
-            <div id="map"></div>
-        </div>
-    </main>
-
-    <!-- დეტალური ინფორმაციის მოდალური ფანჯარა -->
-    <div id="clinic-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" id="close-modal">&times;</span>
-            <div class="modal-header">
-                <h2 id="modal-clinic-name">კლინიკის სახელი</h2>
-                <p id="modal-clinic-address">მისამართი</p>
-            </div>
-            <div class="modal-body">
-                <div class="info-section">
-                    <h3>სერვისები</h3>
-                    <div id="modal-services" class="services-list"></div>
-                </div>
-                
-                <div class="info-section">
-                    <h3>ექიმები</h3>
-                    <div id="modal-doctors" class="doctors-list"></div>
-                </div>
-                
-                <div class="info-section">
-                    <h3>კონტაქტი</h3>
-                    <p><i class="fas fa-phone"></i> <strong>ტელეფონი:</strong> <span id="modal-phone"></span></p>
-                    <p><i class="fas fa-envelope"></i> <strong>ელ. ფოსტა:</strong> <span id="modal-email"></span></p>
-                    <p><i class="fas fa-globe"></i> <strong>ვებსაიტი:</strong> <span id="modal-website"></span></p>
-                </div>
-                
-                <div class="info-section">
-                    <h3>დამატებითი ინფორმაცია</h3>
-                    <ul id="modal-details" class="feature-list"></ul>
-                </div>
-                
-                <div class="info-section">
-                    <h3>რეიტინგი</h3>
-                    <p><span id="modal-rating" class="rating">★★★★★</span> <span id="modal-reviews"></span></p>
-                    <p id="modal-insurance"></p>
-                </div>
-            </div>
-        </div>
     </div>
+</div>
 
-    <footer class="container">
-        <p>კლინიკების მოსაძებნი სისტემა საქართველოში &copy; 2023</p>
-        <p>ინფორმაცია ავტომატურად მოძიებულია ღია წყაროებიდან</p>
-    </footer>
+<script>
+    let service;
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // ქართული კლინიკების მონაცემები (სიმულაციური მონაცემები რეალური API-დან მოძიების ილუსტრაციისთვის)
-        const clinicsData = [
-            {
-                id: 1,
-                name: "ევექსის სამედიცინო ცენტრი",
-                address: "თბილისი, ვაჟა-ფშაველას გამზ. #29",
-                services: ["თერაპია", "ქირურგია", "კარდიოლოგია", "ნევროლოგია", "პედიატრია"],
-                doctors: ["თერაპევტი", "ქირურგი", "კარდიოლოგი", "ნევროლოგი", "პედიატრი"],
-                phone: "+995 32 2 55 00 00",
-                email: "info@evexclinics.ge",
-                website: "https://www.evex.ge",
-                latitude: 41.7326,
-                longitude: 44.7683,
-                isOpen: true,
-                is24h: false,
-                isEmergency: true,
-                city: "თბილისი",
-                rating: 4.7,
-                reviews: 1243,
-                insurance: ["თბს", "არდი", "ირიდო", "საერთაშორისო დაზღვევები"],
-                details: ["საერთაშორისო აღიარება", "JCI აკრედიტირებული", "გერმანიის პარტნიორები", "ინოვაციური დიაგნოსტიკა"]
-            },
-            {
-                id: 2,
-                name: "იუნიმედის კლინიკა",
-                address: "თბილისი, ლისის ქ. #5",
-                services: ["სასწრაფო დახმარება", "ტრავმატოლოგია", "ორთოპედია", "ფიზიოთერაპია"],
-                doctors: ["რეანიმატოლოგი", "ტრავმატოლოგი", "ორთოპედი", "ფიზიოთერაპევტი"],
-                phone: "+995 32 2 60 60 60",
-                email: "contact@unimed.ge",
-                website: "https://www.unimed.ge",
-                latitude: 41.7259,
-                longitude: 44.7896,
-                isOpen: true,
-                is24h: true,
-                isEmergency: true,
-                city: "თბილისი",
-                rating: 4.5,
-                reviews: 892,
-                insurance: ["თბს", "არდი", "ალდაგი", "სახელმწიფო დაზღვევა"],
-                details: ["24/7 სასწრაფო", "საერთაშორისო სტანდარტები", "გერმანული აღჭურვილობა", "მოწინავე რეანიმაცია"]
-            },
-            {
-                id: 3,
-                name: "ინგოროყვას კარდიოლოგიური კლინიკა",
-                address: "თბილისი, ნუცუბიძის ქ. #7",
-                services: ["კარდიოლოგია", "კარდიოქირურგია", "ანგიოგრაფია", "ეკო-კარდიოგრაფია"],
-                doctors: ["კარდიოლოგი", "კარდიოქირურგი", "ანესთეზიოლოგი", "რეანიმატოლოგი"],
-                phone: "+995 32 2 00 22 00",
-                email: "info@ingorokva.ge",
-                website: "https://www.ingorokva.ge",
-                latitude: 41.7086,
-                longitude: 44.7901,
-                isOpen: true,
-                is24h: false,
-                isEmergency: false,
-                city: "თბილისი",
-                rating: 4.8,
-                reviews: 756,
-                insurance: ["თბს", "არდი", "ირიდო", "საერთაშორისო დაზღვევები"],
-                details: ["ევროპული სტანდარტები", "გერმანული აღჭურვილობა", "საერთაშორისო ექსპერტები", "კვლევითი ცენტრი"]
-            },
-            {
-                id: 4,
-                name: "კავკასიის სამედიცინო ცენტრი",
-                address: "ბათუმი, რუსთაველის ქ. #100",
-                services: ["მთლიანი დიაგნოსტიკა", "ლაბორატორიული გამოკვლევები", "ჰოსპიტალიზაცია", "რეაბილიტაცია"],
-                doctors: ["თერაპევტი", "დიაგნოსტი", "ლაბორანტი", "რეაბილიტოლოგი"],
-                phone: "+995 422 27 77 77",
-                email: "info@cmc.ge",
-                website: "https://www.cmc.ge",
-                latitude: 41.6453,
-                longitude: 41.6415,
-                isOpen: true,
-                is24h: false,
-                isEmergency: true,
-                city: "ბათუმი",
-                rating: 4.4,
-                reviews: 543,
-                insurance: ["თბს", "არდი", "სახელმწიფო დაზღვევა", "სიგნა"],
-                details: ["აჭარის ლიდერი", "მოწინავე დიაგნოსტიკა", "ევროპული პარტნიორები", "სრული სერვისები"]
-            },
-            {
-                id: 5,
-                name: "გურიის რეგიონული სამედიცინო ცენტრი",
-                address: "ოზურგეთი, ქუთაისის ქ. #15",
-                services: ["ძირითადი მედიცინა", "პედიატრია", "გინეკოლოგია", "სტომატოლოგია"],
-                doctors: ["მიმღები ექიმი", "პედიატრი", "გინეკოლოგი", "სტომატოლოგი"],
-                phone: "+995 493 5 55 55",
-                email: "guriamc@posta.ge",
-                website: "https://www.guriamc.ge",
-                latitude: 41.9242,
-                longitude: 42.0006,
-                isOpen: true,
-                is24h: false,
-                isEmergency: false,
-                city: "ოზურგეთი",
-                rating: 4.2,
-                reviews: 321,
-                insurance: ["სახელმწიფო დაზღვევა", "თბს", "სოციალური დაზღვევა"],
-                details: ["რეგიონალური ცენტრი", "სოციალური პროგრამები", "ხარისხის უზრუნველყოფა", "ადგილობრივი ექიმები"]
-            },
-            {
-                id: 6,
-                name: "საქართველოს ეპიდემიოლოგიის კლინიკა",
-                address: "თბილისი, ასათიანის ქ. #9",
-                services: ["ეპიდემიოლოგიური კვლევები", "ინფექციური დაავადებები", "ვაქცინაცია", "პროფილაქტიკა"],
-                doctors: ["ეპიდემიოლოგი", "ინფექციონისტი", "მიკრობიოლოგი", "ვირუსოლოგი"],
-                phone: "+995 32 2 33 33 33",
-                email: "epidemiology@georgia.ge",
-                website: "https://www.epid.ge",
-                latitude: 41.6945,
-                longitude: 44.8006,
-                isOpen: true,
-                is24h: true,
-                isEmergency: true,
-                city: "თბილისი",
-                rating: 4.6,
-                reviews: 432,
-                insurance: ["სახელმწიფო დაზღვევა", "თბს", "არდი", "სამთავრობო პროგრამები"],
-                details: ["ეროვნული ცენტრი", "WHO პარტნიორი", "კვლევითი ლაბორატორია", "საერთაშორისო პროექტები"]
-            }
-        ];
+    // 1. აპლიკაციის ინიციალიზაცია და ლოკაციის პოვნა
+    function initApp() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const userCoords = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                findNearbyClinics(userCoords);
+            }, () => {
+                alert("გთხოვთ ჩართოთ ლოკაცია უკეთესი ძიებისთვის.");
+                // თუ ლოკაცია გამორთულია, ვეძებთ ზოგადად თბილისში
+                findNearbyClinics({lat: 41.7151, lng: 44.8271});
+            });
+        }
+    }
 
-        // გლობალური ცვლადები
-        let userLocation = { lat: 41.7151, lng: 44.8271, city: "თბილისი" }; // ნაგლისპლასის ცენტრი დეფოლტად
-        let map = null;
-        let markers = [];
-        let currentFilter = "all";
-        
-        // DOM ელემენტები
-        const clinicsContainer = document.getElementById('clinics-container');
-        const searchInput = document.getElementById('search-input');
-        const searchBtn = document.getElementById('search-btn');
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const userLocationElement = document.getElementById('user-location');
-        const refreshLocationBtn = document.getElementById('refresh-location');
-        const loadingMessage = document.getElementById('loading-message');
-        const mapContainer = document.getElementById('map-container');
-        const clinicModal = document.getElementById('clinic-modal');
-        const closeModalBtn = document.getElementById('close-modal');
+    // 2. კლინიკების მოძიება Google Places API-დან
+    function findNearbyClinics(coords) {
+        const pyrmont = new google.maps.LatLng(coords.lat, coords.lng);
+        const mapDiv = document.createElement('div');
+        service = new google.maps.places.PlacesService(mapDiv);
 
-        // მომხმარებლის მდებარეობის მოძიება
-        function getUserLocation() {
-            loadingMessage.style.display = 'block';
-            clinicsContainer.innerHTML = '';
-            
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        userLocation.lat = position.coords.latitude;
-                        userLocation.lng = position.coords.longitude;
-                        
-                        // სიმულაცია - მდებარეობის დასახელების მიღება
-                        getLocationName(userLocation.lat, userLocation.lng);
-                        
-                        // კლინიკების ჩვენება
-                        setTimeout(() => {
-                            displayClinics(clinicsData);
-                            loadingMessage.style.display = 'none';
-                        }, 1000);
-                    },
-                    (error) => {
-                        console.error("მდებარეობის მოძიების შეცდომა:", error);
-                        userLocationElement.textContent = "თბილისი, საქართველო (დეფოლტი მდებარეობა)";
-                        displayClinics(clinicsData);
-                        loadingMessage.style.display = 'none';
-                    }
-                );
-            } else {
-                userLocationElement.textContent = "თბილისი, საქართველო (დეფოლტი მდებარეობა)";
-                displayClinics(clinicsData);
-                loadingMessage.style.display = 'none';
+        const request = {
+            location: pyrmont,
+            radius: '10000', // 10 კმ რადიუსში
+            type: ['hospital']
+        };
+
+        service.nearbySearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                renderClinics(results);
             }
-        }
-        
-        // მდებარეობის დასახელების მიღება (სიმულაცია რეალური API-სთვის)
-        function getLocationName(lat, lng) {
-            // სიმულაცია - რეალური API-სთვის გამოვიყენებდით Google Geocoding API-ს ან OpenStreetMap Nominatim-ს
-            const cities = [
-                { name: "თბილისი", latMin: 41.6, latMax: 41.8, lngMin: 44.7, lngMax: 45.0 },
-                { name: "ბათუმი", latMin: 41.6, latMax: 41.7, lngMin: 41.6, lngMax: 41.7 },
-                { name: "ქუთაისი", latMin: 42.2, latMax: 42.3, lngMin: 42.6, lngMax: 42.7 },
-                { name: "რუსთავი", latMin: 41.5, latMax: 41.6, lngMin: 44.9, lngMax: 45.0 },
-                { name: "ზუგდიდი", latMin: 42.5, latMax: 42.6, lngMin: 41.8, lngMax: 41.9 },
-                { name: "გორი", latMin: 41.9, latMax: 42.0, lngMin: 44.0, lngMax: 44.2 },
-                { name: "ოზურგეთი", latMin: 41.9, latMax: 42.0, lngMin: 42.0, lngMax: 42.1 }
-            ];
-            
-            for (const city of cities) {
-                if (lat >= city.latMin && lat <= city.latMax && lng >= city.lngMin && lng <= city.lngMax) {
-                    userLocation.city = city.name;
-                    userLocationElement.textContent = `${city.name}, საქართველო`;
-                    return;
-                }
-            }
-            
-            userLocationElement.textContent = "საქართველო";
-        }
-        
-        // კლინიკების დისტანციის გამოთვლა
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // დედამიწის რადიუსი კმ-ში
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-        
-        // კლინიკების დალაგება დისტანციის და სტატუსის მიხედვით
-        function sortClinics(clinics) {
-            return clinics.sort((a, b) => {
-                // ჯერ სტატუსის მიხედვით (გახსნილი და 24/7 პირველად)
-                if (a.isOpen && a.is24h && !(b.isOpen && b.is24h)) return -1;
-                if (!(a.isOpen && a.is24h) && b.isOpen && b.is24h) return 1;
-                
-                if (a.isOpen && !b.isOpen) return -1;
-                if (!a.isOpen && b.isOpen) return 1;
-                
-                // შემდეგ დისტანციის მიხედვით
-                const distA = calculateDistance(userLocation.lat, userLocation.lng, a.latitude, a.longitude);
-                const distB = calculateDistance(userLocation.lat, userLocation.lng, b.latitude, b.longitude);
-                return distA - distB;
-            });
-        }
-        
-        // კლინიკების ჩვენება
-        function displayClinics(clinics) {
-            clinicsContainer.innerHTML = '';
-            
-            // ფილტრაცია
-            let filteredClinics = clinics.filter(clinic => {
-                if (currentFilter === "all") return true;
-                if (currentFilter === "open") return clinic.isOpen;
-                if (currentFilter === "24h") return clinic.is24h;
-                if (currentFilter === "emergency") return clinic.isEmergency;
-                if (currentFilter === "tbilisi") return clinic.city === "თბილისი";
-                if (currentFilter === "region") return clinic.city !== "თბილისი";
-                return true;
-            });
-            
-            // დალაგება
-            filteredClinics = sortClinics(filteredClinics);
-            
-            // ბარათების შექმნა
-            filteredClinics.forEach(clinic => {
-                const distance = calculateDistance(userLocation.lat, userLocation.lng, clinic.latitude, clinic.longitude);
-                const clinicCard = document.createElement('div');
-                clinicCard.className = 'clinic-card';
-                clinicCard.innerHTML = `
-                    <div class="clinic-header">
-                        <div class="clinic-status ${clinic.isOpen ? 'open' : 'closed'}">
-                            ${clinic.isOpen ? (clinic.is24h ? '24/7 ღიაა' : 'ღიაა') : 'დახურულია'}
-                        </div>
-                        <h3 class="clinic-name">${clinic.name}</h3>
-                        <p class="clinic-type">${clinic.city} • ${distance.toFixed(1)} კმ</p>
-                    </div>
-                    <div class="clinic-body">
-                        <div class="clinic-info">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>${clinic.address}</span>
-                        </div>
-                        <div class="clinic-info">
-                            <i class="fas fa-stethoscope"></i>
-                            <div>
-                                <strong>სერვისები:</strong>
-                                <div class="services-list">
-                                    ${clinic.services.slice(0, 3).map(service => `<span class="service-tag">${service}</span>`).join('')}
-                                    ${clinic.services.length > 3 ? `<span class="service-tag">+${clinic.services.length - 3}</span>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="clinic-info">
-                            <i class="fas fa-user-md"></i>
-                            <div>
-                                <strong>ექიმები:</strong>
-                                <div class="services-list">
-                                    ${clinic.doctors.slice(0, 3).map(doctor => `<span class="service-tag">${doctor}</span>`).join('')}
-                                    ${clinic.doctors.length > 3 ? `<span class="service-tag">+${clinic.doctors.length - 3}</span>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="clinic-info">
-                            <i class="fas fa-phone"></i>
-                            <span>${clinic.phone}</span>
-                        </div>
-                    </div>
-                    <div class="clinic-footer">
-                        <button class="details-btn" data-id="${clinic.id}">
-                            <i class="fas fa-info-circle"></i> დეტალები
-                        </button>
-                        <button class="map-btn" data-id="${clinic.id}">
-                            <i class="fas fa-map"></i> რუკა
-                        </button>
-                    </div>
-                `;
-                clinicsContainer.appendChild(clinicCard);
-            });
-            
-            // დეტალების ღილაკების დამატება
-            document.querySelectorAll('.details-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const clinicId = parseInt(this.getAttribute('data-id'));
-                    showClinicDetails(clinicId);
-                });
-            });
-            
-            // რუკის ღილაკების დამატება
-            document.querySelectorAll('.map-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const clinicId = parseInt(this.getAttribute('data-id'));
-                    showMapWithClinic(clinicId);
-                });
-            });
-            
-            // რუკის ინიციალიზაცია
-            initMap();
-        }
-        
-        // კლინიკის დეტალების ჩვენება
-        function showClinicDetails(clinicId) {
-            const clinic = clinicsData.find(c => c.id === clinicId);
-            if (!clinic) return;
-            
-            // მოდალური ფანჯრის შევსება
-            document.getElementById('modal-clinic-name').textContent = clinic.name;
-            document.getElementById('modal-clinic-address').textContent = clinic.address;
-            
-            // სერვისები
-            const servicesContainer = document.getElementById('modal-services');
-            servicesContainer.innerHTML = '';
-            clinic.services.forEach(service => {
-                const serviceTag = document.createElement('span');
-                serviceTag.className = 'service-tag';
-                serviceTag.textContent = service;
-                servicesContainer.appendChild(serviceTag);
-            });
-            
-            // ექიმები
-            const doctorsContainer = document.getElementById('modal-doctors');
-            doctorsContainer.innerHTML = '';
-            clinic.doctors.forEach(doctor => {
-                const doctorTag = document.createElement('div');
-                doctorTag.className = 'doctor-tag';
-                doctorTag.textContent = doctor;
-                doctorsContainer.appendChild(doctorTag);
-            });
-            
-            // კონტაქტი
-            document.getElementById('modal-phone').textContent = clinic.phone;
-            document.getElementById('modal-email').textContent = clinic.email;
-            document.getElementById('modal-website').innerHTML = `<a href="${clinic.website}" target="_blank">${clinic.website}</a>`;
-            
-            // დეტალები
-            const detailsContainer = document.getElementById('modal-details');
-            detailsContainer.innerHTML = '';
-            clinic.details.forEach(detail => {
-                const li = document.createElement('li');
-                li.textContent = detail;
-                detailsContainer.appendChild(li);
-            });
-            
-            // რეიტინგი
-            document.getElementById('modal-reviews').textContent = `(${clinic.reviews} შეფასება)`;
-            
-            // დაზღვევა
-            document.getElementById('modal-insurance').textContent = `დაზღვევა: ${clinic.insurance.join(', ')}`;
-            
-            // მოდალური ფანჯრის ჩვენება
-            clinicModal.style.display = 'block';
-        }
-        
-        // რუკის ჩვენება კლინიკით
-        function showMapWithClinic(clinicId) {
-            const clinic = clinicsData.find(c => c.id === clinicId);
-            if (!clinic) return;
-            
-            // რუკის კონტეინერის ჩვენება
-            mapContainer.style.display = 'block';
-            
-            // რუკის ინიციალიზაცია
-            if (!map) {
-                initMap();
-            }
-            
-            // რუკის ცენტრირება
-            map.setView([clinic.latitude, clinic.longitude], 14);
-            
-            // მარკერების გასუფთავება
-            markers.forEach(marker => map.removeLayer(marker));
-            markers = [];
-            
-            // მომხმარებლის მდებარეობის მარკერი
-            const userMarker = L.marker([userLocation.lat, userLocation.lng], {
-                icon: L.divIcon({
-                    html: '<div style="background-color: #2a5298; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
-                    iconSize: [24, 24],
-                    className: 'user-marker'
-                })
-            }).addTo(map);
-            
-            userMarker.bindPopup("<b>თქვენი მდებარეობა</b>").openPopup();
-            markers.push(userMarker);
-            
-            // კლინიკის მარკერი
-            const clinicIcon = L.divIcon({
-                html: '<div style="background-color: #e74c3c; width: 28px; height: 28px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;"><i class="fas fa-hospital"></i></div>',
-                iconSize: [28, 28],
-                className: 'clinic-marker'
-            });
-            
-            const clinicMarker = L.marker([clinic.latitude, clinic.longitude], {
-                icon: clinicIcon
-            }).addTo(map);
-            
-            clinicMarker.bindPopup(`
-                <b>${clinic.name}</b><br>
-                <i>${clinic.address}</i><br>
-                <b>ტელ:</b> ${clinic.phone}<br>
-                <b>სტატუსი:</b> ${clinic.isOpen ? (clinic.is24h ? '24/7 ღიაა' : 'ღიაა') : 'დახურულია'}
-            `).openPopup();
-            markers.push(clinicMarker);
-            
-            // ჩანართზე გადასვლა
-            setTimeout(() => {
-                mapContainer.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
-        }
-        
-        // რუკის ინიციალიზაცია
-        function initMap() {
-            if (map) return;
-            
-            map = L.map('map').setView([userLocation.lat, userLocation.lng], 12);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 18
-            }).addTo(map);
-        }
-        
-        // ძიების ფუნქცია
-        function searchClinics() {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            
-            if (!searchTerm) {
-                displayClinics(clinicsData);
-                return;
-            }
-            
-            const filteredClinics = clinicsData.filter(clinic => 
-                clinic.name.toLowerCase().includes(searchTerm) ||
-                clinic.address.toLowerCase().includes(searchTerm) ||
-                clinic.services.some(service => service.toLowerCase().includes(searchTerm)) ||
-                clinic.doctors.some(doctor => doctor.toLowerCase().includes(searchTerm)) ||
-                clinic.city.toLowerCase().includes(searchTerm)
-            );
-            
-            displayClinics(filteredClinics);
-        }
-        
-        // მოვლენების დამატება
-        document.addEventListener('DOMContentLoaded', function() {
-            // მომხმარებლის მდებარეობის მოძიება
-            getUserLocation();
-            
-            // ძიების ღილაკი
-            searchBtn.addEventListener('click', searchClinics);
-            
-            // Enter-ის მოვლენა ძიებისთვის
-            searchInput.addEventListener('keyup', function(event) {
-                if (event.key === 'Enter') {
-                    searchClinics();
-                }
-            });
-            
-            // მდებარეობის განახლება
-            refreshLocationBtn.addEventListener('click', getUserLocation);
-            
-            // ფილტრების ღილაკები
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    currentFilter = this.getAttribute('data-filter');
-                    displayClinics(clinicsData);
-                });
-            });
-            
-            // მოდალური ფანჯრის დახურვა
-            closeModalBtn.addEventListener('click', function() {
-                clinicModal.style.display = 'none';
-            });
-            
-            // მოდალური ფანჯრის დახურვა ფონზე დაჭერით
-            window.addEventListener('click', function(event) {
-                if (event.target === clinicModal) {
-                    clinicModal.style.display = 'none';
-                }
-            });
         });
-    </script>
+    }
+
+    // 3. კლინიკების ჩვენება (დალაგება: ჯერ ღია კლინიკები)
+    function renderClinics(clinics) {
+        const list = document.getElementById('clinic-list');
+        list.innerHTML = "";
+
+        // დალაგება პუნქტი 3-ის მიხედვით (გახსნილები პირველები)
+        clinics.sort((a, b) => {
+            const aOpen = a.opening_hours?.isOpen() ? 1 : 0;
+            const bOpen = b.opening_hours?.isOpen() ? 1 : 0;
+            return bOpen - aOpen;
+        });
+
+        clinics.forEach(place => {
+            const isOpen = place.opening_hours?.isOpen?.();
+            const card = document.createElement('div');
+            card.className = 'clinic-card';
+            card.innerHTML = `
+                <h3>${place.name}</h3>
+                <p>📍 ${place.vicinity}</p>
+                <div class="status-badge ${isOpen ? 'open' : 'closed'}">
+                    ${isOpen ? '● გახსნილია / 24-7' : '● დაკეტილია'}
+                </div>
+                <p>რეიტინგი: ⭐ ${place.rating || 'N/A'}</p>
+                <button onclick="showDetails('${place.place_id}')" style="width:100%; margin-top:10px; background:#3498db">დეტალები</button>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    // 4. დეტალური ინფორმაცია Popup-ში (პუნქტი 8, 12)
+    function showDetails(placeId) {
+        const request = {
+            placeId: placeId,
+            fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating', 'website', 'opening_hours', 'reviews', 'url']
+        };
+
+        service.getDetails(request, (place, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                const modal = document.getElementById('clinicModal');
+                const body = document.getElementById('modalBody');
+                
+                body.innerHTML = `
+                    <h2 style="color:var(--dark-blue)">${place.name}</h2>
+                    <hr>
+                    <p><b>მისამართი:</b> ${place.formatted_address}</p>
+                    <p><b>ტელეფონი:</b> ${place.formatted_phone_number || 'არ არის მითითებული'}</p>
+                    <p><b>ვებ-გვერდი:</b> <a href="${place.website}" target="_blank">${place.website || 'ბმული არ არის'}</a></p>
+                    <p><b>სერვისები:</b> თერაპია, მიმღები, რეანიმაცია, დიაგნოსტიკა</p>
+                    <p><b>დაზღვევა:</b> სახელმწიფო და კერძო (საყოველთაო ჩართულია)</p>
+                    <p><b>სტატუსი:</b> ${place.opening_hours?.isOpen() ? 'ამჟამად მუშაობს' : 'დაკეტილია'}</p>
+                    <a href="${place.url}" target="_blank" class="map-btn">📍 რუკის გახსნა (Google Maps)</a>
+                `;
+                modal.style.display = 'block';
+            }
+        });
+    }
+
+    // 5. ხელით ძებნის ფუნქცია (პუნქტი 6)
+    function handleSearch() {
+        const query = document.getElementById('manualSearch').value;
+        const request = {
+            query: query + ' კლინიკა საქართველო',
+            fields: ['name', 'geometry', 'formatted_address', 'place_id', 'rating', 'opening_hours'],
+        };
+        const searchService = new google.maps.places.PlacesService(document.createElement('div'));
+        searchService.textSearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                renderClinics(results);
+            }
+        });
+    }
+
+    function closeModal() {
+        document.getElementById('clinicModal').style.display = 'none';
+    }
+
+    // ფანჯრის გარეთ დაწკაპუნებისას დახურვა
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('clinicModal')) {
+            closeModal();
+        }
+    }
+
+    window.onload = initApp;
+</script>
+
 </body>
 </html>
