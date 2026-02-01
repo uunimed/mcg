@@ -3,304 +3,582 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>კლინიკების საძიებო სისტემა - საქართველო</title>
-    
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=ka"></script>
-
+    <title>UniMed - საინფორმაციო პორტალი მედიცინის ფაკულტეტის სტუდენტებისთვის</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --main-bg: #f0f2f5;
-            --primary-color: #007bff;
-            --dark-blue: #1a2a6c;
-            --white: #ffffff;
-            --shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: var(--main-bg);
+        * {
             margin: 0;
-            color: #333;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Noto Sans Georgian', Arial, sans-serif;
         }
-
-        /* Header & Search */
-        .app-container {
+        
+        body {
+            background-color: #f5f9fc;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, #1a5f7a 0%, #2a8cbc 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            background: linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d);
-            color: white;
-            padding: 40px 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: var(--shadow);
-        }
-
-        .search-box {
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
         }
-
-        input[type="text"] {
-            width: 60%;
-            padding: 15px;
-            border: none;
-            border-radius: 30px;
-            box-shadow: var(--shadow);
-            outline: none;
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-
-        button {
-            padding: 15px 30px;
-            border: none;
-            background: var(--dark-blue);
+        
+        .logo-icon {
+            font-size: 2.5rem;
+            color: #57c0e6;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .logo-text p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* Login Button */
+        .login-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .login-btn {
+            background-color: #ff7e30;
             color: white;
+            border: none;
+            padding: 10px 20px;
             border-radius: 30px;
+            font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-
-        button:hover {
-            background: #000;
-            transform: scale(1.05);
+        
+        .login-btn:hover {
+            background-color: #ff6a0d;
+            transform: translateY(-2px);
         }
-
-        /* Results Grid */
-        #clinic-list {
+        
+        .user-icon {
+            font-size: 1.2rem;
+        }
+        
+        /* Navigation Menu */
+        nav {
+            background-color: #2c3e50;
+            margin-top: 5px;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .main-menu {
+            display: flex;
+            list-style: none;
+        }
+        
+        .main-menu > li {
+            flex: 1;
+            position: relative;
+        }
+        
+        .main-menu > li > a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 16px 10px;
+            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .main-menu > li:last-child > a {
+            border-right: none;
+        }
+        
+        .main-menu > li > a:hover {
+            background-color: #34495e;
+        }
+        
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            background-color: white;
+            min-width: 220px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none;
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+        }
+        
+        .dropdown-menu a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+        
+        .dropdown-menu a:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .main-menu li:hover .dropdown-menu {
+            display: block;
+        }
+        
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        
+        .welcome-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+            border-top: 5px solid #57c0e6;
+        }
+        
+        .welcome-section h2 {
+            color: #1a5f7a;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+        
+        .welcome-section p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #555;
+        }
+        
+        /* Statistics Section */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
         }
-
-        .clinic-card {
-            background: var(--white);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            transition: 0.3s;
-            border-left: 5px solid #28a745;
-        }
-
-        .clinic-card:hover {
-            transform: translateY(-10px);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        .open { background: #d4edda; color: #155724; }
-        .closed { background: #f8d7da; color: #721c24; }
-
-        /* Popup Box Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 30px;
-            width: 90%;
-            max-width: 650px;
-            border-radius: 20px;
-            position: relative;
-            animation: slideDown 0.4s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .close-btn {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .map-btn {
-            display: block;
-            width: 100%;
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
             text-align: center;
-            background: #28a745;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            color: #1a5f7a;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .counter {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #ff7e30;
+            margin: 15px 0;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .counter-label {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .years-card {
+            border-top: 5px solid #ff7e30;
+        }
+        
+        .students-card {
+            border-top: 5px solid #57c0e6;
+        }
+        
+        /* Announcement Section */
+        .announcement-section {
+            background-color: #fff9e6;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #ffb142;
+        }
+        
+        .announcement-section h2 {
+            color: #d35400;
+            margin-bottom: 15px;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .announcement-section h2 i {
+            color: #d35400;
+        }
+        
+        .announcement-date {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        /* Security Notice */
+        .security-notice {
+            background-color: #fff0f0;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .security-notice h3 {
+            color: #c0392b;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .security-notice ul {
+            padding-left: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .security-notice li {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .invite-friends {
+            background-color: #e8f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
             margin-top: 20px;
-            text-decoration: none;
-            color: white;
-            padding: 12px;
-            border-radius: 10px;
+        }
+        
+        .invite-friends h4 {
+            color: #1a5f7a;
+            margin-bottom: 10px;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            text-align: center;
+            padding: 25px 0;
+            margin-top: 40px;
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .footer-logo {
+            font-size: 1.8rem;
+            color: #57c0e6;
+            margin-bottom: 10px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .main-menu {
+                flex-wrap: wrap;
+            }
+            
+            .main-menu > li {
+                flex: 1 0 33%;
+            }
+            
+            .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                background-color: #34495e;
+                border-radius: 0;
+            }
+            
+            .dropdown-menu a {
+                color: white;
+                padding-left: 30px;
+            }
+            
+            .stats-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .main-menu > li {
+                flex: 1 0 50%;
+            }
+            
+            .counter {
+                font-size: 2.8rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-menu > li {
+                flex: 1 0 100%;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
-
-<div class="app-container">
+    <!-- Header with Logo and Login -->
     <header>
-        <h1>საქართველოს კლინიკების ერთიანი ბაზა</h1>
-        <p>ავტომატური ძიება თქვენს მდებარეობასთან ახლოს</p>
-        <div class="search-box">
-            <input type="text" id="manualSearch" placeholder="ჩაწერეთ კლინიკის სახელი ან ქალაქი...">
-            <button onclick="handleSearch()">ძებნა</button>
+        <div class="header-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>UniMed</h1>
+                    <p>საინფორმაციო პორტალი მედიცინის ფაკულტეტის სტუდენტებისთვის</p>
+                </div>
+            </div>
+            <div class="login-area">
+                <button class="login-btn" id="loginButton">
+                    <i class="fas fa-sign-in-alt user-icon"></i>
+                    <span id="loginText">შესვლა</span>
+                </button>
+            </div>
         </div>
     </header>
-
-    <div id="clinic-list">
+    
+    <!-- Navigation Menu -->
+    <nav>
+        <div class="nav-container">
+            <ul class="main-menu">
+                <li>
+                    <a href="#">სასწავლო მასალები</a>
+                    <div class="dropdown-menu">
+                        <a href="#">ძირითადი სასწავლო მასალები</a>
+                        <a href="#">დამატებითი სასწავლო მასალები</a>
+                        <a href="#">საგამოცდო მასალები სტუდენტებისთვის</a>
+                        <a href="#">სასწავლო კონსპექტები</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="#">სასწავლო პროცესი</a>
+                    <div class="dropdown-menu">
+                        <a href="#">სილაბუსები</a>
+                        <a href="#">წინაპირობები</a>
+                        <a href="#">ნომრების ბაზა</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="#">სასწავლო ცხრილი</a>
+                    <div class="dropdown-menu">
+                        <a href="#">V კურსი</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="#">სიმულაციის ცენტრი</a>
+                    <div class="dropdown-menu">
+                        <a href="#">სიმულაციის ცენტრი</a>
+                        <a href="#">სიმულაციის ცენტრის აქტივაცია</a>
+                    </div>
+                </li>
+                <li><a href="#">GPA კალკულატორი</a></li>
+                <li><a href="#">ე.კ.გ</a></li>
+                <li><a href="#">პროპედევტიკა</a></li>
+                <li><a href="#">ლათინური ენა</a></li>
+            </ul>
         </div>
-</div>
-
-<div id="clinicModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <div id="modalBody">
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="container">
+        <section class="welcome-section">
+            <h2>კეთილი იყოს თქვენი მობრძანება UniMed-ზე!</h2>
+            <p>UniMed არის ყოვლისმომცველი პლატფორმა თბილისის სახელმწიფო უნივერსიტეტის მედიცინის ფაკულტეტის სტუდენტებისთვის. აქ თქვენ იპოვით სასწავლო მასალებს, პროცესების ინფორმაციას, სასწავლო ცხრილებს და სხვა მრავალ სასარგებლო რესურსს.</p>
+            <p>გამოიყენეთ მენიუს მეშვეობით საიტის სხვადასხვა განყოფილებებზე წვდომისთვის.</p>
+        </section>
+        
+        <section class="stats-section">
+            <div class="stat-card years-card">
+                <h3>UniMed-ის გამოცდილება</h3>
+                <div class="counter" id="yearsCounter">0</div>
+                <p class="counter-label">წელი სტუდენტურ საქმიანობაში</p>
             </div>
-    </div>
-</div>
+            
+            <div class="stat-card students-card">
+                <h3>UniMed-ის საზოგადოება</h3>
+                <div class="counter" id="studentsCounter">0</div>
+                <p class="counter-label">სტუდენტზე მეტი ერთ სივრცეში</p>
+            </div>
+        </section>
+        
+        <section class="announcement-section">
+            <h2><i class="fas fa-bullhorn"></i> UniMed ცვლილებები განახლებების შესახებ</h2>
+            <div class="announcement-date">განახლების თარიღი: 2024 წლის 1 სექტემბერი</div>
+            <p>გაცნობებთ, რომ 2025 წლის 1 სექტემბრიდან ვებგვერდზე - UniMed წყდება განახლებები. აღნიშნულის მიზეზს წარმოადგენს გვერდის ადმინისტრაციის საუნივერსიტეტო პროცესის შეწყვეტა, რის გამოც უნივერსიტეტში მიმდინარე პროცესები რჩება გვერდის მართვის მიღმა.</p>
+            <p>განახლებებში შეტანილი ცვლილებები ეხება გვერდზე არსებულ ყველა ფუნქციონალს, თუმცა, უნდა აღინიშნოს, რომ ატვირთული მასალების 98% მრავალი წლის განმავლობაში კვლავ იქნება სტუდენტებისათვის ნომერ პირველი სახელმძღვანელო და UniMed კი კვლავ დარჩება ყველაზე დიდ სტუდენტურ პლატფორმად თსუ-ის მედიცინის ფაკულტეტის სტუდენტებისთვის.</p>
+            <p><strong>მადლობას გიხდით ნდობისთვის!</strong></p>
+            <p><em>UniMed-ის ადმინისტრაცია</em></p>
+        </section>
+        
+        <section class="security-notice">
+            <h3><i class="fas fa-shield-alt"></i> UniMed უსაფრთხოებისთვის გაითვალისწინეთ:</h3>
+            <ul>
+                <li>არ დალინკო საიტის ნებისმიერი ბმული სხვადასხვა ჯგუფში, კომენტარში, ჩატში და სხვა;</li>
+                <li>არ ისაუბრო ვებგვერდის შესახებ უნივერსიტეტის პერსონალთან და სხვა;</li>
+                <li>საიტზე შეტანილი ნებისმიერი ინფორმაცია შეინახეთ თქვენთვის და არ გაანდოთ უცხო მესამე პირს;</li>
+                <li>დაიცავით ვებგვერდის პრივატულობა და ნუ შეუქმნით საფრთხეს მის არსებობას. არ ისაუბროთ ვებგვერდზე სხვებთან, გამოიყენეთ ის პირადი საჭიროებისას!</li>
+            </ul>
+            
+            <div class="invite-friends">
+                <h4>მოიწვიეთ მეგობრები UniMed-ზე</h4>
+                <p>გააზიარეთ ეს პლატფორმა სანდო კოლეგებთან, რომელთაც ეს რესურსები დაეხმარებათ სასწავლო პროცესში.</p>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-logo">
+                <i class="fas fa-stethoscope"></i>
+            </div>
+            <p>UniMed - საინფორმაციო პორტალი მედიცინის ფაკულტეტის სტუდენტებისთვის</p>
+            <p>&copy; 2024 UniMed. ყველა უფლება დაცულია.</p>
+        </div>
+    </footer>
 
-<script>
-    let service;
-
-    // 1. აპლიკაციის ინიციალიზაცია და ლოკაციის პოვნა
-    function initApp() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                const userCoords = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                findNearbyClinics(userCoords);
-            }, () => {
-                alert("გთხოვთ ჩართოთ ლოკაცია უკეთესი ძიებისთვის.");
-                // თუ ლოკაცია გამორთულია, ვეძებთ ზოგადად თბილისში
-                findNearbyClinics({lat: 41.7151, lng: 44.8271});
-            });
-        }
-    }
-
-    // 2. კლინიკების მოძიება Google Places API-დან
-    function findNearbyClinics(coords) {
-        const pyrmont = new google.maps.LatLng(coords.lat, coords.lng);
-        const mapDiv = document.createElement('div');
-        service = new google.maps.places.PlacesService(mapDiv);
-
-        const request = {
-            location: pyrmont,
-            radius: '10000', // 10 კმ რადიუსში
-            type: ['hospital']
-        };
-
-        service.nearbySearch(request, (results, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                renderClinics(results);
-            }
-        });
-    }
-
-    // 3. კლინიკების ჩვენება (დალაგება: ჯერ ღია კლინიკები)
-    function renderClinics(clinics) {
-        const list = document.getElementById('clinic-list');
-        list.innerHTML = "";
-
-        // დალაგება პუნქტი 3-ის მიხედვით (გახსნილები პირველები)
-        clinics.sort((a, b) => {
-            const aOpen = a.opening_hours?.isOpen() ? 1 : 0;
-            const bOpen = b.opening_hours?.isOpen() ? 1 : 0;
-            return bOpen - aOpen;
-        });
-
-        clinics.forEach(place => {
-            const isOpen = place.opening_hours?.isOpen?.();
-            const card = document.createElement('div');
-            card.className = 'clinic-card';
-            card.innerHTML = `
-                <h3>${place.name}</h3>
-                <p>📍 ${place.vicinity}</p>
-                <div class="status-badge ${isOpen ? 'open' : 'closed'}">
-                    ${isOpen ? '● გახსნილია / 24-7' : '● დაკეტილია'}
-                </div>
-                <p>რეიტინგი: ⭐ ${place.rating || 'N/A'}</p>
-                <button onclick="showDetails('${place.place_id}')" style="width:100%; margin-top:10px; background:#3498db">დეტალები</button>
-            `;
-            list.appendChild(card);
-        });
-    }
-
-    // 4. დეტალური ინფორმაცია Popup-ში (პუნქტი 8, 12)
-    function showDetails(placeId) {
-        const request = {
-            placeId: placeId,
-            fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating', 'website', 'opening_hours', 'reviews', 'url']
-        };
-
-        service.getDetails(request, (place, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const modal = document.getElementById('clinicModal');
-                const body = document.getElementById('modalBody');
+    <script>
+        // Login functionality
+        const loginButton = document.getElementById('loginButton');
+        const loginText = document.getElementById('loginText');
+        let isLoggedIn = false;
+        
+        loginButton.addEventListener('click', function() {
+            if (!isLoggedIn) {
+                // Simulate login
+                isLoggedIn = true;
+                loginText.textContent = 'მთავარი გვერდი';
+                loginButton.innerHTML = '<i class="fas fa-home user-icon"></i><span id="loginText">მთავარი გვერდი</span>';
+                loginButton.style.backgroundColor = '#27ae60';
                 
-                body.innerHTML = `
-                    <h2 style="color:var(--dark-blue)">${place.name}</h2>
-                    <hr>
-                    <p><b>მისამართი:</b> ${place.formatted_address}</p>
-                    <p><b>ტელეფონი:</b> ${place.formatted_phone_number || 'არ არის მითითებული'}</p>
-                    <p><b>ვებ-გვერდი:</b> <a href="${place.website}" target="_blank">${place.website || 'ბმული არ არის'}</a></p>
-                    <p><b>სერვისები:</b> თერაპია, მიმღები, რეანიმაცია, დიაგნოსტიკა</p>
-                    <p><b>დაზღვევა:</b> სახელმწიფო და კერძო (საყოველთაო ჩართულია)</p>
-                    <p><b>სტატუსი:</b> ${place.opening_hours?.isOpen() ? 'ამჟამად მუშაობს' : 'დაკეტილია'}</p>
-                    <a href="${place.url}" target="_blank" class="map-btn">📍 რუკის გახსნა (Google Maps)</a>
-                `;
-                modal.style.display = 'block';
+                // Show welcome message
+                alert('თქვენ წარმატებით შეხვედით სისტემაში! გთხოვთ, გამოიყენეთ მენიუს მეშვეობით საიტის ფუნქციონალზე წვდომისთვის.');
+            } else {
+                // Already logged in - go to main page (refresh)
+                window.location.href = window.location.href.split('#')[0];
             }
         });
-    }
-
-    // 5. ხელით ძებნის ფუნქცია (პუნქტი 6)
-    function handleSearch() {
-        const query = document.getElementById('manualSearch').value;
-        const request = {
-            query: query + ' კლინიკა საქართველო',
-            fields: ['name', 'geometry', 'formatted_address', 'place_id', 'rating', 'opening_hours'],
-        };
-        const searchService = new google.maps.places.PlacesService(document.createElement('div'));
-        searchService.textSearch(request, (results, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                renderClinics(results);
-            }
-        });
-    }
-
-    function closeModal() {
-        document.getElementById('clinicModal').style.display = 'none';
-    }
-
-    // ფანჯრის გარეთ დაწკაპუნებისას დახურვა
-    window.onclick = function(event) {
-        if (event.target == document.getElementById('clinicModal')) {
-            closeModal();
+        
+        // Counter animation
+        function animateCounter(elementId, targetValue, duration) {
+            const element = document.getElementById(elementId);
+            const startValue = 0;
+            const increment = targetValue / (duration / 16); // 60fps
+            let currentValue = startValue;
+            
+            const timer = setInterval(() => {
+                currentValue += increment;
+                if (currentValue >= targetValue) {
+                    currentValue = targetValue;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(currentValue);
+            }, 16);
         }
-    }
-
-    window.onload = initApp;
-</script>
-
+        
+        // Start counter animations when page loads
+        window.addEventListener('load', function() {
+            // Wait a bit before starting animations for better UX
+            setTimeout(() => {
+                animateCounter('yearsCounter', 6, 1500);
+                animateCounter('studentsCounter', 450, 2000);
+            }, 500);
+        });
+        
+        // Highlight current menu item on click
+        const menuItems = document.querySelectorAll('.main-menu > li > a');
+        menuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Prevent navigation for demo purposes
+                e.preventDefault();
+                
+                // Remove active class from all menu items
+                menuItems.forEach(menuItem => {
+                    menuItem.style.backgroundColor = '';
+                });
+                
+                // Add active class to clicked item
+                this.style.backgroundColor = '#1a5276';
+                
+                // Update page title based on clicked menu item
+                const pageName = this.textContent;
+                document.title = `${pageName} | UniMed`;
+                
+                // Show a message about the page
+                if (pageName !== 'GPA კალკულატორი' && 
+                    pageName !== 'ე.კ.გ' && 
+                    pageName !== 'პროპედევტიკა' && 
+                    pageName !== 'ლათინური ენა') {
+                    alert(`ეს გვერდი აჩვენებს ინფორმაციას "${pageName}"-ის შესახებ. დემო ვერსიაში მხოლოდ მენიუს სტრუქტურაა ხელმისაწვდომი.`);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
