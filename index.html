@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniMed - სამედიცინო სტუდენტური პორტალი</title>
+    <title>UniMed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <style>
@@ -16,8 +16,7 @@
             --success-color: #28a745;
             --warning-color: #ffc107;
             --danger-color: #dc3545;
-            --sidebar-width: 250px;
-            --header-height: 70px;
+            --header-height: 100px;
         }
 
         * {
@@ -31,30 +30,42 @@
             background-color: #f5f7fa;
             color: #333;
             overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
-        /* Particles Background */
+        /* Particles Background - Lighter */
         #particles-js {
             position: fixed;
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: linear-gradient(135deg, #0c2461 0%, #1e3799 100%);
+            background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
         }
 
-        /* Header Styles */
-        header {
-            background-color: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            height: var(--header-height);
+        /* Top Header */
+        .top-header {
+            background-color: rgba(255, 255, 255, 0.97);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary-color);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+            flex-shrink: 0;
+        }
+
+        .logo-container {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
+            gap: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-container:hover {
+            transform: scale(1.02);
         }
 
         .logo {
@@ -63,285 +74,253 @@
         }
 
         .logo i {
-            font-size: 28px;
+            font-size: 36px;
             color: var(--primary-color);
-            margin-right: 10px;
+            margin-right: 12px;
         }
 
         .logo h1 {
-            font-size: 24px;
+            font-size: 32px;
+            color: var(--primary-color);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .site-description {
+            color: #555;
+            font-size: 15px;
+            max-width: 400px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Smaller Clock */
+        .clock {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 86, 179, 0.08);
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 86, 179, 0.2);
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 8px rgba(0, 86, 179, 0.2);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 86, 179, 0.3);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(0, 86, 179, 0.1);
+            border-radius: 30px;
+        }
+
+        .user-profile i {
+            font-size: 20px;
             color: var(--primary-color);
         }
 
-        nav {
-            display: flex;
-            align-items: center;
+        .user-name {
+            font-weight: 600;
+            color: var(--primary-color);
         }
 
-        .menu {
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        /* Main Navigation Menu */
+        .main-menu {
+            background-color: white;
+            width: 100%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-shrink: 0;
+        }
+
+        .menu-container {
+            max-width: 100%;
+            margin: 0;
+        }
+
+        .main-menu ul {
             display: flex;
             list-style: none;
+            width: 100%;
+            margin: 0;
+            padding: 0;
         }
 
-        .menu li {
+        .main-menu li {
+            flex: 1;
+            text-align: center;
             position: relative;
         }
 
-        .menu a {
+        .main-menu a {
             display: block;
-            padding: 10px 15px;
+            padding: 16px 10px;
             text-decoration: none;
             color: var(--dark-color);
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.3s ease;
-            border-radius: 4px;
+            border-bottom: 3px solid transparent;
+            font-size: 15px;
         }
 
-        .menu a:hover {
-            background-color: rgba(0, 86, 179, 0.1);
+        .main-menu li:hover > a,
+        .main-menu li.active > a {
             color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+            background-color: rgba(0, 86, 179, 0.05);
         }
 
+        /* Submenu - Vertical Layout */
         .submenu {
             position: absolute;
             top: 100%;
             left: 0;
             background-color: white;
-            min-width: 200px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
+            min-width: 250px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            border-radius: 0 0 8px 8px;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(10px);
+            transform: translateY(-10px);
             transition: all 0.3s ease;
             z-index: 100;
+            max-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .menu li:hover .submenu {
+        .main-menu li:hover .submenu {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
+            max-height: 400px;
         }
 
         .submenu li {
             width: 100%;
+            text-align: left;
         }
 
         .submenu a {
-            padding: 10px 15px;
-            border-bottom: 1px solid #eee;
+            padding: 14px 20px;
+            color: var(--dark-color);
+            border-bottom: 1px solid #f0f0f0;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .submenu a:hover {
-            background-color: rgba(0, 86, 179, 0.1);
-        }
-
-        .auth-buttons {
-            display: flex;
-            gap: 10px;
-            margin-left: 20px;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
+            background-color: rgba(0, 86, 179, 0.08);
             color: var(--primary-color);
-            border: 1px solid var(--primary-color);
+            border-left: 4px solid var(--primary-color);
+            padding-left: 24px;
         }
 
-        .btn-secondary:hover {
-            background-color: rgba(0, 86, 179, 0.1);
+        .submenu a i {
+            font-size: 12px;
+            opacity: 0.7;
         }
 
         /* Main Content */
         main {
-            margin-top: var(--header-height);
-            min-height: calc(100vh - var(--header-height) - 150px);
-            padding: 20px;
-        }
-
-        .page-title {
-            font-size: 28px;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-        }
-
-        /* Admin Panel */
-        .admin-container {
-            display: flex;
-            min-height: calc(100vh - var(--header-height));
-        }
-
-        .admin-sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--dark-color);
-            color: white;
-            padding: 20px 0;
-        }
-
-        .admin-sidebar h2 {
-            padding: 0 20px;
-            margin-bottom: 20px;
-            font-size: 20px;
-            color: var(--warning-color);
-        }
-
-        .admin-menu {
-            list-style: none;
-        }
-
-        .admin-menu li {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .admin-menu a {
-            display: block;
-            padding: 15px 20px;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .admin-menu a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            padding-left: 25px;
-        }
-
-        .admin-menu a.active {
-            background-color: var(--primary-color);
-            border-left: 4px solid var(--warning-color);
-        }
-
-        .admin-content {
             flex: 1;
-            padding: 20px;
-            background-color: white;
+            padding: 40px 20px;
         }
 
-        .admin-section {
-            display: none;
-        }
-
-        .admin-section.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        textarea.form-control {
-            min-height: 150px;
-            resize: vertical;
-        }
-
-        /* Visitor Pages */
-        .visitor-content {
+        .content-container {
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        .cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+        /* Warning Section - No box background */
+        .warning-section {
+            background: transparent;
+            border-left: 5px solid var(--danger-color);
+            padding: 30px;
+            margin-bottom: 40px;
         }
 
-        .card {
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card-header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: 500;
-        }
-
-        .card-body {
-            padding: 15px;
-        }
-
-        .card-list {
-            list-style: none;
-        }
-
-        .card-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .card-list li:last-child {
-            border-bottom: none;
-        }
-
-        .card-list a {
-            color: var(--dark-color);
-            text-decoration: none;
+        .warning-section h2 {
+            color: var(--danger-color);
+            margin-bottom: 20px;
+            font-size: 24px;
             display: flex;
             align-items: center;
+            gap: 10px;
         }
 
-        .card-list a:hover {
-            color: var(--primary-color);
+        .warning-section h2 i {
+            font-size: 26px;
         }
 
-        .card-list i {
-            margin-right: 10px;
-            color: var(--primary-color);
+        .warning-section p {
+            margin-bottom: 15px;
+            line-height: 1.7;
+            font-size: 16px;
+            padding-left: 10px;
+            border-left: 3px solid #ffcccc;
+            padding-top: 5px;
+            padding-bottom: 5px;
         }
 
-        /* Counter Section */
+        /* Counter Section - No box background */
         .counter-section {
-            background-color: white;
-            border-radius: 8px;
-            padding: 30px;
-            margin: 30px 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background: transparent;
+            padding: 40px 0;
+            margin-bottom: 40px;
             text-align: center;
+            position: relative;
         }
 
         .counter-container {
@@ -354,56 +333,324 @@
         }
 
         .counter-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex: 1;
+            min-width: 300px;
+            padding: 25px;
+            background: transparent;
+        }
+
+        .counter-title {
+            font-size: 20px;
+            color: var(--dark-color);
+            margin-bottom: 15px;
+            font-weight: 600;
         }
 
         .counter-value {
-            font-size: 48px;
-            font-weight: bold;
+            font-size: 72px;
+            font-weight: 800;
             color: var(--primary-color);
-            margin-bottom: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .counter-label {
             font-size: 18px;
-            color: var(--dark-color);
+            color: #666;
+            font-weight: 500;
         }
 
-        /* Footer */
+        /* Announcement Section - No box background */
+        .announcement-section {
+            background: transparent;
+            padding: 30px;
+            margin-bottom: 40px;
+            border-top: 3px solid var(--primary-color);
+        }
+
+        .announcement-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .announcement-section h2 i {
+            font-size: 28px;
+        }
+
+        .announcement-section p {
+            margin-bottom: 18px;
+            line-height: 1.8;
+            font-size: 16.5px;
+        }
+
+        .announcement-signature {
+            text-align: right;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            font-style: italic;
+            color: #666;
+        }
+
+        /* Footer - Always at bottom */
         footer {
-            background-color: var(--dark-color);
+            background: linear-gradient(135deg, var(--dark-color), #2c3e50);
             color: white;
-            padding: 30px 20px;
-            margin-top: 40px;
+            padding: 40px 20px 20px;
+            margin-top: auto;
+            flex-shrink: 0;
         }
 
         .footer-content {
             max-width: 1200px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 30px;
+            margin-bottom: 30px;
         }
 
         .footer-section h3 {
-            font-size: 20px;
+            font-size: 18px;
             margin-bottom: 15px;
+            color: var(--warning-color);
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .footer-section p, .footer-section a {
+            line-height: 1.7;
+            margin-bottom: 10px;
+            color: #ddd;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: white;
+            transform: translateX(5px);
+            padding-left: 5px;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .contact-info i {
+            width: 20px;
             color: var(--warning-color);
         }
 
-        .footer-section p {
-            line-height: 1.6;
-            margin-bottom: 15px;
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
         }
 
-        .warning-box {
-            background-color: rgba(220, 53, 69, 0.1);
-            border-left: 4px solid var(--danger-color);
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 15px;
+        .visitor-counter {
+            font-size: 20px;
+            color: var(--warning-color);
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .copyright {
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        /* Admin Panel */
+        .admin-container {
+            display: none;
+            min-height: calc(100vh - 100px);
+            background: #f8f9fa;
+            flex: 1;
+        }
+
+        .admin-sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--dark-color), #2c3e50);
+            color: white;
+            padding: 30px 0;
+            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-sidebar h2 {
+            padding: 0 25px;
+            margin-bottom: 30px;
+            font-size: 22px;
+            color: var(--warning-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .admin-menu {
+            list-style: none;
+        }
+
+        .admin-menu li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .admin-menu a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 25px;
+            color: #ddd;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .admin-menu a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding-left: 30px;
+            color: white;
+        }
+
+        .admin-menu a.active {
+            background-color: rgba(0, 86, 179, 0.3);
+            border-left: 5px solid var(--warning-color);
+            color: white;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 30px;
+            background-color: white;
+            overflow-y: auto;
+        }
+
+        .admin-section {
+            display: none;
+        }
+
+        .admin-section.active {
+            display: block;
+        }
+
+        .admin-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 28px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        /* Admin Content Pages */
+        .subject-management {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .subject-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .subject-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subject-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+            outline: none;
+        }
+
+        textarea.form-control {
+            min-height: 200px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 86, 179, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
         }
 
         /* Login Modal */
@@ -414,48 +661,185 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7);
             z-index: 2000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(3px);
         }
 
         .modal-content {
             background-color: white;
-            border-radius: 8px;
-            width: 400px;
+            border-radius: 15px;
+            width: 450px;
             max-width: 90%;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalAppear 0.4s ease;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+            text-align: center;
+            margin-bottom: 30px;
         }
 
         .modal-header h2 {
             color: var(--primary-color);
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .modal-header p {
+            color: #666;
+            font-size: 15px;
         }
 
         .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
-            color: var(--dark-color);
+            color: #999;
+        }
+
+        .close-modal:hover {
+            color: var(--danger-color);
+        }
+
+        /* Dynamic Content for Added Subjects */
+        .dynamic-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--success-color);
+        }
+
+        .dynamic-content h3 {
+            color: var(--success-color);
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .subject-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .subject-category {
+            background: rgba(0, 86, 179, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Page Content Styles */
+        .page-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .page-content h1 {
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        .admin-editor {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border: 2px dashed #ddd;
+        }
+
+        .admin-editor h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
         }
 
         /* Responsive */
-        @media (max-width: 992px) {
-            .menu {
-                display: none;
+        @media (max-width: 1200px) {
+            .counter-container {
+                flex-direction: column;
+                gap: 30px;
             }
             
-            .mobile-menu-btn {
-                display: block;
+            .counter-item {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .top-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .logo-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .header-right {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .main-menu ul {
+                flex-wrap: wrap;
+            }
+            
+            .main-menu li {
+                flex: 1 0 25%;
+            }
+            
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-menu li {
+                flex: 1 0 50%;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .counter-value {
+                font-size: 60px;
             }
             
             .admin-container {
@@ -467,13 +851,22 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .cards-container {
-                grid-template-columns: 1fr;
+        @media (max-width: 576px) {
+            .main-menu li {
+                flex: 1 0 100%;
             }
             
-            .footer-content {
-                grid-template-columns: 1fr;
+            .counter-value {
+                font-size: 48px;
+            }
+            
+            .modal-content {
+                padding: 25px;
+            }
+            
+            .clock {
+                font-size: 14px;
+                padding: 4px 8px;
             }
         }
     </style>
@@ -482,323 +875,292 @@
     <!-- Particles Background -->
     <div id="particles-js"></div>
     
-    <!-- Header/Navigation -->
-    <header>
-        <div class="logo">
-            <i class="fas fa-stethoscope"></i>
-            <h1>UniMed</h1>
+    <!-- Top Header -->
+    <header class="top-header">
+        <div class="logo-container" id="logo-link">
+            <div class="logo">
+                <i class="fas fa-stethoscope"></i>
+                <h1>UniMed</h1>
+            </div>
+            <div class="site-description">
+                სამედიცინო სტუდენტური პლატფორმა - ცოდნა, თანამშრომლობა, წარმატება
+            </div>
         </div>
         
-        <nav>
-            <ul class="menu">
-                <li><a href="#" data-page="materials">სასწავლო მასალები</a>
-                    <ul class="submenu">
-                        <li><a href="#">ძირითადი სასწავლო მასალები</a></li>
-                        <li><a href="#">დამატებითი სასწავლო მასალები</a></li>
-                        <li><a href="#">საგამოცდო მასალები სტუდენტებისთვის</a></li>
-                        <li><a href="#">სასწავლო კონსპექტები</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" data-page="process">სასწავლო პროცესი</a>
-                    <ul class="submenu">
-                        <li><a href="#">სილაბუსები</a></li>
-                        <li><a href="#">წინაპირობები</a></li>
-                        <li><a href="#">ნომრების ბაზა</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" data-page="schedule">სასწავლო ცხრილი</a>
-                    <ul class="submenu">
-                        <li><a href="#">V კურსი</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" data-page="simulation">სიმულაციის ცენტრი</a>
-                    <ul class="submenu">
-                        <li><a href="#">სიმულაციის ცენტრი</a></li>
-                        <li><a href="#">სიმულაციის ცენტრის აქტივაცია</a></li>
-                    </ul>
-                </li>
-                <li><a href="#" data-page="gpa">GPA კალკულატორი</a></li>
-                <li><a href="#" data-page="ekg">ე.კ.გ</a></li>
-                <li><a href="#" data-page="propedeutics">პროპედევტიკა</a></li>
-                <li><a href="#" data-page="latin">ლათინური ენა</a></li>
-            </ul>
-            
-            <div class="auth-buttons">
-                <button class="btn btn-primary" id="admin-login-btn">ადმინისტრატორი</button>
+        <div class="header-right">
+            <div class="clock" id="current-time">00:00:00</div>
+            <div class="user-status" id="user-status">
+                <button class="login-btn" id="login-button">შესვლა</button>
             </div>
-        </nav>
+        </div>
     </header>
     
-    <!-- Main Content (Visitor Page) -->
-    <main id="visitor-content">
-        <div class="visitor-content">
-            <h1 class="page-title">UniMed - სამედიცინო სტუდენტური პორტალი</h1>
-            
-            <div class="cards-container">
-                <div class="card">
-                    <div class="card-header">სასწავლო მასალები</div>
-                    <div class="card-body">
-                        <ul class="card-list">
-                            <li><a href="#"><i class="fas fa-book"></i> ძირითადი სასწავლო მასალები</a></li>
-                            <li><a href="#"><i class="fas fa-book-open"></i> დამატებითი სასწავლო მასალები</a></li>
-                            <li><a href="#"><i class="fas fa-file-alt"></i> საგამოცდო მასალები სტუდენტებისთვის</a></li>
-                            <li><a href="#"><i class="fas fa-clipboard-list"></i> სასწავლო კონსპექტები</a></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">სასწავლო პროცესი</div>
-                    <div class="card-body">
-                        <ul class="card-list">
-                            <li><a href="#"><i class="fas fa-calendar-alt"></i> სილაბუსები</a></li>
-                            <li><a href="#"><i class="fas fa-tasks"></i> წინაპირობები</a></li>
-                            <li><a href="#"><i class="fas fa-database"></i> ნომრების ბაზა</a></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">სასწავლო ცხრილი</div>
-                    <div class="card-body">
-                        <ul class="card-list">
-                            <li><a href="#"><i class="fas fa-calendar"></i> V კურსი</a></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">სიმულაციის ცენტრი</div>
-                    <div class="card-body">
-                        <ul class="card-list">
-                            <li><a href="#"><i class="fas fa-hospital-alt"></i> სიმულაციის ცენტრი</a></li>
-                            <li><a href="#"><i class="fas fa-power-off"></i> სიმულაციის ცენტრის აქტივაცია</a></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">GPA კალკულატორი</div>
-                    <div class="card-body">
-                        <p>გამოიყენეთ GPA კალკულატორი თქვენი აკადემიური მიღწევების შესაფასებლად.</p>
-                        <button class="btn btn-primary" style="margin-top: 10px;">გამოთვალეთ GPA</button>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">ე.კ.გ</div>
-                    <div class="card-body">
-                        <p>ე.კ.გ სასწავლო მასალები და ინტერპრეტაციის სახელმძღვანელოები.</p>
-                        <button class="btn btn-primary" style="margin-top: 10px;">ე.კ.გ მასალები</button>
-                    </div>
-                </div>
-            </div>
+    <!-- Main Navigation Menu -->
+    <nav class="main-menu">
+        <div class="menu-container">
+            <ul id="main-menu-list">
+                <!-- Menu will be populated by JavaScript -->
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main id="main-content">
+        <div class="content-container">
+            <!-- Warning Section -->
+            <section class="warning-section">
+                <h2><i class="fas fa-shield-alt"></i> UniMed უსაფრთხოებისთვის გაითვალისწინეთ:</h2>
+                <p>• არ დალინკო საიტის ნებისმიერი ბმული სხვადასხვა ჯგუფში, კომენტარში, ჩატში და სხვა;</p>
+                <p>• არ ისაუბრო ვებგვერდის შესახებ უნივერსიტეტის პერსონალთან და სხვა;</p>
+                <p>• საიტზე შეტანილი ნებისმიერი ინფორმაცია შეინახეთ თქვენთვის და არ გაანდოთ უცხო მესამე პირს;</p>
+                <p>• დაიცავით ვებგვერდის პრივატულობა და ნუ შეუქმნით საფრთხეს მის არსებობას. არ ისაუბროთ ვებგვერდზე სხვებთან, გამოიყენეთ ის პირადი საჭიროებისას!</p>
+            </section>
             
             <!-- Counter Section -->
-            <div class="counter-section">
-                <h2>UniMed სტატისტიკა</h2>
+            <section class="counter-section">
                 <div class="counter-container">
                     <div class="counter-item">
-                        <div class="counter-value" id="counter-years">6</div>
-                        <div class="counter-label">წელი სტუდენტურ საქმიანობაში</div>
+                        <div class="counter-title">6 წელი სტუდენტურ საქმიანობაში</div>
+                        <div class="counter-value">6</div>
+                        <div class="counter-label">ხნიანი გამოცდილება</div>
                     </div>
                     <div class="counter-item">
-                        <div class="counter-value" id="counter-students">0</div>
+                        <div class="counter-title">სტუდენტების რაოდენობა</div>
+                        <div class="counter-value" id="student-counter">0</div>
                         <div class="counter-label">სტუდენტზე მეტი ერთ სივრცეში</div>
                     </div>
                 </div>
+            </section>
+            
+            <!-- Dynamic Content Section for Added Subjects -->
+            <div id="dynamic-content-container">
+                <!-- Dynamic content from admin will appear here -->
             </div>
             
             <!-- Announcement Section -->
-            <div class="card">
-                <div class="card-header">UniMed ცვლილებები განახლებების შესახებ</div>
-                <div class="card-body">
-                    <p>გაცნობებთ, რომ 2025 წლის 1 სექტემბრიდან ვებგვერდზე - UniMed წყდება განახლებები. აღნიშნულის მიზეზს წარმოადგენს გვერდის ადმინისტრაციის საუნივერსიტეტო პროცესის შეწყვეტა, რის გამოც უნივერსიტეტში მიმდინარე პროცესები რჩება გვერდის მართვის მიღმა.</p>
-                    <p>განახლებებში შეტანილი ცვლილებები ეხება გვერდზე არსებულ ყველა ფუნქციონალს, თუმცა, უნდა აღინიშნოს, რომ ატვირთული მასალების 98% მრავალი წლის განმავლობაში კვლავ იქნება სტუდენტებისათვის ნომერ პირველი სახელმძღვანელო და UniMed კი კვლავ დარჩება ყველაზე დიდ სტუდენტურ პლატფორმად თსუ-ის მედიცინის ფაკულტეტის სტუდენტებისთვის.</p>
-                    <p><strong>მადლობას გიხდით ნდობისთვის!</strong></p>
-                    <p style="text-align: right; margin-top: 20px;"><em>UniMed-ის ადმინისტრაცია</em></p>
+            <section class="announcement-section">
+                <h2><i class="fas fa-bullhorn"></i> UniMed ცვლილებები განახლებების შესახებ:</h2>
+                <p>გაცნობებთ, რომ 2025 წლის 1 სექტემბრიდან ვებგვერდზე - UniMed წყდება განახლებები. აღნიშნულის მიზეზს წარმოადგენს გვერდის ადმინისტრაციის საუნივერსიტეტო პროცესის შეწყვეტა, რის გამოც უნივერსიტეტში მიმდინარე პროცესები რჩება გვერდის მართვის მიღმა.</p>
+                <p>განახლებებში შეტანილი ცვლილებები ეხება გვერდზე არსებულ ყველა ფუნქციონალს, თუმცა, უნდა აღინიშნოს, რომ ატვირთული მასალების 98% მრავალი წლის განმავლობაში კვლავ იქნება სტუდენტებისათვის ნომერ პირველი სახელმძღვანელო და UniMed კი კვლავ დარჩება ყველაზე დიდ სტუდენტურ პლატფორმად თსუ-ის მედიცინის ფაკულტეტის სტუდენტებისთვის.</p>
+                <p><strong>მადლობას გიხდით ნდობისთვის!</strong></p>
+                <div class="announcement-signature">
+                    <em>UniMed-ის ადმინისტრაცია</em>
                 </div>
-            </div>
+            </section>
         </div>
     </main>
     
-    <!-- Admin Panel (Hidden by default) -->
-    <div id="admin-panel" class="admin-container" style="display: none;">
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>საიტის შესახებ</h3>
+                <p>UniMed არის სამედიცინო სტუდენტებისთვის შექმნილი პორტალი, სადაც ისინი შეძლებენ სასწავლო მასალებთან წვდომას, კომუნიკაციას და ცოდნის გაზიარებას.</p>
+                <p>ჩვენი მიზანია გავხადოთ სასწავლო პროცესი უფრო ეფექტური და ხელმისაწვდომი.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>კონფიდენციალურობის პოლიტიკა</h3>
+                <a href="#"><i class="fas fa-lock"></i> კონფიდენციალურობის წესები</a>
+                <a href="#"><i class="fas fa-database"></i> მონაცემთა დაცვა</a>
+                <a href="#"><i class="fas fa-cookie-bite"></i> Cookies პოლიტიკა</a>
+                <a href="#"><i class="fas fa-user-shield"></i> მომხმარებლის უსაფრთხოება</a>
+            </div>
+            
+            <div class="footer-section">
+                <h3>კონტაქტი</h3>
+                <div class="contact-info">
+                    <p><i class="fas fa-envelope"></i> unimedsimulation@gmail.com</p>
+                    <p><i class="fas fa-phone"></i> +995 5XX XX XX XX</p>
+                    <p><i class="fas fa-map-marker-alt"></i> თბილისი, საქართველო</p>
+                    <p><i class="fas fa-clock"></i> ორშაბათი - პარასკევი: 10:00-18:00</p>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>ზოგადი დებულებები</h3>
+                <a href="#"><i class="fas fa-file-contract"></i> მომსახურების პირობები</a>
+                <a href="#"><i class="fas fa-gavel"></i> საიტის გამოყენების წესები</a>
+                <a href="#"><i class="fas fa-info-circle"></i> საიტზე განთავსებული ინფორმაცია</a>
+                <a href="#"><i class="fas fa-flag"></i> საიტის რეპორტი</a>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <div class="visitor-counter">ვიზიტორი – 177,920</div>
+            <div>Unimed - სამედიცინო სტუდენტური პლატფორმა</div>
+            <div class="copyright">©2021-2025 UniMed. ყველა უფლება დაცულია.</div>
+        </div>
+    </footer>
+    
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="admin-container">
         <aside class="admin-sidebar">
             <h2><i class="fas fa-cogs"></i> ადმინისტრირება</h2>
             <ul class="admin-menu">
                 <li><a href="#" class="active" data-admin-section="dashboard"><i class="fas fa-tachometer-alt"></i> დაფა</a></li>
-                <li><a href="#" data-admin-section="add-page"><i class="fas fa-plus-circle"></i> გვერდის დამატება</a></li>
+                <li><a href="#" data-admin-section="add-page"><i class="fas fa-plus-circle"></i> მენიუს დამატება</a></li>
+                <li><a href="#" data-admin-section="add-subpage"><i class="fas fa-plus-square"></i> ქვემენიუს დამატება</a></li>
                 <li><a href="#" data-admin-section="add-description"><i class="fas fa-edit"></i> აღწერის დამატება</a></li>
+                <li><a href="#" data-admin-section="add-subject"><i class="fas fa-book-medical"></i> საგნის დამატება</a></li>
                 <li><a href="#" data-admin-section="manage-materials"><i class="fas fa-book"></i> მასალების მართვა</a></li>
                 <li><a href="#" data-admin-section="user-management"><i class="fas fa-users"></i> მომხმარებლების მართვა</a></li>
                 <li><a href="#" data-admin-section="settings"><i class="fas fa-cog"></i> პარამეტრები</a></li>
-                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> გამოსვლა</a></li>
+                <li><a href="#" id="admin-logout-btn"><i class="fas fa-sign-out-alt"></i> გამოსვლა</a></li>
             </ul>
         </aside>
         
         <main class="admin-content">
             <div id="admin-dashboard" class="admin-section active">
-                <h2 class="page-title">ადმინისტრატორის დაფა</h2>
+                <h2>ადმინისტრატორის დაფა</h2>
                 <p>კეთილი იყოს თქვენი მობრძანება UniMed ადმინისტრაციულ პანელში.</p>
                 
-                <div class="cards-container" style="margin-top: 20px;">
-                    <div class="card">
-                        <div class="card-header">სტატისტიკა</div>
-                        <div class="card-body">
-                            <p><strong>მომხმარებლები:</strong> 452</p>
-                            <p><strong>ატვირთული მასალები:</strong> 128</p>
-                            <p><strong>გვერდები:</strong> 12</p>
-                            <p><strong>ბოლო აქტივობა:</strong> 2024-06-15</p>
-                        </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-top: 35px;">
+                    <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+                        <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 20px;">სტატისტიკა</h3>
+                        <p><strong>მომხმარებლები:</strong> <span style="float: right; font-weight: 700; color: var(--primary-color);">452</span></p>
+                        <p><strong>ატვირთული მასალები:</strong> <span style="float: right; font-weight: 700; color: var(--primary-color);">128</span></p>
+                        <p><strong>გვერდები:</strong> <span style="float: right; font-weight: 700; color: var(--primary-color);" id="admin-page-count">12</span></p>
+                        <p><strong>საგნები:</strong> <span style="float: right; font-weight: 700; color: var(--primary-color);" id="admin-subject-count">8</span></p>
                     </div>
                     
-                    <div class="card">
-                        <div class="card-header">სწრაფი მოქმედებები</div>
-                        <div class="card-body">
-                            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" data-admin-section="add-page">გვერდის დამატება</button>
-                            <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" data-admin-section="add-description">აღწერის დამატება</button>
-                            <button class="btn btn-secondary" style="width: 100%;" data-admin-section="manage-materials">მასალების მართვა</button>
-                        </div>
+                    <div style="background: linear-gradient(135deg, #f3e5f5, #e1bee7); padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+                        <h3 style="color: #7b1fa2; margin-bottom: 15px; font-size: 20px;">სწრაფი მოქმედებები</h3>
+                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 12px;" data-admin-section="add-page">მენიუს დამატება</button>
+                        <button class="btn btn-success" style="width: 100%; margin-bottom: 12px;" data-admin-section="add-subpage">ქვემენიუს დამატება</button>
+                        <button class="btn btn-secondary" style="width: 100%;" data-admin-section="manage-materials">მასალების მართვა</button>
                     </div>
                 </div>
             </div>
             
             <div id="add-page" class="admin-section">
-                <h2 class="page-title">გვერდის დამატება</h2>
+                <h2>მენიუს დამატება</h2>
                 <form id="add-page-form">
                     <div class="form-group">
-                        <label for="page-title">გვერდის სათაური</label>
-                        <input type="text" id="page-title" class="form-control" placeholder="მაგ: პროპედევტიკა">
+                        <label for="new-page-name">გვერდის სახელი</label>
+                        <input type="text" id="new-page-name" class="form-control" placeholder="მაგ: პროპედევტიკა">
                     </div>
                     
                     <div class="form-group">
-                        <label for="page-url">გვერდის URL</label>
-                        <input type="text" id="page-url" class="form-control" placeholder="მაგ: propedeutics">
+                        <label for="new-page-id">გვერდის ID (ინგლისურად, უნიკალური)</label>
+                        <input type="text" id="new-page-id" class="form-control" placeholder="მაგ: propedeutics">
                     </div>
                     
                     <div class="form-group">
-                        <label for="page-content">გვერდის შიგთავსი</label>
-                        <textarea id="page-content" class="form-control" placeholder="გვერდის შიგთავსი..."></textarea>
+                        <label for="new-page-content">გვერდის შიგთავსი (HTML)</label>
+                        <textarea id="new-page-content" class="form-control" placeholder="შეიყვანეთ HTML კოდი..." rows="15"></textarea>
                     </div>
                     
+                    <button type="submit" class="btn btn-primary">გვერდის დამატება მენიუში</button>
+                </form>
+                
+                <div class="subject-list" id="custom-pages-list" style="margin-top: 40px;">
+                    <h3 style="color: var(--primary-color);">არსებული კონტენტი გვერდებისთვის</h3>
+                    <!-- Custom page content will be populated here -->
+                </div>
+            </div>
+            
+            <div id="add-subpage" class="admin-section">
+                <h2>ქვემენიუს დამატება</h2>
+                <form id="add-subpage-form">
                     <div class="form-group">
-                        <label for="page-category">კატეგორია</label>
-                        <select id="page-category" class="form-control">
-                            <option value="materials">სასწავლო მასალები</option>
-                            <option value="process">სასწავლო პროცესი</option>
-                            <option value="schedule">სასწავლო ცხრილი</option>
-                            <option value="simulation">სიმულაციის ცენტრი</option>
-                            <option value="other">სხვა</option>
+                        <label for="parent-page">მშობელი გვერდი</label>
+                        <select id="parent-page" class="form-control">
+                            <!-- Will be populated by JavaScript -->
                         </select>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary">გვერდის დამატება</button>
+                    <div class="form-group">
+                        <label for="new-subpage-name">ქვეგვერდის სახელი</label>
+                        <input type="text" id="new-subpage-name" class="form-control" placeholder="მაგ: ძირითადი მასალები">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-subpage-id">ქვეგვერდის ID (ინგლისურად, უნიკალური)</label>
+                        <input type="text" id="new-subpage-id" class="form-control" placeholder="მაგ: basic-materials">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-subpage-content">ქვეგვერდის შიგთავსი (HTML)</label>
+                        <textarea id="new-subpage-content" class="form-control" placeholder="შეიყვანეთ HTML კოდი..." rows="15"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">ქვეგვერდის დამატება</button>
                 </form>
+                
+                <div class="subject-list" id="custom-subpages-list" style="margin-top: 40px;">
+                    <h3 style="color: var(--primary-color);">არსებული ქვეგვერდები</h3>
+                    <!-- Custom subpage content will be populated here -->
+                </div>
             </div>
             
             <div id="add-description" class="admin-section">
-                <h2 class="page-title">აღწერის დამატება/რედაქტირება</h2>
+                <h2>აღწერის დამატება/რედაქტირება</h2>
                 <form id="add-description-form">
                     <div class="form-group">
-                        <label for="description-page">აირჩიეთ გვერდი</label>
-                        <select id="description-page" class="form-control">
-                            <option value="">-- აირჩიეთ გვერდი --</option>
-                            <option value="materials">სასწავლო მასალები</option>
-                            <option value="process">სასწავლო პროცესი</option>
-                            <option value="schedule">სასწავლო ცხრილი</option>
-                            <option value="simulation">სიმულაციის ცენტრი</option>
-                            <option value="gpa">GPA კალკულატორი</option>
-                            <option value="ekg">ე.კ.გ</option>
-                            <option value="propedeutics">პროპედევტიკა</option>
-                            <option value="latin">ლათინური ენა</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
                         <label for="description-text">აღწერა</label>
-                        <textarea id="description-text" class="form-control" placeholder="გვერდის აღწერა..."></textarea>
+                        <textarea id="description-text" class="form-control" placeholder="გვერდის აღწერა..." rows="10"></textarea>
                     </div>
                     
                     <button type="submit" class="btn btn-primary">აღწერის შენახვა</button>
                 </form>
             </div>
             
-            <div id="manage-materials" class="admin-section">
-                <h2 class="page-title">მასალების მართვა</h2>
-                <div class="cards-container">
-                    <div class="card">
-                        <div class="card-header">ატვირთული მასალები</div>
-                        <div class="card-body">
-                            <ul class="card-list">
-                                <li><a href="#"><i class="fas fa-file-pdf"></i> ანატომია - თავი 1 <span class="btn btn-secondary btn-sm" style="float: right;">წაშლა</span></a></li>
-                                <li><a href="#"><i class="fas fa-file-word"></i> ფიზიოლოგია - ლექცია 5 <span class="btn btn-secondary btn-sm" style="float: right;">წაშლა</span></a></li>
-                                <li><a href="#"><i class="fas fa-file-powerpoint"></i> პათოლოგია - პრეზენტაცია <span class="btn btn-secondary btn-sm" style="float: right;">წაშლა</span></a></li>
-                                <li><a href="#"><i class="fas fa-file-alt"></i> ფარმაკოლოგია - საგამოცდო <span class="btn btn-secondary btn-sm" style="float: right;">წაშლა</span></a></li>
-                            </ul>
+            <div id="add-subject" class="admin-section">
+                <h2>საგნის დამატება</h2>
+                <div class="subject-management">
+                    <form id="add-subject-form">
+                        <div class="form-group">
+                            <label for="subject-name">საგნის სახელი</label>
+                            <input type="text" id="subject-name" class="form-control" placeholder="მაგ: ანატომია, ფიზიოლოგია">
                         </div>
-                    </div>
+                        
+                        <div class="form-group">
+                            <label for="subject-category">კატეგორია</label>
+                            <select id="subject-category" class="form-control">
+                                <option value="materials">სასწავლო მასალები</option>
+                                <option value="process">სასწავლო პროცესი</option>
+                                <option value="simulation">სიმულაციის ცენტრი</option>
+                                <option value="other">სხვა</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject-html">საგნის HTML კონტენტი</label>
+                            <textarea id="subject-html" class="form-control" placeholder="შეიყვანეთ HTML კოდი საგნისთვის..." rows="12"></textarea>
+                            <small style="color: #666; display: block; margin-top: 5px;">აქ შეგიძლიათ ჩასვათ HTML კოდი საგნის გვერდისთვის (ვიდეოები, ლინკები, ტექსტი, ფოტოები)</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">საგნის დამატება</button>
+                    </form>
                     
-                    <div class="card">
-                        <div class="card-header">მასალის ატვირთვა</div>
-                        <div class="card-body">
-                            <form id="upload-material-form">
-                                <div class="form-group">
-                                    <label for="material-file">აირჩიეთ ფაილი</label>
-                                    <input type="file" id="material-file" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="material-category">კატეგორია</label>
-                                    <select id="material-category" class="form-control">
-                                        <option value="basic">ძირითადი მასალები</option>
-                                        <option value="additional">დამატებითი მასალები</option>
-                                        <option value="exam">საგამოცდო მასალები</option>
-                                        <option value="notes">კონსპექტები</option>
-                                    </select>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary">მასალის ატვირთვა</button>
-                            </form>
-                        </div>
+                    <div class="subject-list" id="subject-list">
+                        <h3 style="margin-top: 30px; color: var(--primary-color);">არსებული საგნები</h3>
+                        <!-- Subjects will be populated by JavaScript -->
                     </div>
                 </div>
+            </div>
+            
+            <div id="manage-materials" class="admin-section">
+                <h2>მასალების მართვა</h2>
+                <p>მასალების მართვის პანელი. აქ შეგიძლიათ ატვირთოთ, წაშალოთ და დაარედაქტიროთ სასწავლო მასალები.</p>
+                <!-- Additional content for materials management -->
             </div>
         </main>
     </div>
     
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>UniMed უსაფრთხოებისთვის გაითვალისწინეთ:</h3>
-                <div class="warning-box">
-                    <p><i class="fas fa-exclamation-triangle"></i> <strong>არ დალინკო</strong> საიტის ნებისმიერი ბმული სხვადასხვა ჯგუფში, კომენტარში, ჩატში და სხვა;</p>
-                    <p><i class="fas fa-exclamation-triangle"></i> <strong>არ ისაუბრო</strong> ვებგვერდის შესახებ უნივერსიტეტის პერსონალთან და სხვა;</p>
-                    <p><i class="fas fa-exclamation-triangle"></i> საიტზე შეტანილი <strong>ნებისმიერი ინფორმაცია შეინახეთ</strong> თქვენთვის და არ გაანდოთ უცხო მესამე პირს;</p>
-                    <p><i class="fas fa-exclamation-triangle"></i> <strong>დაიცავით</strong> ვებგვერდის პრივატულობა და ნუ შეუქმნით საფრთხეს მის არსებობას. არ ისაუბროთ ვებგვერდზე სხვებთან, გამოიყენეთ ის პირადი საჭიროებისას!</p>
-                </div>
-            </div>
-            
-            <div class="footer-section">
-                <h3>მოიწვიეთ მეგობრები UniMed-ზე</h3>
-                <p>გააზიარეთ UniMed თქვენს კოლეგებთან, რათა მეტმა სტუდენტმა შეძლოს სასწავლო პროცესის გამარტივება.</p>
-                <button class="btn btn-primary" style="margin-top: 10px;">გაზიარების ბმული</button>
-            </div>
-        </div>
-    </footer>
-    
     <!-- Login Modal -->
     <div id="login-modal" class="modal">
         <div class="modal-content">
+            <button class="close-modal">&times;</button>
             <div class="modal-header">
-                <h2>ადმინისტრატორის შესვლა</h2>
-                <button class="close-modal">&times;</button>
+                <h2>შესვლა UniMed-ში</h2>
+                <p>გთხოვთ შეიყვანეთ თქვენი მონაცემები</p>
             </div>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="login-username">მომხმარებლის სახელი</label>
-                    <input type="text" id="login-username" class="form-control" placeholder="შეიყვანეთ მომხმარებლის სახელი">
+                    <label for="login-username">მომხმარებლის სახელი ან ელ.ფოსტა</label>
+                    <input type="text" id="login-username" class="form-control" placeholder="შეიყვანეთ მომხმარებლის სახელი ან ელ.ფოსტა">
                 </div>
                 
                 <div class="form-group">
@@ -806,31 +1168,87 @@
                     <input type="password" id="login-password" class="form-control" placeholder="შეიყვანეთ პაროლი">
                 </div>
                 
-                <button type="submit" class="btn btn-primary" style="width: 100%;">შესვლა</button>
+                <button type="submit" class="btn btn-primary">შესვლა</button>
             </form>
         </div>
     </div>
     
+    <!-- Page Content Container (for dynamically loaded pages) -->
+    <div id="page-content-container" style="display: none;">
+        <!-- Dynamic page content will be loaded here -->
+    </div>
+    
     <script>
-        // Initialize particles.js background
+        // Application State
+        const AppState = {
+            currentUser: null,
+            isAdmin: false,
+            menuItems: JSON.parse(localStorage.getItem('unimed-menu')) || [
+                {
+                    name: "სასწავლო მასალები",
+                    id: "materials",
+                    subpages: [
+                        { name: "ძირითადი სასწავლო მასალები", id: "basic-materials" },
+                        { name: "დამატებითი სასწავლო მასალები", id: "additional-materials" },
+                        { name: "საგამოცდო მასალები სტუდენტებისთვის", id: "exam-materials" },
+                        { name: "სასწავლო კონსპექტები", id: "lecture-notes" }
+                    ]
+                },
+                {
+                    name: "სასწავლო პროცესი",
+                    id: "process",
+                    subpages: [
+                        { name: "სილაბუსები", id: "syllabus" },
+                        { name: "წინაპირობები", id: "prerequisites" },
+                        { name: "ნომრების ბაზა", id: "numbers-database" }
+                    ]
+                },
+                {
+                    name: "სასწავლო ცხრილი",
+                    id: "schedule",
+                    subpages: [
+                        { name: "V კურსი", id: "course-v" }
+                    ]
+                },
+                {
+                    name: "სიმულაციის ცენტრი",
+                    id: "simulation",
+                    subpages: [
+                        { name: "სიმულაციის ცენტრი", id: "simulation-center" },
+                        { name: "სიმულაციის ცენტრის აქტივაცია", id: "simulation-activation" }
+                    ]
+                },
+                { name: "GPA კალკულატორი", id: "gpa" },
+                { name: "ე.კ.გ", id: "ekg" },
+                { name: "პროპედევტიკა", id: "propedeutics" },
+                { name: "ლათინური ენა", id: "latin" }
+            ],
+            subjects: JSON.parse(localStorage.getItem('unimed-subjects')) || [],
+            pageContent: JSON.parse(localStorage.getItem('unimed-page-content')) || {},
+            subpageContent: JSON.parse(localStorage.getItem('unimed-subpage-content')) || {},
+            dynamicContent: JSON.parse(localStorage.getItem('unimed-dynamic-content')) || []
+        };
+
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize particles.js background - Lighter version
             particlesJS("particles-js", {
                 particles: {
-                    number: { value: 80, density: { enable: true, value_area: 800 } },
-                    color: { value: "#ffffff" },
+                    number: { value: 60, density: { enable: true, value_area: 800 } },
+                    color: { value: "#0056b3" },
                     shape: { type: "circle" },
-                    opacity: { value: 0.5, random: true },
-                    size: { value: 3, random: true },
+                    opacity: { value: 0.3, random: true },
+                    size: { value: 2, random: true },
                     line_linked: {
                         enable: true,
                         distance: 150,
-                        color: "#ffffff",
-                        opacity: 0.4,
+                        color: "#0056b3",
+                        opacity: 0.2,
                         width: 1
                     },
                     move: {
                         enable: true,
-                        speed: 2,
+                        speed: 1,
                         direction: "none",
                         random: true,
                         straight: false,
@@ -848,26 +1266,67 @@
                 retina_detect: true
             });
             
-            // Initialize student counter
+            // Initialize real-time clock - Smaller version
+            function updateClock() {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
+            }
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Initialize student counter (0 to 450 in 5 seconds)
             let studentCount = 0;
-            const studentCounter = document.getElementById('counter-students');
+            const targetCount = 450;
+            const duration = 5000; // 5 seconds
+            const increment = targetCount / (duration / 50);
+            const studentCounter = document.getElementById('student-counter');
+            
             const counterInterval = setInterval(() => {
-                if (studentCount < 450) {
-                    studentCount += 5;
-                    studentCounter.textContent = studentCount;
+                if (studentCount < targetCount) {
+                    studentCount += increment;
+                    studentCounter.textContent = Math.floor(studentCount);
                 } else {
+                    studentCounter.textContent = targetCount;
                     clearInterval(counterInterval);
                 }
-            }, 30);
+            }, 50);
+            
+            // Build dynamic menu
+            buildMenu();
+            
+            // Load dynamic content (subjects added by admin)
+            loadDynamicContent();
+            
+            // Initialize admin page counts
+            updateAdminCounts();
+            
+            // Initialize parent page dropdown for subpages
+            updateParentPageDropdown();
+            
+            // Load custom pages and subpages
+            loadCustomPages();
+            loadCustomSubpages();
+            
+            // Logo click handler - always goes to main page
+            document.getElementById('logo-link').addEventListener('click', function() {
+                showMainPage();
+            });
             
             // Login functionality
-            const loginBtn = document.getElementById('admin-login-btn');
+            const loginBtn = document.getElementById('login-button');
             const loginModal = document.getElementById('login-modal');
             const closeModalBtn = document.querySelector('.close-modal');
             const loginForm = document.getElementById('login-form');
             const adminPanel = document.getElementById('admin-panel');
-            const visitorContent = document.getElementById('visitor-content');
-            const logoutBtn = document.getElementById('logout-btn');
+            const mainContent = document.getElementById('main-content');
+            const headerNav = document.querySelector('.main-menu');
+            const footer = document.querySelector('footer');
+            const adminLogoutBtn = document.getElementById('admin-logout-btn');
+            const userStatusDiv = document.getElementById('user-status');
             
             // Show login modal
             loginBtn.addEventListener('click', function() {
@@ -893,24 +1352,38 @@
                 const username = document.getElementById('login-username').value;
                 const password = document.getElementById('login-password').value;
                 
-                // Simple authentication (in a real app, this would be server-side)
-                if (username === 'admin' && password === 'admin123') {
-                    // Hide visitor content and show admin panel
-                    visitorContent.style.display = 'none';
-                    adminPanel.style.display = 'flex';
-                    loginModal.style.display = 'none';
-                    
-                    // Clear form
-                    loginForm.reset();
+                // Auto-detect user type based on credentials
+                // Admin credentials
+                if ((username === 'admin' || username === 'admin@unimed.ge') && password === 'admin123') {
+                    AppState.currentUser = { name: 'ადმინისტრატორი', username: 'admin' };
+                    AppState.isAdmin = true;
+                    showAdminPanel();
+                } 
+                // Regular user credentials
+                else if ((username === 'user' || username === 'student@unimed.ge') && password === 'user123') {
+                    AppState.currentUser = { name: 'სტუდენტი', username: 'user' };
+                    AppState.isAdmin = false;
+                    showUserProfile();
+                }
+                // Demo users
+                else if (username === 'demo' && password === 'demo123') {
+                    AppState.currentUser = { name: 'დემო მომხმარებელი', username: 'demo' };
+                    AppState.isAdmin = false;
+                    showUserProfile();
                 } else {
                     alert('არასწორი მომხმარებლის სახელი ან პაროლი!');
+                    return;
                 }
+                
+                // Update UI
+                updateUserInterface();
+                loginModal.style.display = 'none';
+                loginForm.reset();
             });
             
-            // Handle logout
-            logoutBtn.addEventListener('click', function() {
-                adminPanel.style.display = 'none';
-                visitorContent.style.display = 'block';
+            // Handle logout from admin panel
+            adminLogoutBtn.addEventListener('click', function() {
+                logout();
             });
             
             // Admin panel navigation
@@ -922,7 +1395,7 @@
                     e.preventDefault();
                     
                     // Don't process logout link here
-                    if (this.id === 'logout-btn') return;
+                    if (this.id === 'admin-logout-btn') return;
                     
                     // Get the target section
                     const targetSection = this.getAttribute('data-admin-section');
@@ -938,6 +1411,11 @@
                             section.classList.add('active');
                         }
                     });
+                    
+                    // Update dropdown when add-subpage is selected
+                    if (targetSection === 'add-subpage') {
+                        updateParentPageDropdown();
+                    }
                 });
             });
             
@@ -966,40 +1444,890 @@
                             section.classList.add('active');
                         }
                     });
-                });
-            });
-            
-            // Handle form submissions in admin panel
-            const adminForms = document.querySelectorAll('#admin-panel form');
-            adminForms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    alert('ფორმა წარმატებით გაიგზავნა! (დემო ვერსია)');
-                    this.reset();
-                });
-            });
-            
-            // Handle visitor page navigation
-            const menuLinks = document.querySelectorAll('.menu > li > a');
-            menuLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const page = this.getAttribute('data-page');
-                    alert(`ნავიგაცია გვერდზე: ${this.textContent} (დემო ვერსია)`);
-                });
-            });
-            
-            // Handle card clicks in visitor section
-            const cardLinks = document.querySelectorAll('.card-list a');
-            cardLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    if (!this.querySelector('.btn')) { // Don't trigger for delete buttons
-                        e.preventDefault();
-                        alert(`ნავიგაცია: ${this.textContent} (დემო ვერსია)`);
+                    
+                    // Update dropdown when add-subpage is selected
+                    if (targetSection === 'add-subpage') {
+                        updateParentPageDropdown();
                     }
                 });
             });
+            
+            // Handle new page form submission
+            const addPageForm = document.getElementById('add-page-form');
+            if (addPageForm) {
+                addPageForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const pageName = document.getElementById('new-page-name').value;
+                    const pageId = document.getElementById('new-page-id').value;
+                    const pageContent = document.getElementById('new-page-content').value;
+                    
+                    if (!pageName.trim() || !pageId.trim() || !pageContent.trim()) {
+                        alert('გთხოვთ შეავსოთ ყველა ველი!');
+                        return;
+                    }
+                    
+                    // Check if page ID already exists
+                    if (AppState.menuItems.some(item => item.id === pageId)) {
+                        alert('გვერდის ID უკვე არსებობს! გთხოვთ აირჩიოთ სხვა ID.');
+                        return;
+                    }
+                    
+                    // Add new page to menu
+                    const newPage = {
+                        name: pageName,
+                        id: pageId,
+                        subpages: []
+                    };
+                    
+                    AppState.menuItems.push(newPage);
+                    
+                    // Save page content
+                    AppState.pageContent[pageId] = {
+                        name: pageName,
+                        html: pageContent,
+                        date: new Date().toLocaleDateString('ka-GE'),
+                        timestamp: Date.now()
+                    };
+                    
+                    // Save to localStorage
+                    localStorage.setItem('unimed-menu', JSON.stringify(AppState.menuItems));
+                    localStorage.setItem('unimed-page-content', JSON.stringify(AppState.pageContent));
+                    
+                    // Rebuild menu
+                    buildMenu();
+                    
+                    // Update admin counts
+                    updateAdminCounts();
+                    
+                    // Load custom pages
+                    loadCustomPages();
+                    
+                    // Show success message
+                    alert(`გვერდი "${pageName}" წარმატებით დაემატა მენიუში!`);
+                    
+                    // Reset form
+                    this.reset();
+                });
+            }
+            
+            // Handle new subpage form submission
+            const addSubpageForm = document.getElementById('add-subpage-form');
+            if (addSubpageForm) {
+                addSubpageForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const parentPageId = document.getElementById('parent-page').value;
+                    const subpageName = document.getElementById('new-subpage-name').value;
+                    const subpageId = document.getElementById('new-subpage-id').value;
+                    const subpageContent = document.getElementById('new-subpage-content').value;
+                    
+                    if (!parentPageId || !subpageName.trim() || !subpageId.trim() || !subpageContent.trim()) {
+                        alert('გთხოვთ შეავსოთ ყველა ველი!');
+                        return;
+                    }
+                    
+                    // Find parent page
+                    const parentPage = AppState.menuItems.find(item => item.id === parentPageId);
+                    if (!parentPage) {
+                        alert('მშობელი გვერდი ვერ მოიძებნა!');
+                        return;
+                    }
+                    
+                    // Check if subpage ID already exists in this parent
+                    if (parentPage.subpages && parentPage.subpages.some(sub => sub.id === subpageId)) {
+                        alert('ქვეგვერდის ID უკვე არსებობს ამ გვერდზე! გთხოვთ აირჩიოთ სხვა ID.');
+                        return;
+                    }
+                    
+                    // Add new subpage
+                    if (!parentPage.subpages) {
+                        parentPage.subpages = [];
+                    }
+                    
+                    parentPage.subpages.push({
+                        name: subpageName,
+                        id: subpageId
+                    });
+                    
+                    // Save subpage content
+                    AppState.subpageContent[subpageId] = {
+                        parentId: parentPageId,
+                        name: subpageName,
+                        html: subpageContent,
+                        date: new Date().toLocaleDateString('ka-GE'),
+                        timestamp: Date.now()
+                    };
+                    
+                    // Save to localStorage
+                    localStorage.setItem('unimed-menu', JSON.stringify(AppState.menuItems));
+                    localStorage.setItem('unimed-subpage-content', JSON.stringify(AppState.subpageContent));
+                    
+                    // Rebuild menu
+                    buildMenu();
+                    
+                    // Load custom subpages
+                    loadCustomSubpages();
+                    
+                    // Show success message
+                    alert(`ქვეგვერდი "${subpageName}" წარმატებით დაემატა "${parentPage.name}" გვერდს!`);
+                    
+                    // Reset form
+                    this.reset();
+                });
+            }
+            
+            // Handle subject form submission
+            const subjectForm = document.getElementById('add-subject-form');
+            if (subjectForm) {
+                subjectForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const subjectName = document.getElementById('subject-name').value;
+                    const subjectCategory = document.getElementById('subject-category').value;
+                    const subjectHTML = document.getElementById('subject-html').value;
+                    
+                    if (!subjectName.trim() || !subjectHTML.trim()) {
+                        alert('გთხოვთ შეავსოთ საგნის სახელი და HTML კონტენტი!');
+                        return;
+                    }
+                    
+                    // Add subject to AppState
+                    const newSubject = {
+                        id: 'subject-' + Date.now(),
+                        name: subjectName,
+                        category: subjectCategory,
+                        html: subjectHTML,
+                        date: new Date().toLocaleDateString('ka-GE'),
+                        timestamp: Date.now()
+                    };
+                    
+                    AppState.subjects.push(newSubject);
+                    
+                    // Save to localStorage
+                    localStorage.setItem('unimed-subjects', JSON.stringify(AppState.subjects));
+                    
+                    // Also add to dynamic content for main page
+                    const dynamicContent = {
+                        id: 'dynamic-' + Date.now(),
+                        title: subjectName,
+                        category: subjectCategory,
+                        content: subjectHTML,
+                        type: 'subject',
+                        date: new Date().toLocaleDateString('ka-GE'),
+                        timestamp: Date.now()
+                    };
+                    
+                    AppState.dynamicContent.push(dynamicContent);
+                    localStorage.setItem('unimed-dynamic-content', JSON.stringify(AppState.dynamicContent));
+                    
+                    // Update subject list in admin
+                    updateSubjectList();
+                    
+                    // Update subject count in admin dashboard
+                    document.getElementById('admin-subject-count').textContent = AppState.subjects.length;
+                    
+                    // Load dynamic content on main page
+                    loadDynamicContent();
+                    
+                    // Show success message
+                    alert(`საგანი "${subjectName}" წარმატებით დაემატა! ის გამოჩნდება როგორც ადმინისტრატორისთვის, ასევე ჩვეულებრივი მომხმარებლებისთვის.`);
+                    
+                    // Reset form
+                    this.reset();
+                });
+            }
+            
+            // Handle other admin form submissions
+            const otherForms = document.querySelectorAll('#admin-panel form');
+            otherForms.forEach(form => {
+                if (form.id !== 'add-page-form' && form.id !== 'add-subpage-form' && form.id !== 'add-subject-form') {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        alert('ფორმა წარმატებით გაიგზავნა! (დემო ვერსია)');
+                        this.reset();
+                    });
+                }
+            });
+            
+            // Initialize subject list
+            updateSubjectList();
+            // Update subject count in admin dashboard
+            document.getElementById('admin-subject-count').textContent = AppState.subjects.length;
         });
+        
+        // Function to build dynamic menu
+        function buildMenu() {
+            const menuList = document.getElementById('main-menu-list');
+            menuList.innerHTML = '';
+            
+            AppState.menuItems.forEach(item => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#';
+                a.textContent = item.name;
+                a.dataset.page = item.id;
+                
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPage(item.id);
+                });
+                
+                li.appendChild(a);
+                
+                // Add submenu if item has subpages
+                if (item.subpages && item.subpages.length > 0) {
+                    const submenu = document.createElement('ul');
+                    submenu.className = 'submenu';
+                    
+                    item.subpages.forEach(subpage => {
+                        const subLi = document.createElement('li');
+                        const subA = document.createElement('a');
+                        subA.href = '#';
+                        subA.innerHTML = `${subpage.name} <i class="fas fa-chevron-right"></i>`;
+                        subA.dataset.subpage = subpage.id;
+                        subA.dataset.parent = item.id;
+                        
+                        subA.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            showSubpage(item.id, subpage.id);
+                        });
+                        
+                        subLi.appendChild(subA);
+                        submenu.appendChild(subLi);
+                    });
+                    
+                    li.appendChild(submenu);
+                }
+                
+                menuList.appendChild(li);
+            });
+        }
+        
+        // Function to load dynamic content on main page
+        function loadDynamicContent() {
+            const dynamicContainer = document.getElementById('dynamic-content-container');
+            
+            if (AppState.dynamicContent.length === 0) {
+                dynamicContainer.innerHTML = '';
+                return;
+            }
+            
+            // Sort by timestamp (newest first)
+            const sortedContent = [...AppState.dynamicContent].sort((a, b) => b.timestamp - a.timestamp);
+            
+            dynamicContainer.innerHTML = `
+                <section style="margin-bottom: 40px;">
+                    <h2 style="color: var(--primary-color); font-size: 28px; margin-bottom: 25px; display: flex; align-items: center; gap: 12px;">
+                        <i class="fas fa-book"></i> დამატებული მასალები
+                    </h2>
+                    ${sortedContent.map(item => `
+                        <div class="dynamic-content">
+                            <h3>${item.title}</h3>
+                            <div class="subject-meta">
+                                <span class="subject-category">${getCategoryName(item.category)}</span>
+                                <span><i class="far fa-calendar"></i> ${item.date}</span>
+                            </div>
+                            <div>${item.content}</div>
+                        </div>
+                    `).join('')}
+                </section>
+            `;
+        }
+        
+        // Function to show main page
+        function showMainPage() {
+            document.getElementById('main-content').style.display = 'block';
+            document.querySelector('.main-menu').style.display = 'block';
+            document.querySelector('footer').style.display = 'block';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('page-content-container').style.display = 'none';
+            
+            // Reload dynamic content when showing main page
+            loadDynamicContent();
+        }
+        
+        // Function to show regular page (for both admin and regular users)
+        function showPage(pageId) {
+            const page = AppState.menuItems.find(item => item.id === pageId);
+            if (!page) return;
+            
+            // Get page content from storage or use default
+            const storedContent = AppState.pageContent[pageId];
+            const pageHTML = storedContent ? storedContent.html : `
+                <p style="font-size: 18px; line-height: 1.7; margin-bottom: 20px;">ეს არის "${page.name}" გვერდის კონტენტი. რეალურ აპლიკაციაში აქ იქნება სასწავლო მასალები, ინფორმაცია და სხვა რესურსები.</p>
+                
+                ${page.id === 'materials' ? `
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 30px;">
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 15px;">ანატომია</h3>
+                        <p>ძირითადი ანატომიური ცნებები და სტრუქტურები.</p>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 15px;">ფიზიოლოგია</h3>
+                        <p>ორგანიზმის ფუნქციონირების პრინციპები.</p>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 15px;">ბიოქიმია</h3>
+                        <p>ქიმიური პროცესები ცოცხალ ორგანიზმებში.</p>
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${page.id === 'simulation' ? `
+                <div style="background: linear-gradient(135deg, #e3f2fd, #f3e5f5); padding: 25px; border-radius: 10px; margin-top: 30px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px;">სიმულაციის ცენტრი</h3>
+                    <p>სიმულაციის ცენტრი გთავაზობთ პრაქტიკულ უნარების განვითარების საშუალებას.</p>
+                    <button style="background: var(--primary-color); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; margin-top: 15px;">ცენტრის ნახვა</button>
+                </div>
+                ` : ''}
+            `;
+            
+            // Create page content
+            const pageContent = document.getElementById('page-content-container');
+            
+            if (AppState.isAdmin) {
+                // Admin view with editing capabilities
+                pageContent.innerHTML = `
+                    <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                            <h1 style="color: var(--primary-color); font-size: 36px;">${page.name}</h1>
+                            <button class="btn btn-primary" onclick="showAdminPanel()">ადმინ პანელში დაბრუნება</button>
+                        </div>
+                        
+                        <div class="page-content">
+                            <h2>გვერდის კონტენტი (სტუდენტებისთვის ხილული)</h2>
+                            <div id="page-content-preview">${pageHTML}</div>
+                            
+                            <div class="admin-editor">
+                                <h3><i class="fas fa-edit"></i> HTML კონტენტის რედაქტირება</h3>
+                                <textarea id="page-editor" class="form-control" rows="15" placeholder="შეიყვანეთ HTML კოდი...">${pageHTML}</textarea>
+                                <div class="admin-actions">
+                                    <button class="btn btn-primary" onclick="savePageContent('${pageId}')">შენახვა</button>
+                                    <button class="btn btn-secondary" onclick="showPage('${pageId}')">განახლება</button>
+                                    <button class="btn btn-success" onclick="previewPageContent()">წინასწარი ნახვა</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Regular user view
+                pageContent.innerHTML = `
+                    <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
+                        <h1 style="color: var(--primary-color); font-size: 36px; margin-bottom: 30px;">${page.name}</h1>
+                        <div class="page-content">
+                            ${pageHTML}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Show page content, hide main content
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('page-content-container').style.display = 'block';
+        }
+        
+        // Function to show subpage (for both admin and regular users)
+        function showSubpage(parentId, subpageId) {
+            const parentPage = AppState.menuItems.find(item => item.id === parentId);
+            const subpage = parentPage.subpages.find(sp => sp.id === subpageId);
+            
+            if (!parentPage || !subpage) return;
+            
+            // Get subpage content from storage or use default
+            const storedContent = AppState.subpageContent[subpageId];
+            const subpageHTML = storedContent ? storedContent.html : `
+                <p style="font-size: 18px; line-height: 1.7; margin-bottom: 20px;">ეს არის "${subpage.name}" ქვეგვერდის დემო კონტენტი. რეალურ აპლიკაციაში აქ იქნება დეტალური ინფორმაცია და მასალები.</p>
+                
+                ${subpageId === 'basic-materials' ? `
+                <div style="margin-top: 30px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 20px;">ძირითადი მასალები</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 15px; background: #f8f9fa; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid var(--primary-color);">
+                            <strong>ანატომიის სახელმძღვანელო</strong> - PDF ფორმატი
+                        </li>
+                        <li style="padding: 15px; background: #f8f9fa; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid var(--primary-color);">
+                            <strong>ფიზიოლოგიის ლექციები</strong> - პრეზენტაციები
+                        </li>
+                        <li style="padding: 15px; background: #f8f9fa; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid var(--primary-color);">
+                            <strong>ბიოქიმიის სახელმძღვანელო</strong> - ონლაინ ვერსია
+                        </li>
+                    </ul>
+                </div>
+                ` : ''}
+                
+                ${subpageId === 'simulation-center' ? `
+                <div style="background: linear-gradient(135deg, #e3f2fd, #f3e5f5); padding: 25px; border-radius: 10px; margin-top: 30px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px;">სიმულაციის ცენტრის რესურსები</h3>
+                    <p>სიმულაციის ცენტრი გთავაზობთ პრაქტიკულ უნარების განვითარების საშუალებას მედიცინის სხვადასხვა დარგში.</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
+                        <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <i class="fas fa-heartbeat" style="font-size: 30px; color: var(--danger-color); margin-bottom: 10px;"></i>
+                            <p>კარდიოლოგიური სიმულაციები</p>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <i class="fas fa-lungs" style="font-size: 30px; color: var(--primary-color); margin-bottom: 10px;"></i>
+                            <p>სასუნთქი სისტემის სიმულაციები</p>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            // Create subpage content
+            const pageContent = document.getElementById('page-content-container');
+            
+            if (AppState.isAdmin) {
+                // Admin view with editing capabilities
+                pageContent.innerHTML = `
+                    <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                            <h1 style="color: var(--primary-color); font-size: 36px;">${parentPage.name} - ${subpage.name}</h1>
+                            <button class="btn btn-primary" onclick="showAdminPanel()">ადმინ პანელში დაბრუნება</button>
+                        </div>
+                        
+                        <div class="page-content">
+                            <h2>ქვეგვერდის კონტენტი (სტუდენტებისთვის ხილული)</h2>
+                            <div id="subpage-content-preview">${subpageHTML}</div>
+                            
+                            <div class="admin-editor">
+                                <h3><i class="fas fa-edit"></i> HTML კონტენტის რედაქტირება</h3>
+                                <textarea id="subpage-editor" class="form-control" rows="15" placeholder="შეიყვანეთ HTML კოდი...">${subpageHTML}</textarea>
+                                <div class="admin-actions">
+                                    <button class="btn btn-primary" onclick="saveSubpageContent('${subpageId}')">შენახვა</button>
+                                    <button class="btn btn-secondary" onclick="showSubpage('${parentId}', '${subpageId}')">განახლება</button>
+                                    <button class="btn btn-success" onclick="previewSubpageContent()">წინასწარი ნახვა</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Regular user view
+                pageContent.innerHTML = `
+                    <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
+                        <h1 style="color: var(--primary-color); font-size: 36px; margin-bottom: 30px;">${parentPage.name} - ${subpage.name}</h1>
+                        <div class="page-content">
+                            ${subpageHTML}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Show page content, hide main content
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('page-content-container').style.display = 'block';
+        }
+        
+        // Function to show admin panel
+        function showAdminPanel() {
+            document.getElementById('main-content').style.display = 'none';
+            document.querySelector('.main-menu').style.display = 'none';
+            document.querySelector('footer').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'flex';
+            document.getElementById('page-content-container').style.display = 'none';
+        }
+        
+        // Function to show user profile after login
+        function showUserProfile() {
+            // For regular users, just update the UI
+            // They will continue to see the main content
+        }
+        
+        // Function to update user interface based on login state
+        function updateUserInterface() {
+            const userStatusDiv = document.getElementById('user-status');
+            const loginBtn = document.getElementById('login-button');
+            
+            if (AppState.currentUser) {
+                userStatusDiv.innerHTML = `
+                    <div class="user-profile">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="user-name">${AppState.currentUser.name}</span>
+                    </div>
+                    <button class="logout-btn" id="user-logout-btn">გამოსვლა</button>
+                `;
+                
+                // Add logout event for regular users
+                document.getElementById('user-logout-btn').addEventListener('click', function() {
+                    logout();
+                });
+            } else {
+                userStatusDiv.innerHTML = `<button class="login-btn" id="login-button">შესვლა</button>`;
+                
+                // Re-add event listener to login button
+                document.getElementById('login-button').addEventListener('click', function() {
+                    document.getElementById('login-modal').style.display = 'flex';
+                });
+            }
+        }
+        
+        // Function to logout
+        function logout() {
+            AppState.currentUser = null;
+            AppState.isAdmin = false;
+            showMainPage();
+            updateUserInterface();
+        }
+        
+        // Function to update subject list in admin panel
+        function updateSubjectList() {
+            const subjectList = document.getElementById('subject-list');
+            if (!subjectList) return;
+            
+            subjectList.innerHTML = AppState.subjects.length > 0 ? 
+                AppState.subjects.map(subject => `
+                    <div class="subject-item">
+                        <div>
+                            <h4 style="margin-bottom: 5px;">${subject.name}</h4>
+                            <p style="color: #666; font-size: 14px;">კატეგორია: ${getCategoryName(subject.category)} | დამატებულია: ${subject.date}</p>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-secondary" onclick="editSubject('${subject.id}')">რედაქტირება</button>
+                            <button class="btn btn-danger" onclick="deleteSubject('${subject.id}')">წაშლა</button>
+                        </div>
+                    </div>
+                `).join('') :
+                '<p style="color: #666; text-align: center; padding: 20px;">ჯერ არ არის დამატებული საგნები.</p>';
+        }
+        
+        // Function to update admin counts
+        function updateAdminCounts() {
+            document.getElementById('admin-page-count').textContent = AppState.menuItems.length;
+            document.getElementById('admin-subject-count').textContent = AppState.subjects.length;
+        }
+        
+        // Function to update parent page dropdown for subpages
+        function updateParentPageDropdown() {
+            const parentPageSelect = document.getElementById('parent-page');
+            if (!parentPageSelect) return;
+            
+            parentPageSelect.innerHTML = '<option value="">აირჩიეთ მშობელი გვერდი</option>';
+            
+            AppState.menuItems.forEach(page => {
+                parentPageSelect.innerHTML += `<option value="${page.id}">${page.name}</option>`;
+            });
+        }
+        
+        // Function to load custom pages in admin panel
+        function loadCustomPages() {
+            const customPagesList = document.getElementById('custom-pages-list');
+            if (!customPagesList) return;
+            
+            // Get pages with custom content
+            const pagesWithContent = AppState.menuItems.filter(page => AppState.pageContent[page.id]);
+            
+            if (pagesWithContent.length === 0) {
+                customPagesList.innerHTML += '<p style="color: #666; text-align: center; padding: 20px;">ჯერ არ არის დამატებული კონტენტი გვერდებისთვის.</p>';
+                return;
+            }
+            
+            pagesWithContent.forEach(page => {
+                const content = AppState.pageContent[page.id];
+                const pageElement = document.createElement('div');
+                pageElement.className = 'subject-item';
+                pageElement.innerHTML = `
+                    <div>
+                        <h4 style="margin-bottom: 5px;">${page.name}</h4>
+                        <p style="color: #666; font-size: 14px;">ID: ${page.id} | განახლებულია: ${content.date}</p>
+                    </div>
+                    <div class="subject-actions">
+                        <button class="btn btn-primary" onclick="editPage('${page.id}')">რედაქტირება</button>
+                        <button class="btn btn-danger" onclick="deletePage('${page.id}')">წაშლა</button>
+                    </div>
+                `;
+                customPagesList.appendChild(pageElement);
+            });
+        }
+        
+        // Function to load custom subpages in admin panel
+        function loadCustomSubpages() {
+            const customSubpagesList = document.getElementById('custom-subpages-list');
+            if (!customSubpagesList) return;
+            
+            // Clear existing content
+            customSubpagesList.innerHTML = '';
+            
+            // Get all subpages with content
+            const subpagesWithContent = [];
+            
+            AppState.menuItems.forEach(page => {
+                if (page.subpages) {
+                    page.subpages.forEach(subpage => {
+                        if (AppState.subpageContent[subpage.id]) {
+                            subpagesWithContent.push({
+                                parentPage: page,
+                                subpage: subpage,
+                                content: AppState.subpageContent[subpage.id]
+                            });
+                        }
+                    });
+                }
+            });
+            
+            if (subpagesWithContent.length === 0) {
+                customSubpagesList.innerHTML += '<p style="color: #666; text-align: center; padding: 20px;">ჯერ არ არის დამატებული ქვეგვერდები.</p>';
+                return;
+            }
+            
+            subpagesWithContent.forEach(item => {
+                const pageElement = document.createElement('div');
+                pageElement.className = 'subject-item';
+                pageElement.innerHTML = `
+                    <div>
+                        <h4 style="margin-bottom: 5px;">${item.subpage.name}</h4>
+                        <p style="color: #666; font-size: 14px;">მშობელი: ${item.parentPage.name} | ID: ${item.subpage.id} | განახლებულია: ${item.content.date}</p>
+                    </div>
+                    <div class="subject-actions">
+                        <button class="btn btn-primary" onclick="editSubpage('${item.subpage.id}')">რედაქტირება</button>
+                        <button class="btn btn-danger" onclick="deleteSubpage('${item.subpage.id}')">წაშლა</button>
+                    </div>
+                `;
+                customSubpagesList.appendChild(pageElement);
+            });
+        }
+        
+        // Helper function to get category name
+        function getCategoryName(categoryId) {
+            const categories = {
+                'materials': 'სასწავლო მასალები',
+                'process': 'სასწავლო პროცესი',
+                'simulation': 'სიმულაციის ცენტრი',
+                'other': 'სხვა'
+            };
+            return categories[categoryId] || categoryId;
+        }
+        
+        // Global functions for HTML editing
+        
+        // Save page content
+        window.savePageContent = function(pageId) {
+            const editor = document.getElementById('page-editor');
+            if (!editor) return;
+            
+            const page = AppState.menuItems.find(item => item.id === pageId);
+            if (!page) return;
+            
+            AppState.pageContent[pageId] = {
+                name: page.name,
+                html: editor.value,
+                date: new Date().toLocaleDateString('ka-GE'),
+                timestamp: Date.now()
+            };
+            
+            localStorage.setItem('unimed-page-content', JSON.stringify(AppState.pageContent));
+            
+            // Update preview
+            document.getElementById('page-content-preview').innerHTML = editor.value;
+            
+            alert('გვერდის კონტენტი წარმატებით შენახულია!');
+        };
+        
+        // Save subpage content
+        window.saveSubpageContent = function(subpageId) {
+            const editor = document.getElementById('subpage-editor');
+            if (!editor) return;
+            
+            // Find which page this subpage belongs to
+            let parentPage = null;
+            let subpage = null;
+            
+            for (const page of AppState.menuItems) {
+                if (page.subpages) {
+                    const foundSubpage = page.subpages.find(sp => sp.id === subpageId);
+                    if (foundSubpage) {
+                        parentPage = page;
+                        subpage = foundSubpage;
+                        break;
+                    }
+                }
+            }
+            
+            if (!parentPage || !subpage) return;
+            
+            AppState.subpageContent[subpageId] = {
+                parentId: parentPage.id,
+                name: subpage.name,
+                html: editor.value,
+                date: new Date().toLocaleDateString('ka-GE'),
+                timestamp: Date.now()
+            };
+            
+            localStorage.setItem('unimed-subpage-content', JSON.stringify(AppState.subpageContent));
+            
+            // Update preview
+            document.getElementById('subpage-content-preview').innerHTML = editor.value;
+            
+            alert('ქვეგვერდის კონტენტი წარმატებით შენახულია!');
+        };
+        
+        // Preview page content
+        window.previewPageContent = function() {
+            const editor = document.getElementById('page-editor');
+            if (!editor) return;
+            
+            document.getElementById('page-content-preview').innerHTML = editor.value;
+        };
+        
+        // Preview subpage content
+        window.previewSubpageContent = function() {
+            const editor = document.getElementById('subpage-editor');
+            if (!editor) return;
+            
+            document.getElementById('subpage-content-preview').innerHTML = editor.value;
+        };
+        
+        // Edit page from admin panel
+        window.editPage = function(pageId) {
+            const page = AppState.menuItems.find(item => item.id === pageId);
+            if (!page) return;
+            
+            document.getElementById('new-page-name').value = page.name;
+            document.getElementById('new-page-id').value = page.id;
+            
+            const content = AppState.pageContent[pageId];
+            document.getElementById('new-page-content').value = content ? content.html : '';
+            
+            // Scroll to form
+            document.getElementById('add-page').scrollIntoView();
+        };
+        
+        // Edit subpage from admin panel
+        window.editSubpage = function(subpageId) {
+            // Find which page this subpage belongs to
+            let parentPage = null;
+            let subpage = null;
+            
+            for (const page of AppState.menuItems) {
+                if (page.subpages) {
+                    const foundSubpage = page.subpages.find(sp => sp.id === subpageId);
+                    if (foundSubpage) {
+                        parentPage = page;
+                        subpage = foundSubpage;
+                        break;
+                    }
+                }
+            }
+            
+            if (!parentPage || !subpage) return;
+            
+            document.getElementById('parent-page').value = parentPage.id;
+            document.getElementById('new-subpage-name').value = subpage.name;
+            document.getElementById('new-subpage-id').value = subpage.id;
+            
+            const content = AppState.subpageContent[subpageId];
+            document.getElementById('new-subpage-content').value = content ? content.html : '';
+            
+            // Scroll to form
+            document.getElementById('add-subpage').scrollIntoView();
+        };
+        
+        // Delete page
+        window.deletePage = function(pageId) {
+            if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ გვერდის წაშლა? ეს ასევე წაშლის ყველა მასში არსებულ ქვეგვერდს!')) {
+                // Remove page from menu
+                AppState.menuItems = AppState.menuItems.filter(item => item.id !== pageId);
+                
+                // Remove page content
+                delete AppState.pageContent[pageId];
+                
+                // Remove any subpages of this page
+                const subpagesToDelete = [];
+                for (const subpageId in AppState.subpageContent) {
+                    if (AppState.subpageContent[subpageId].parentId === pageId) {
+                        subpagesToDelete.push(subpageId);
+                    }
+                }
+                
+                subpagesToDelete.forEach(subpageId => {
+                    delete AppState.subpageContent[subpageId];
+                });
+                
+                // Save to localStorage
+                localStorage.setItem('unimed-menu', JSON.stringify(AppState.menuItems));
+                localStorage.setItem('unimed-page-content', JSON.stringify(AppState.pageContent));
+                localStorage.setItem('unimed-subpage-content', JSON.stringify(AppState.subpageContent));
+                
+                // Rebuild menu
+                buildMenu();
+                
+                // Update admin counts
+                updateAdminCounts();
+                
+                // Reload custom pages and subpages
+                loadCustomPages();
+                loadCustomSubpages();
+                
+                alert('გვერდი წარმატებით წაიშალა!');
+            }
+        };
+        
+        // Delete subpage
+        window.deleteSubpage = function(subpageId) {
+            if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ ქვეგვერდის წაშლა?')) {
+                // Find and remove subpage from its parent
+                for (const page of AppState.menuItems) {
+                    if (page.subpages) {
+                        const index = page.subpages.findIndex(sp => sp.id === subpageId);
+                        if (index !== -1) {
+                            page.subpages.splice(index, 1);
+                            break;
+                        }
+                    }
+                }
+                
+                // Remove subpage content
+                delete AppState.subpageContent[subpageId];
+                
+                // Save to localStorage
+                localStorage.setItem('unimed-menu', JSON.stringify(AppState.menuItems));
+                localStorage.setItem('unimed-subpage-content', JSON.stringify(AppState.subpageContent));
+                
+                // Rebuild menu
+                buildMenu();
+                
+                // Reload custom subpages
+                loadCustomSubpages();
+                
+                alert('ქვეგვერდი წარმატებით წაიშალა!');
+            }
+        };
+        
+        // Edit subject
+        window.editSubject = function(subjectId) {
+            const subject = AppState.subjects.find(s => s.id === subjectId);
+            if (subject) {
+                document.getElementById('subject-name').value = subject.name;
+                document.getElementById('subject-category').value = subject.category;
+                document.getElementById('subject-html').value = subject.html;
+                
+                // Scroll to form
+                document.getElementById('add-subject').scrollIntoView();
+            }
+        };
+        
+        // Delete subject
+        window.deleteSubject = function(subjectId) {
+            if (confirm('დარწმუნებული ხართ, რომ გსურთ ამ საგნის წაშლა?')) {
+                // Remove from subjects
+                AppState.subjects = AppState.subjects.filter(s => s.id !== subjectId);
+                localStorage.setItem('unimed-subjects', JSON.stringify(AppState.subjects));
+                
+                // Also remove from dynamic content
+                AppState.dynamicContent = AppState.dynamicContent.filter(dc => !dc.id.includes(subjectId));
+                localStorage.setItem('unimed-dynamic-content', JSON.stringify(AppState.dynamicContent));
+                
+                // Update lists
+                updateSubjectList();
+                loadDynamicContent();
+                
+                // Update subject count in admin dashboard
+                document.getElementById('admin-subject-count').textContent = AppState.subjects.length;
+                
+                alert('საგანი წარმატებით წაიშალა!');
+            }
+        };
     </script>
 </body>
 </html>
