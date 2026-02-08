@@ -227,82 +227,6 @@
             font-size: 16px;
         }
         
-        /* პაციენტის სახელის რედაქტირება */
-        .patient-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            color: #2d3748;
-        }
-        
-        .patient-name:hover {
-            color: #667eea;
-        }
-        
-        /* pop-up ფანჯრის სტილი */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .modal-title {
-            margin-bottom: 1.5rem;
-            color: #333;
-        }
-        
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        
-        .modal-btn {
-            padding: 0.7rem 1.5rem;
-            border-radius: 5px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-        }
-        
-        .modal-btn-primary {
-            background-color: #667eea;
-            color: white;
-        }
-        
-        .modal-btn-secondary {
-            background-color: #e2e8f0;
-            color: #4a5568;
-        }
-        
-        /* სელექტის სტილი */
-        .status-select {
-            padding: 0.5rem;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            background-color: white;
-            font-size: 0.9rem;
-            cursor: pointer;
-            min-width: 180px;
-        }
-        
         /* სტატუსის სელექტორის სტილი მენეჯერისთვის */
         .status-select-manager {
             padding: 0.4rem;
@@ -311,23 +235,7 @@
             background-color: white;
             font-size: 0.85rem;
             cursor: pointer;
-            min-width: 160px;
-        }
-        
-        /* ექთნის და ექიმის ველების სტილი */
-        .editable-field {
-            padding: 0.5rem;
-            border: 1px dashed #cbd5e0;
-            border-radius: 5px;
-            cursor: text;
-            min-height: 2.5rem;
-            display: flex;
-            align-items: center;
-        }
-        
-        .editable-field:hover {
-            background-color: #f7fafc;
-            border-color: #a0aec0;
+            min-width: 180px;
         }
         
         /* შეტყობინებები */
@@ -344,19 +252,25 @@
             border-left: 4px solid #38a169;
         }
         
+        .message-error {
+            background-color: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #e53e3e;
+        }
+        
         /* გაწერილი პაციენტის ანიმაცია */
         .discharge-animation {
-            animation: discharge-animation 3s forwards;
+            animation: discharge-animation 120s forwards;
         }
         
         @keyframes discharge-animation {
             0% { 
-                background-color: #c6f6d5;
+                background-color: #ffffff;
                 opacity: 1;
             }
-            70% { 
+            95% { 
                 background-color: #c6f6d5;
-                opacity: 0.7;
+                opacity: 1;
             }
             100% { 
                 opacity: 0;
@@ -382,6 +296,121 @@
             margin-bottom: 1.5rem;
             color: #2d3748;
             font-size: 1.8rem;
+        }
+        
+        /* ექთნის გვერდი - პაციენტის დამატების ფორმა */
+        .add-patient-form {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .form-title {
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+            flex-grow: 1;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a67d8;
+        }
+        
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+        }
+        
+        /* ფილტრის ღილაკები */
+        .filter-container {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background-color: #e2e8f0;
+            color: #4a5568;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background-color: #cbd5e0;
+        }
+        
+        .filter-btn.active {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        /* მთავარი დისფლეი გვერდები (თერაპია და ქირურგია) */
+        .display-page {
+            padding: 1rem;
+        }
+        
+        .display-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #2d3748;
+            font-size: 2rem;
         }
     </style>
 </head>
@@ -424,6 +453,12 @@
                 <input type="text" id="managerSearch" class="search-input" placeholder="პაციენტის ძებნა სახელის ან გვარის მიხედვით...">
             </div>
             
+            <div class="filter-container">
+                <button class="filter-btn active" data-filter="all">ყველა</button>
+                <button class="filter-btn" data-filter="therapy">თერაპია (C)</button>
+                <button class="filter-btn" data-filter="surgery">ქირურგია (B)</button>
+            </div>
+            
             <div id="managerMessage" class="message message-success">
                 პაციენტის სტატუსი განახლებულია!
             </div>
@@ -448,96 +483,112 @@
         </main>
     </div>
     
-    <!-- ექთნის გვერდი (სტაციონარი) -->
+    <!-- ექთნის გვერდი - პაციენტის დამატება -->
     <div id="nursePage" class="container" style="display: none;">
         <header class="header">
             <div class="header-content container">
-                <h1>სტაციონარი ექთნის პანელი</h1>
+                <h1>ექთნის პანელი</h1>
                 <div class="user-info">
-                    <div class="user-role">სტაციონარი ექთანი</div>
+                    <div class="user-role">ექთანი</div>
                     <button id="nurseLogout" class="logout-btn">გამოსვლა</button>
                 </div>
             </div>
         </header>
         
         <main class="container">
-            <h2 class="page-title">პაციენტები სტაციონარში</h2>
-            
-            <div id="nurseMessage" class="message message-success">
-                პაციენტი წარმატებით დაემატა!
-            </div>
-            
-            <div class="table-container">
-                <table id="nurseTable">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>პალატის ნომერი</th>
-                            <th>პაციენტის სახელი და გვარი</th>
-                            <th>სტატუსი</th>
-                            <th>ექთანი</th>
-                            <th>ექიმი/ტიპი</th>
-                        </tr>
-                    </thead>
-                    <tbody id="nurseTableBody">
-                        <!-- პაციენტები დამატდება აქ JavaScript-ის მეშვეობით -->
-                    </tbody>
-                </table>
-            </div>
-        </main>
-    </div>
-    
-    <!-- ქირურგიის ექთნის გვერდი -->
-    <div id="surgeryPage" class="container" style="display: none;">
-        <header class="header">
-            <div class="header-content container">
-                <h1>ქირურგიის ექთნის პანელი</h1>
-                <div class="user-info">
-                    <div class="user-role">ქირურგიის ექთანი</div>
-                    <button id="surgeryLogout" class="logout-btn">გამოსვლა</button>
+            <div class="add-patient-form">
+                <h2 class="form-title">პაციენტის დამატება განყოფილებაში</h2>
+                
+                <div id="nurseMessage" class="message message-success">
+                    პაციენტი წარმატებით დაემატა!
+                </div>
+                
+                <div id="nurseError" class="message message-error">
+                    გთხოვთ შეავსოთ ყველა სავალდებულო ველი!
+                </div>
+                
+                <div class="form-group">
+                    <label for="departmentSelect">განყოფილება *</label>
+                    <select id="departmentSelect">
+                        <option value="">აირჩიეთ განყოფილება</option>
+                        <option value="therapy">თერაპია</option>
+                        <option value="surgery">ქირურგია</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="patientName">პაციენტის სახელი და გვარი *</label>
+                    <input type="text" id="patientName" placeholder="შეიყვანეთ პაციენტის სახელი და გვარი">
+                </div>
+                
+                <div class="form-group">
+                    <label for="patientRoom">პალატის ნომერი *</label>
+                    <select id="patientRoom">
+                        <option value="">ჯერ აირჩიეთ განყოფილება</option>
+                        <!-- პალატები დამატდება JavaScript-ის მეშვეობით -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nurseName">ექთანი *</label>
+                    <input type="text" id="nurseName" placeholder="შეიყვანეთ ექთნის სახელი">
+                </div>
+                
+                <div class="form-group">
+                    <label for="doctorType">ექიმი/ტიპი *</label>
+                    <input type="text" id="doctorType" placeholder="შეიყვანეთ ექიმი ან ტიპი">
+                </div>
+                
+                <div class="form-buttons">
+                    <button id="addPatientBtn" class="btn btn-primary">პაციენტის დამატება</button>
                 </div>
             </div>
-        </header>
-        
-        <main class="container">
-            <h2 class="page-title">პაციენტები ქირურგიაში</h2>
-            
-            <div id="surgeryMessage" class="message message-success">
-                პაციენტი წარმატებით დაემატა!
-            </div>
-            
-            <div class="table-container">
-                <table id="surgeryTable">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>პალატის ნომერი</th>
-                            <th>პაციენტის სახელი და გვარი</th>
-                            <th>სტატუსი</th>
-                            <th>ექთანი</th>
-                            <th>ექიმი/ტიპი</th>
-                        </tr>
-                    </thead>
-                    <tbody id="surgeryTableBody">
-                        <!-- პაციენტები დამატდება აქ JavaScript-ის მეშვეობით -->
-                    </tbody>
-                </table>
-            </div>
         </main>
     </div>
     
-    <!-- პაციენტის სახელის რედაქტირების ფანჯარა -->
-    <div id="patientNameModal" class="modal">
-        <div class="modal-content">
-            <h3 class="modal-title">პაციენტის სახელისა და გვარის რედაქტირება</h3>
-            <div class="input-group">
-                <label for="patientNameInput">პაციენტის სახელი და გვარი</label>
-                <input type="text" id="patientNameInput" placeholder="შეიყვანეთ პაციენტის სახელი და გვარი">
-            </div>
-            <div class="modal-actions">
-                <button id="cancelPatientNameBtn" class="modal-btn modal-btn-secondary">გაუქმება</button>
-                <button id="savePatientNameBtn" class="modal-btn modal-btn-primary">შენახვა</button>
-            </div>
+    <!-- თერაპიის მთავარი დისფლეი -->
+    <div id="therapyDisplayPage" class="display-page" style="display: none;">
+        <h1 class="display-title">პაციენტები სტაციონარში (თერაპია)</h1>
+        
+        <div class="table-container">
+            <table id="therapyDisplayTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>პალატის ნომერი</th>
+                        <th>პაციენტის სახელი და გვარი</th>
+                        <th>სტატუსი</th>
+                        <th>ექთანი</th>
+                        <th>ექიმი/ტიპი</th>
+                    </tr>
+                </thead>
+                <tbody id="therapyDisplayTableBody">
+                    <!-- პაციენტები დამატდება აქ JavaScript-ის მეშვეობით -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- ქირურგიის მთავარი დისფლეი -->
+    <div id="surgeryDisplayPage" class="display-page" style="display: none;">
+        <h1 class="display-title">პაციენტები ქირურგიაში</h1>
+        
+        <div class="table-container">
+            <table id="surgeryDisplayTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>პალატის ნომერი</th>
+                        <th>პაციენტის სახელი და გვარი</th>
+                        <th>სტატუსი</th>
+                        <th>ექთანი</th>
+                        <th>ექიმი/ტიპი</th>
+                    </tr>
+                </thead>
+                <tbody id="surgeryDisplayTableBody">
+                    <!-- პაციენტები დამატდება აქ JavaScript-ის მეშვეობით -->
+                </tbody>
+            </table>
         </div>
     </div>
     
@@ -545,14 +596,20 @@
         // მომხმარებლების მონაცემები
         const users = {
             'manager': { password: '1234', role: 'manager', name: 'მენეჯერი' },
-            'stacionari': { password: '1234', role: 'nurse', name: 'სტაციონარი ექთანი', rooms: [1,2,4,5,6,7,8,9,10,11,12,14,15,16,17,18] },
-            'qirurgia': { password: '1234', role: 'surgery', name: 'ქირურგიის ექთანი', rooms: [2,3,4,5,6,7,8,9,10,11,12] }
+            'stacionari': { password: '1234', role: 'therapy_display', name: 'თერაპიის დისფლეი' },
+            'qirurgia': { password: '1234', role: 'surgery_display', name: 'ქირურგიის დისფლეი' },
+            'eqtani': { password: '1234', role: 'nurse', name: 'ექთანი' }
         };
         
-        // დამალული ცვლადები რედაქტირებისთვის
-        let editingPatientId = null;
-        let editingPatientField = null;
+        // პალატების სია თერაპიისთვის
+        const therapyRooms = [1,2,4,5,6,7,8,9,10,11,12,14,15,16,17,18];
+        
+        // პალატების სია ქირურგიისთვის
+        const surgeryRooms = [2,3,4,5,6,7,8,9,10,11,12];
+        
+        // დამალული ცვლადები
         let currentUser = null;
+        let currentFilter = 'all';
         
         // პაციენტების მონაცემთა ბაზა (თავდაპირველად ცარიელი)
         let patients = [];
@@ -561,25 +618,29 @@
         const loginPage = document.getElementById('loginPage');
         const managerPage = document.getElementById('managerPage');
         const nursePage = document.getElementById('nursePage');
-        const surgeryPage = document.getElementById('surgeryPage');
+        const therapyDisplayPage = document.getElementById('therapyDisplayPage');
+        const surgeryDisplayPage = document.getElementById('surgeryDisplayPage');
         const loginBtn = document.getElementById('loginBtn');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
         const loginError = document.getElementById('loginError');
         const managerLogoutBtn = document.getElementById('managerLogout');
         const nurseLogoutBtn = document.getElementById('nurseLogout');
-        const surgeryLogoutBtn = document.getElementById('surgeryLogout');
         const managerTableBody = document.getElementById('managerTableBody');
-        const nurseTableBody = document.getElementById('nurseTableBody');
-        const surgeryTableBody = document.getElementById('surgeryTableBody');
+        const therapyDisplayTableBody = document.getElementById('therapyDisplayTableBody');
+        const surgeryDisplayTableBody = document.getElementById('surgeryDisplayTableBody');
         const managerSearch = document.getElementById('managerSearch');
-        const patientNameModal = document.getElementById('patientNameModal');
-        const patientNameInput = document.getElementById('patientNameInput');
-        const savePatientNameBtn = document.getElementById('savePatientNameBtn');
-        const cancelPatientNameBtn = document.getElementById('cancelPatientNameBtn');
         const managerMessage = document.getElementById('managerMessage');
         const nurseMessage = document.getElementById('nurseMessage');
-        const surgeryMessage = document.getElementById('surgeryMessage');
+        const nurseError = document.getElementById('nurseError');
+        
+        // ექთნის გვერდის ელემენტები
+        const departmentSelect = document.getElementById('departmentSelect');
+        const patientNameInput = document.getElementById('patientName');
+        const patientRoomSelect = document.getElementById('patientRoom');
+        const nurseNameInput = document.getElementById('nurseName');
+        const doctorTypeInput = document.getElementById('doctorType');
+        const addPatientBtn = document.getElementById('addPatientBtn');
         
         // ლოგინის ლოგიკა
         loginBtn.addEventListener('click', handleLogin);
@@ -605,33 +666,153 @@
         
         function showUserPage(role) {
             loginPage.style.display = 'none';
+            managerPage.style.display = 'none';
+            nursePage.style.display = 'none';
+            therapyDisplayPage.style.display = 'none';
+            surgeryDisplayPage.style.display = 'none';
             
             if (role === 'manager') {
                 managerPage.style.display = 'block';
                 loadPatientsForManager();
             } else if (role === 'nurse') {
                 nursePage.style.display = 'block';
-                loadPatientsForNurse();
-            } else if (role === 'surgery') {
-                surgeryPage.style.display = 'block';
-                loadPatientsForSurgery();
+                initializeNursePage();
+            } else if (role === 'therapy_display') {
+                therapyDisplayPage.style.display = 'block';
+                loadPatientsForTherapyDisplay();
+            } else if (role === 'surgery_display') {
+                surgeryDisplayPage.style.display = 'block';
+                loadPatientsForSurgeryDisplay();
+            }
+        }
+        
+        // ექთნის გვერდის ინიციალიზაცია
+        function initializeNursePage() {
+            // დეპარტამენტის არჩევისას პალატების ჩამონათვალის განახლება
+            departmentSelect.addEventListener('change', function() {
+                updateRoomOptions();
+            });
+            
+            // ველების გასუფთავება
+            departmentSelect.value = '';
+            patientNameInput.value = '';
+            nurseNameInput.value = '';
+            doctorTypeInput.value = '';
+            patientRoomSelect.innerHTML = '<option value="">ჯერ აირჩიეთ განყოფილება</option>';
+            
+            nurseMessage.style.display = 'none';
+            nurseError.style.display = 'none';
+        }
+        
+        // პალატების ვარიანტების განახლება
+        function updateRoomOptions() {
+            const department = departmentSelect.value;
+            patientRoomSelect.innerHTML = '<option value="">აირჩიეთ პალატის ნომერი</option>';
+            
+            if (department === 'therapy') {
+                therapyRooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room;
+                    option.textContent = room;
+                    patientRoomSelect.appendChild(option);
+                });
+            } else if (department === 'surgery') {
+                surgeryRooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room;
+                    option.textContent = room;
+                    patientRoomSelect.appendChild(option);
+                });
             }
         }
         
         // გამოსვლის ლოგიკა
         managerLogoutBtn.addEventListener('click', logout);
         nurseLogoutBtn.addEventListener('click', logout);
-        surgeryLogoutBtn.addEventListener('click', logout);
         
         function logout() {
             managerPage.style.display = 'none';
             nursePage.style.display = 'none';
-            surgeryPage.style.display = 'none';
+            therapyDisplayPage.style.display = 'none';
+            surgeryDisplayPage.style.display = 'none';
             loginPage.style.display = 'flex';
             usernameInput.value = '';
             passwordInput.value = '';
             currentUser = null;
         }
+        
+        // პაციენტის დამატების ლოგიკა
+        addPatientBtn.addEventListener('click', function() {
+            const department = departmentSelect.value;
+            const name = patientNameInput.value.trim();
+            const room = patientRoomSelect.value;
+            const nurse = nurseNameInput.value.trim();
+            const doctor = doctorTypeInput.value.trim();
+            
+            // ვალიდაცია
+            if (!department || !name || !room || !nurse || !doctor) {
+                nurseError.style.display = 'block';
+                nurseMessage.style.display = 'none';
+                return;
+            }
+            
+            // შემოწმება, არის თუ არა პალატა უკვე დაკავებული ამ განყოფილებაში
+            const isRoomOccupied = patients.some(patient => 
+                patient.department === department && 
+                patient.room === parseInt(room) && 
+                patient.status !== 'free'
+            );
+            
+            if (isRoomOccupied) {
+                nurseError.textContent = 'ეს პალატა უკვე დაკავებულია ამ განყოფილებაში!';
+                nurseError.style.display = 'block';
+                nurseMessage.style.display = 'none';
+                return;
+            }
+            
+            nurseError.style.display = 'none';
+            
+            // ახალი პაციენტის შექმნა
+            const newPatient = {
+                id: Date.now(), // უნიკალური ID
+                name: name,
+                room: parseInt(room),
+                nurse: nurse,
+                doctor: doctor,
+                department: department, // თერაპია ან ქირურგია
+                status: '' // სტატუსი თავიდან ცარიელი
+            };
+            
+            patients.push(newPatient);
+            
+            // წარმატების შეტყობინება
+            nurseMessage.style.display = 'block';
+            nurseMessage.textContent = 'პაციენტი წარმატებით დაემატა!';
+            
+            // ველების გასუფთავება
+            departmentSelect.value = '';
+            patientNameInput.value = '';
+            patientRoomSelect.innerHTML = '<option value="">ჯერ აირჩიეთ განყოფილება</option>';
+            nurseNameInput.value = '';
+            doctorTypeInput.value = '';
+            
+            // მენეჯერის გვერდის განახლება (თუ ღიაა)
+            if (currentUser.role === 'manager') {
+                loadPatientsForManager();
+            }
+            
+            // შესაბამისი დისფლეის განახლება
+            if (department === 'therapy') {
+                loadPatientsForTherapyDisplay();
+            } else if (department === 'surgery') {
+                loadPatientsForSurgeryDisplay();
+            }
+            
+            // 3 წამის შემდეგ შეტყობინების დამალვა
+            setTimeout(() => {
+                nurseMessage.style.display = 'none';
+            }, 3000);
+        });
         
         // პაციენტების ჩატვირთვა მენეჯერისთვის
         function loadPatientsForManager() {
@@ -643,8 +824,16 @@
             if (searchTerm) {
                 filteredPatients = patients.filter(patient => 
                     patient.name.toLowerCase().includes(searchTerm) || 
-                    patient.doctor.toLowerCase().includes(searchTerm)
+                    patient.doctor.toLowerCase().includes(searchTerm) ||
+                    patient.nurse.toLowerCase().includes(searchTerm)
                 );
+            }
+            
+            // დეპარტამენტის მიხედვით ფილტრაცია
+            if (currentFilter === 'therapy') {
+                filteredPatients = filteredPatients.filter(patient => patient.department === 'therapy');
+            } else if (currentFilter === 'surgery') {
+                filteredPatients = filteredPatients.filter(patient => patient.department === 'surgery');
             }
             
             if (filteredPatients.length === 0) {
@@ -662,37 +851,28 @@
                 const row = document.createElement('tr');
                 row.id = `patient-${patient.id}`;
                 
-                // სტატუსის ფერის განსაზღვრა
-                let statusClass = '';
-                let statusText = '';
-                
-                if (patient.status === 'free') {
-                    statusClass = 'status-free';
-                    statusText = 'თავისუფალია';
-                } else if (patient.status === 'pending') {
-                    statusClass = 'status-pending';
-                    statusText = 'გადასახდელია';
-                } else if (patient.status === 'manager') {
-                    statusClass = 'status-manager';
-                    statusText = 'მისასვლელია მენეჯერთან';
+                // პალატის ნომრის ფორმატირება - პრეფიქსები
+                let roomDisplay = patient.room;
+                if (patient.department === 'therapy') {
+                    roomDisplay = `C${patient.room}`;
+                } else if (patient.department === 'surgery') {
+                    roomDisplay = `B${patient.room}`;
                 }
-                
-                // დამატება blink კლასი, თუ სტატუსი განსხვავებულია
-                const blinkClass = patient.statusChanged ? 'blink' : '';
                 
                 row.innerHTML = `
                     <td>${index + 1}</td>
-                    <td><span class="patient-name">${patient.name}</span></td>
+                    <td>${patient.name}</td>
                     <td>${patient.doctor}</td>
                     <td>
-                        <select class="status-select-manager ${blinkClass}" data-patient-id="${patient.id}">
-                            <option value="free" ${patient.status === 'free' ? 'selected' : ''}>თავისუფალია (მწვანე)</option>
-                            <option value="pending" ${patient.status === 'pending' ? 'selected' : ''}>გადასახდელია (წითელი)</option>
-                            <option value="manager" ${patient.status === 'manager' ? 'selected' : ''}>მისასვლელია მენეჯერთან (ნარინჯისფერი)</option>
+                        <select class="status-select-manager" data-patient-id="${patient.id}">
+                            <option value="">-- აირჩიეთ სტატუსი --</option>
+                            <option value="free" ${patient.status === 'free' ? 'selected' : ''}>თავისუფალია</option>
+                            <option value="pending" ${patient.status === 'pending' ? 'selected' : ''}>გადასახდელია</option>
+                            <option value="manager" ${patient.status === 'manager' ? 'selected' : ''}>მისასვლელია მენეჯერთან</option>
                         </select>
                     </td>
-                    <td>${patient.nurse || ''}</td>
-                    <td><span class="room-number">${patient.room}</span></td>
+                    <td>${patient.nurse}</td>
+                    <td><span class="room-number">${roomDisplay}</span></td>
                 `;
                 
                 managerTableBody.appendChild(row);
@@ -709,28 +889,29 @@
             });
         }
         
-        // პაციენტების ჩატვირთვა ექთნისთვის
-        function loadPatientsForNurse() {
-            nurseTableBody.innerHTML = '';
+        // პაციენტების ჩატვირთვა თერაპიის დისფლეისთვის
+        function loadPatientsForTherapyDisplay() {
+            therapyDisplayTableBody.innerHTML = '';
             
-            // ფილტრაცია მხოლოდ სტაციონარის პალატებისთვის
-            const nurseRooms = users['stacionari'].rooms;
-            const nursePatients = patients.filter(patient => nurseRooms.includes(patient.room));
+            // მხოლოდ თერაპიის პაციენტები (და არა თავისუფალი სტატუსის მქონეები)
+            const therapyPatients = patients.filter(patient => 
+                patient.department === 'therapy' && patient.status !== 'free'
+            );
             
-            if (nursePatients.length === 0) {
+            if (therapyPatients.length === 0) {
                 const emptyRow = document.createElement('tr');
                 emptyRow.innerHTML = `
                     <td colspan="6" style="text-align: center; padding: 2rem; color: #718096;">
                         არ არის პაციენტები სტაციონარში
                     </td>
                 `;
-                nurseTableBody.appendChild(emptyRow);
+                therapyDisplayTableBody.appendChild(emptyRow);
                 return;
             }
             
-            nursePatients.forEach((patient, index) => {
+            therapyPatients.forEach((patient, index) => {
                 const row = document.createElement('tr');
-                row.id = `patient-nurse-${patient.id}`;
+                row.id = `therapy-display-${patient.id}`;
                 
                 // სტატუსის ფერის განსაზღვრა
                 let statusClass = '';
@@ -740,36 +921,37 @@
                     statusClass = 'status-free blink';
                     statusText = 'თავისუფალია';
                 } else if (patient.status === 'pending') {
-                    statusClass = 'status-pending blink';
+                    statusClass = 'status-pending';
                     statusText = 'გადასახდელია';
                 } else if (patient.status === 'manager') {
-                    statusClass = 'status-manager blink';
+                    statusClass = 'status-manager';
                     statusText = 'მისასვლელია მენეჯერთან';
+                } else {
+                    statusClass = '';
+                    statusText = '-';
                 }
                 
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td><span class="room-number">${patient.room}</span></td>
-                    <td><span class="patient-name editable" data-patient-id="${patient.id}" data-field="name">${patient.name}</span></td>
+                    <td>${patient.name}</td>
                     <td><span class="status ${statusClass}">${statusText}</span></td>
-                    <td><div class="editable-field" data-patient-id="${patient.id}" data-field="nurse" contenteditable="true">${patient.nurse || ''}</div></td>
-                    <td><div class="editable-field" data-patient-id="${patient.id}" data-field="doctor" contenteditable="true">${patient.doctor || ''}</div></td>
+                    <td>${patient.nurse}</td>
+                    <td>${patient.doctor}</td>
                 `;
                 
-                nurseTableBody.appendChild(row);
+                therapyDisplayTableBody.appendChild(row);
             });
-            
-            // ედიტირებადი ველების დამუშავება
-            setupEditableFields();
         }
         
-        // პაციენტების ჩატვირთვა ქირურგიის ექთნისთვის
-        function loadPatientsForSurgery() {
-            surgeryTableBody.innerHTML = '';
+        // პაციენტების ჩატვირთვა ქირურგიის დისფლეისთვის
+        function loadPatientsForSurgeryDisplay() {
+            surgeryDisplayTableBody.innerHTML = '';
             
-            // ფილტრაცია მხოლოდ ქირურგიის პალატებისთვის
-            const surgeryRooms = users['qirurgia'].rooms;
-            const surgeryPatients = patients.filter(patient => surgeryRooms.includes(patient.room));
+            // მხოლოდ ქირურგიის პაციენტები (და არა თავისუფალი სტატუსის მქონეები)
+            const surgeryPatients = patients.filter(patient => 
+                patient.department === 'surgery' && patient.status !== 'free'
+            );
             
             if (surgeryPatients.length === 0) {
                 const emptyRow = document.createElement('tr');
@@ -778,13 +960,13 @@
                         არ არის პაციენტები ქირურგიაში
                     </td>
                 `;
-                surgeryTableBody.appendChild(emptyRow);
+                surgeryDisplayTableBody.appendChild(emptyRow);
                 return;
             }
             
             surgeryPatients.forEach((patient, index) => {
                 const row = document.createElement('tr');
-                row.id = `patient-surgery-${patient.id}`;
+                row.id = `surgery-display-${patient.id}`;
                 
                 // სტატუსის ფერის განსაზღვრა
                 let statusClass = '';
@@ -794,58 +976,26 @@
                     statusClass = 'status-free blink';
                     statusText = 'თავისუფალია';
                 } else if (patient.status === 'pending') {
-                    statusClass = 'status-pending blink';
+                    statusClass = 'status-pending';
                     statusText = 'გადასახდელია';
                 } else if (patient.status === 'manager') {
-                    statusClass = 'status-manager blink';
+                    statusClass = 'status-manager';
                     statusText = 'მისასვლელია მენეჯერთან';
+                } else {
+                    statusClass = '';
+                    statusText = '-';
                 }
                 
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td><span class="room-number">${patient.room}</span></td>
-                    <td><span class="patient-name editable" data-patient-id="${patient.id}" data-field="name">${patient.name}</span></td>
+                    <td>${patient.name}</td>
                     <td><span class="status ${statusClass}">${statusText}</span></td>
-                    <td><div class="editable-field" data-patient-id="${patient.id}" data-field="nurse" contenteditable="true">${patient.nurse || ''}</div></td>
-                    <td><div class="editable-field" data-patient-id="${patient.id}" data-field="doctor" contenteditable="true">${patient.doctor || ''}</div></td>
+                    <td>${patient.nurse}</td>
+                    <td>${patient.doctor}</td>
                 `;
                 
-                surgeryTableBody.appendChild(row);
-            });
-            
-            // ედიტირებადი ველების დამუშავება
-            setupEditableFields();
-        }
-        
-        // ედიტირებადი ველების დაყენება
-        function setupEditableFields() {
-            // პაციენტის სახელის რედაქტირება (pop-up-ით)
-            document.querySelectorAll('.patient-name.editable').forEach(element => {
-                element.addEventListener('click', function(e) {
-                    if (e.button === 0) { // მხოლოდ მარცხენა ღილაკი
-                        const patientId = this.getAttribute('data-patient-id');
-                        const field = this.getAttribute('data-field');
-                        
-                        const patient = patients.find(p => p.id.toString() === patientId);
-                        if (patient) {
-                            patientNameInput.value = patient.name;
-                            editingPatientId = patientId;
-                            editingPatientField = field;
-                            patientNameModal.style.display = 'flex';
-                        }
-                    }
-                });
-            });
-            
-            // ექთნის და ექიმის ველების რედაქტირება
-            document.querySelectorAll('.editable-field').forEach(element => {
-                element.addEventListener('blur', function() {
-                    const patientId = this.getAttribute('data-patient-id');
-                    const field = this.getAttribute('data-field');
-                    const value = this.textContent.trim();
-                    
-                    updatePatientField(patientId, field, value);
-                });
+                surgeryDisplayTableBody.appendChild(row);
             });
         }
         
@@ -855,7 +1005,6 @@
             
             if (patientIndex !== -1) {
                 patients[patientIndex].status = newStatus;
-                patients[patientIndex].statusChanged = true;
                 
                 // ჩვენება შეტყობინება მენეჯერს
                 managerMessage.style.display = 'block';
@@ -863,103 +1012,71 @@
                     managerMessage.style.display = 'none';
                 }, 3000);
                 
-                // თუ სტატუსი "თავისუფალია", დაიწყება გაწერის ანიმაცია
+                // თუ სტატუსი "თავისუფალია", დაიწყება გაწერის ანიმაცია (2 წუთი = 120 წამი)
                 if (newStatus === 'free') {
                     const patientRow = document.getElementById(`patient-${patientId}`);
                     if (patientRow) {
                         patientRow.classList.add('discharge-animation');
                         
-                        // 3 წამის შემდეგ პაციენტის წაშლა
+                        // 2 წუთის შემდეგ პაციენტის წაშლა ყველა სიიდან
                         setTimeout(() => {
                             patients = patients.filter(p => p.id.toString() !== patientId);
-                            loadPatientsForManager();
                             
-                            // ასევე განახლება ექთნების გვერდებზე
-                            if (currentUser.role === 'nurse') {
-                                loadPatientsForNurse();
-                            } else if (currentUser.role === 'surgery') {
-                                loadPatientsForSurgery();
-                            }
-                        }, 3000);
+                            // ყველა გვერდის განახლება
+                            loadPatientsForManager();
+                            loadPatientsForTherapyDisplay();
+                            loadPatientsForSurgeryDisplay();
+                        }, 120000);
                     }
+                } else {
+                    // სტატუსი შეიცვალა, მაგრამ არა "თავისუფალზე", უბრალოდ განვაახლოთ გვერდები
+                    loadPatientsForManager();
+                    loadPatientsForTherapyDisplay();
+                    loadPatientsForSurgeryDisplay();
                 }
-                
-                // განახლება ექთნების გვერდებზე
-                loadPatientsForNurse();
-                loadPatientsForSurgery();
             }
         }
-        
-        // პაციენტის ველის განახლება
-        function updatePatientField(patientId, field, value) {
-            const patientIndex = patients.findIndex(p => p.id.toString() === patientId);
-            
-            if (patientIndex !== -1) {
-                patients[patientIndex][field] = value;
-                
-                // ჩვენება შეტყობინება
-                if (currentUser.role === 'nurse') {
-                    nurseMessage.style.display = 'block';
-                    setTimeout(() => {
-                        nurseMessage.style.display = 'none';
-                    }, 3000);
-                } else if (currentUser.role === 'surgery') {
-                    surgeryMessage.style.display = 'block';
-                    setTimeout(() => {
-                        surgeryMessage.style.display = 'none';
-                    }, 3000);
-                }
-                
-                // განახლება მენეჯერის გვერდზე
-                loadPatientsForManager();
-            }
-        }
-        
-        // პაციენტის სახელის რედაქტირების ფანჯრის ლოგიკა
-        savePatientNameBtn.addEventListener('click', function() {
-            const newName = patientNameInput.value.trim();
-            
-            if (newName && editingPatientId) {
-                updatePatientField(editingPatientId, editingPatientField, newName);
-                patientNameModal.style.display = 'none';
-                
-                // განახლება შესაბამისი გვერდი
-                if (currentUser.role === 'nurse') {
-                    loadPatientsForNurse();
-                } else if (currentUser.role === 'surgery') {
-                    loadPatientsForSurgery();
-                }
-            }
-        });
-        
-        cancelPatientNameBtn.addEventListener('click', function() {
-            patientNameModal.style.display = 'none';
-        });
         
         // ძებნის ლოგიკა მენეჯერის გვერდზე
         managerSearch.addEventListener('input', function() {
             loadPatientsForManager();
         });
         
-        // თავდაპირველი მონაცემების დამატება
-        function initializeSampleData() {
-            // დამატება რამდენიმე პაციენტის მონაცემები
-            patients = [
-                { id: 1, name: 'გიორგი ლომიძე', room: 5, doctor: 'დოქტორი ივანიძე', nurse: 'ნინო კაპანაძე', status: 'pending', statusChanged: false },
-                { id: 2, name: 'მარინა ბერიძე', room: 8, doctor: 'ქირურგი პეტრიაშვილი', nurse: 'თამარ გოგალაძე', status: 'manager', statusChanged: true },
-                { id: 3, name: 'ლევან ხოშტარია', room: 12, doctor: 'დოქტორი მელაძე', nurse: 'ნინო კაპანაძე', status: 'pending', statusChanged: false },
-                { id: 4, name: 'ნინო ცერცვაძე', room: 3, doctor: 'ქირურგი პეტრიაშვილი', nurse: 'თამარ გოგალაძე', status: 'free', statusChanged: false },
-                { id: 5, name: 'დავით აბაშიძე', room: 7, doctor: 'დოქტორი მელაძე', nurse: 'ნინო კაპანაძე', status: 'pending', statusChanged: false },
-                { id: 6, name: 'თამარ კვარაცხელია', room: 15, doctor: 'დოქტორი ივანიძე', nurse: 'თამარ გოგალაძე', status: 'manager', statusChanged: true },
-                { id: 7, name: 'ირაკლი გამრეკელი', room: 10, doctor: 'ქირურგი პეტრიაშვილი', nurse: 'ნინო კაპანაძე', status: 'pending', statusChanged: false },
-                { id: 8, name: 'მაია ჩიხრაძე', room: 6, doctor: 'დოქტორი მელაძე', nurse: 'თამარ გოგალაძე', status: 'free', statusChanged: true },
-                { id: 9, name: 'ზურაბ ჭანტურია', room: 4, doctor: 'დოქტორი ივანიძე', nurse: 'ნინო კაპანაძე', status: 'pending', statusChanged: false },
-                { id: 10, name: 'სოფიო რუხაძე', room: 11, doctor: 'ქირურგი პეტრიაშვილი', nurse: 'თამარ გოგალაძე', status: 'manager', statusChanged: false }
-            ];
-        }
+        // ფილტრის ღილაკების დამუშავება
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // აქტიური ღილაკის მონიშვნა
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // ფილტრის განახლება
+                currentFilter = this.getAttribute('data-filter');
+                loadPatientsForManager();
+            });
+        });
         
-        // ინიციალიზაცია
-        initializeSampleData();
+        // Enter კლავიშის მხარდაჭერა ექთნის გვერდზე
+        departmentSelect.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addPatientBtn.click();
+        });
+        
+        patientNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addPatientBtn.click();
+        });
+        
+        patientRoomSelect.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addPatientBtn.click();
+        });
+        
+        nurseNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addPatientBtn.click();
+        });
+        
+        doctorTypeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addPatientBtn.click();
+        });
     </script>
 </body>
 </html>
