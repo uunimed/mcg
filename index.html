@@ -1972,58 +1972,6 @@ body {
   overflow-y: auto;
 }
 
-/* ==================== FIXED PRINT STYLES FOR MISTAKES ==================== */
-@media print {
-  @page {
-    margin: 2cm;
-    size: A4;
-  }
-  
-  body * {
-    visibility: hidden;
-  }
-  
-  .print-mistakes-container,
-  .print-mistakes-container * {
-    visibility: visible;
-  }
-  
-  .print-mistakes-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    padding: 2cm !important;
-    margin: 0 !important;
-    background: white;
-  }
-  
-  .mistake-item {
-    page-break-inside: avoid;
-    margin-bottom: 25px !important;
-    padding: 20px !important;
-    border-left: 6px solid #dc2626 !important;
-  }
-  
-  .mistake-question {
-    font-size: 16px !important;
-    margin-bottom: 15px !important;
-    line-height: 1.6 !important;
-    padding-right: 20px !important;
-  }
-  
-  .mistake-answers {
-    padding-left: 20px !important;
-  }
-  
-  .mistake-user-answer,
-  .mistake-correct-answer {
-    font-size: 15px !important;
-    margin-bottom: 8px !important;
-    line-height: 1.5 !important;
-  }
-}
-
 .exam-answers-container{
   display: flex;
   flex-direction: column;
@@ -3371,58 +3319,21 @@ function handleSignup() {
   }
 }
 
-function bindUserMenuEvents() {
-  const usernameBtn = document.getElementById('usernameBtn');
-  const userDropdown = document.getElementById('userDropdown');
-  
-  if (usernameBtn) {
-    usernameBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      userDropdown.classList.toggle('show');
-    });
-    
-    document.addEventListener('click', () => {
-      userDropdown.classList.remove('show');
-    });
-  }
-  
-  document.getElementById('wrongQuestionsBtn').addEventListener('click', () => {
-    startWrongQuestionsMode();
-    userDropdown.classList.remove('show');
-  });
-  
-  document.getElementById('changePasswordBtn').addEventListener('click', () => {
-    showPasswordChangeModal();
-    userDropdown.classList.remove('show');
-  });
-  
-  document.getElementById('settingsBtn').addEventListener('click', () => {
-    showNotification('პარამეტრები მალე იქნება ხელმისაწვდომი', false);
-    userDropdown.classList.remove('show');
-  });
-  
-  document.getElementById('signOutBtn').addEventListener('click', () => {
-    saveUserProgress();
-    currentUser = null;
-    location.reload();
-  });
-}
-
 function showPasswordChangeModal() {
   const modalHTML = `
-    <div class="modal-overlay active" style="display: flex;">
-      <div class="modal" style="max-width: 450px;">
-        <div class="modal-header" style="font-size: 24px; margin-bottom: 25px;">პაროლის შეცვლა</div>
+    <div class="modal-overlay active">
+      <div class="modal">
+        <div class="modal-header">პაროლის შეცვლა</div>
         <div class="modal-content">
           <div style="margin-bottom: 20px;">
-            <input type="password" id="currentPassword" placeholder="მიმდინარე პაროლი" class="auth-input" style="margin-bottom: 12px; width: 100%;">
-            <input type="password" id="newPassword" placeholder="ახალი პაროლი (მინიმუმ 6 სიმბოლო)" class="auth-input" style="margin-bottom: 12px; width: 100%;">
-            <input type="password" id="confirmNewPassword" placeholder="გაიმეორეთ ახალი პაროლი" class="auth-input" style="width: 100%;">
+            <input type="password" id="currentPassword" placeholder="მიმდინარე პაროლი" class="auth-input" style="margin-bottom: 10px;">
+            <input type="password" id="newPassword" placeholder="ახალი პაროლი (მინიმუმ 6 სიმბოლო)" class="auth-input" style="margin-bottom: 10px;">
+            <input type="password" id="confirmNewPassword" placeholder="გაიმეორეთ ახალი პაროლი" class="auth-input">
           </div>
         </div>
-        <div class="modal-buttons" style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
-          <button id="savePasswordBtn" class="modal-btn confirm" style="background: var(--success); padding: 12px 30px;">შენახვა</button>
-          <button id="cancelPasswordBtn" class="modal-btn cancel" style="background: var(--danger); padding: 12px 30px;">გაუქმება</button>
+        <div class="modal-buttons">
+          <button id="savePasswordBtn" class="modal-btn confirm">შენახვა</button>
+          <button id="cancelPasswordBtn" class="modal-btn cancel">გაუქმება</button>
         </div>
       </div>
     </div>
@@ -3452,29 +3363,16 @@ function showPasswordChangeModal() {
       return;
     }
     
-    try {
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      
-      if (!users[currentUser.username]) {
-        showNotification('მომხმარებელი ვერ მოიძებნა');
-        modalContainer.remove();
-        return;
-      }
-      
-      if (users[currentUser.username].password !== currentPassword) {
-        showNotification('მიმდინარე პაროლი არასწორია');
-        return;
-      }
-      
-      users[currentUser.username].password = newPassword;
-      localStorage.setItem('users', JSON.stringify(users));
-      
-      showNotification('პაროლი წარმატებით შეიცვალა', false);
-      modalContainer.remove();
-    } catch (error) {
-      console.error('Password change error:', error);
-      showNotification('შეცდომა პაროლის შეცვლისას');
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    if (users[currentUser.username]?.password !== currentPassword) {
+      showNotification('მიმდინარე პაროლი არასწორია');
+      return;
     }
+    
+    users[currentUser.username].password = newPassword;
+    localStorage.setItem('users', JSON.stringify(users));
+    showNotification('პაროლი წარმატებით შეიცვალა', false);
+    modalContainer.remove();
   });
   
   document.getElementById('cancelPasswordBtn').addEventListener('click', () => {
@@ -4034,6 +3932,7 @@ function startExamMode() {
   updateExamTimer();
 }
 
+// ==================== SETTINGS PAGE FUNCTIONS ====================
 function showSettingsPage() {
   if (!currentUser || currentUser.isGuest) {
     showNotification('მხოლოდ რეგისტრირებულ მომხმარებლებს შეუძლიათ პარამეტრების ნახვა');
@@ -4041,29 +3940,30 @@ function showSettingsPage() {
   }
 
   const settingsHTML = `
-    <div id="settingsPage" class="settings-page" style="padding: 5cm !important; background: rgba(248, 250, 252, 0.95);">
-      <div class="settings-container" style="max-width: none; width: 100%; margin: 0; padding: 50px;">
-        <div class="settings-header" style="margin-bottom: 40px;">
-          <h2 style="font-size: 36px;">პარამეტრები</h2>
-          <button class="settings-close-btn" onclick="closeSettingsPage()" style="font-size: 32px;">✕</button>
+    <div id="settingsPage" class="settings-page">
+      <div class="settings-container">
+        <div class="settings-header">
+          <h2>პარამეტრები</h2>
+          <button class="settings-close-btn" onclick="closeSettingsPage()">✕</button>
         </div>
         
-        <div id="settingsContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-          <!-- Left Column - User Info -->
-          <div class="settings-section" style="border-bottom: none; padding-right: 20px;">
-            <div class="settings-section-title" style="font-size: 24px; margin-bottom: 30px;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <div id="settingsContent">
+          <!-- User Info Section -->
+          <div class="settings-section">
+            <div class="settings-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="${currentUser ? '#0ea5a4' : '#64748b'}"/>
               </svg>
               მომხმარებლის ინფორმაცია
             </div>
             
-            <div class="settings-field" style="margin-bottom: 30px;">
-              <label class="settings-label" style="font-size: 18px; margin-bottom: 12px;">მომხმარებლის სახელი</label>
-              <div class="settings-input-group" style="gap: 15px;">
-                <input type="text" id="settingsUsername" class="settings-input" value="${escapeHtml(currentUser?.username || '')}" disabled style="padding: 16px 20px; font-size: 18px;">
-                <button class="settings-edit-btn" onclick="enableUsernameEdit()" style="font-size: 18px; padding: 12px 20px;">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+            <!-- Username Field -->
+            <div class="settings-field">
+              <label class="settings-label">მომხმარებლის სახელი</label>
+              <div class="settings-input-group">
+                <input type="text" id="settingsUsername" class="settings-input" value="${escapeHtml(currentUser?.username || '')}" disabled>
+                <button class="settings-edit-btn" onclick="enableUsernameEdit()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" stroke="currentColor" fill="currentColor"/>
                   </svg>
                   შეცვლა
@@ -4071,18 +3971,19 @@ function showSettingsPage() {
               </div>
             </div>
             
+            <!-- Password Field with Eye Toggle -->
             <div class="settings-field">
-              <label class="settings-label" style="font-size: 18px; margin-bottom: 12px;">პაროლი</label>
-              <div class="settings-input-group" style="gap: 15px;">
-                <input type="password" id="settingsPassword" class="settings-input" value="${escapeHtml(getUserPassword(currentUser?.username) || '')}" disabled style="padding: 16px 20px; font-size: 18px;">
-                <button class="settings-eye-btn" onclick="togglePasswordVisibility('settingsPassword', this)" style="padding: 12px;">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <label class="settings-label">პაროლი</label>
+              <div class="settings-input-group">
+                <input type="password" id="settingsPassword" class="settings-input" value="${escapeHtml(getUserPassword(currentUser?.username) || '')}" disabled>
+                <button class="settings-eye-btn" onclick="togglePasswordVisibility('settingsPassword', this)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" stroke-width="2"/>
                     <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
                   </svg>
                 </button>
-                <button class="settings-edit-btn" onclick="showPasswordChangeFromSettings()" style="font-size: 18px; padding: 12px 20px;">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+                <button class="settings-edit-btn" onclick="showPasswordChangeFromSettings()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" stroke="currentColor" fill="currentColor"/>
                   </svg>
                   შეცვლა
@@ -4091,47 +3992,49 @@ function showSettingsPage() {
             </div>
           </div>
           
-          <!-- Right Column - Mistakes Section -->
-          <div class="settings-section" style="border-bottom: none; padding-left: 20px;">
-            <div class="settings-section-title" style="font-size: 24px; margin-bottom: 30px;">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <!-- Mistakes Section -->
+          <div class="settings-section">
+            <div class="settings-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M18 6L6 18M6 6l12 12" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
               </svg>
               შეცდომების ისტორია
             </div>
             
-            <div id="mistakesList" class="mistakes-container" style="max-height: 500px; padding: 20px; font-size: 16px;">
+            <div id="mistakesList" class="mistakes-container">
               ${renderMistakesList()}
             </div>
             
-            <button class="settings-print-btn" onclick="printMistakes()" style="margin-top: 30px; padding: 16px 32px; font-size: 18px; width: 100%;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="margin-right: 10px;">
+            <button class="settings-print-btn" onclick="printMistakes()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path d="M6 9V3h12v6m0 4h.01M6 15h12v6H6v-6z" stroke="white" stroke-width="2"/>
                 <path d="M6 19v-4h12v4" stroke="white" stroke-width="2"/>
               </svg>
               შეცდომების დაბეჭდვა
             </button>
           </div>
-        </div>
-        
-        <!-- Back Button at Bottom -->
-        <div style="display: flex; justify-content: center; margin-top: 60px;">
-          <button class="settings-back-btn" onclick="closeSettingsPage()" style="padding: 16px 48px; font-size: 20px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="margin-right: 12px;">
-              <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            მთავარ გვერდზე დაბრუნება
-          </button>
+          
+          <!-- Actions -->
+          <div class="settings-actions">
+            <button class="settings-back-btn" onclick="closeSettingsPage()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              მთავარ გვერდზე დაბრუნება
+            </button>
+          </div>
         </div>
       </div>
     </div>
   `;
 
+  // Remove existing settings page if any
   const existingSettings = document.getElementById('settingsPage');
   if (existingSettings) {
     existingSettings.remove();
   }
 
+  // Add settings page to body
   document.body.insertAdjacentHTML('beforeend', settingsHTML);
 }
 
@@ -4318,109 +4221,28 @@ function printMistakes() {
     <html>
     <head>
       <title>შეცდომების ისტორია - ${currentUser.username}</title>
-      <meta charset="UTF-8">
       <style>
-        @page {
-          margin: 2.5cm;
-          size: A4;
-        }
-        
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
-        body {
-          font-family: 'Inter', Arial, sans-serif;
-          padding: 0;
-          margin: 2.5cm;
-          line-height: 1.6;
-          color: #1e293b;
-        }
-        
-        .print-container {
-          max-width: 100%;
-          margin: 0;
-          padding: 0;
-        }
-        
-        h1 {
-          color: #0ea5a4;
-          text-align: center;
-          font-size: 28px;
-          margin-bottom: 20px;
-          padding-bottom: 15px;
-          border-bottom: 2px solid #e2e8f0;
-        }
-        
-        .user-info {
-          text-align: center;
-          color: #64748b;
-          font-size: 16px;
-          margin-bottom: 30px;
-          padding: 10px;
+        body { font-family: Arial, sans-serif; padding: 40px; }
+        h1 { color: #0ea5a4; text-align: center; }
+        .mistake { 
+          margin-bottom: 30px; 
+          padding: 20px; 
+          border-left: 4px solid #dc2626;
           background: #f8fafc;
+          border-radius: 8px;
         }
-        
-        .mistake {
-          margin-bottom: 35px;
-          padding: 25px;
-          border-left: 6px solid #dc2626;
-          background: #f8fafc;
-          border-radius: 0 8px 8px 0;
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        
-        .question {
-          font-size: 17px;
-          font-weight: 600;
-          color: #1e293b;
-          margin-bottom: 15px;
-          padding-right: 20px;
-        }
-        
-        .user-answer {
-          color: #dc2626;
-          margin-bottom: 8px;
-          font-size: 16px;
-          padding-left: 15px;
-        }
-        
-        .correct-answer {
-          color: #16a34a;
-          margin-bottom: 8px;
-          font-size: 16px;
-          padding-left: 15px;
-        }
-        
-        .date {
-          color: #64748b;
-          font-size: 13px;
-          text-align: right;
-          margin-top: 12px;
-          padding-top: 8px;
-          border-top: 1px dashed #cbd5e1;
-        }
-        
-        hr {
-          margin: 25px 0;
-          border: 1px solid #e2e8f0;
-        }
-        
-        strong {
-          font-weight: 700;
-        }
+        .question { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 10px; }
+        .user-answer { color: #dc2626; margin-bottom: 5px; }
+        .correct-answer { color: #16a34a; }
+        hr { margin: 20px 0; border: 1px solid #e2e8f0; }
+        .date { color: #64748b; font-size: 12px; text-align: right; }
       </style>
     </head>
     <body>
-      <div class="print-container">
-        <h1>შეცდომების ისტორია</h1>
-        <div class="user-info">
-          <strong>მომხმარებელი:</strong> ${escapeHtml(currentUser.username)} &nbsp;&nbsp;|&nbsp;&nbsp;
-          <strong>თარიღი:</strong> ${new Date().toLocaleDateString('ka-GE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-        </div>
+      <h1>შეცდომების ისტორია</h1>
+      <p style="text-align: center; color: #64748b;">მომხმარებელი: ${escapeHtml(currentUser.username)}</p>
+      <p style="text-align: center; color: #64748b;">თარიღი: ${new Date().toLocaleDateString('ka-GE')}</p>
+      <hr>
   `;
   
   wrongQuestionIds.forEach((questionId, index) => {
@@ -4447,22 +4269,14 @@ function printMistakes() {
     `;
   });
   
-  printContent += `
-      </div>
-    </body>
-    </html>
-  `;
+  printContent += `</body></html>`;
   
   const printWindow = window.open('', '_blank');
   printWindow.document.write(printContent);
   printWindow.document.close();
   printWindow.focus();
-  
-  // Wait for content to load before printing
-  setTimeout(() => {
-    printWindow.print();
-    printWindow.close();
-  }, 500);
+  printWindow.print();
+  printWindow.close();
 }
 
 function closeSettingsPage() {
@@ -4472,7 +4286,6 @@ function closeSettingsPage() {
   }
 }
 
-// Update the settings button click handler in bindUserMenuEvents
 function bindUserMenuEvents() {
   const usernameBtn = document.getElementById('usernameBtn');
   const userDropdown = document.getElementById('userDropdown');
@@ -4488,19 +4301,23 @@ function bindUserMenuEvents() {
     });
   }
   
+  // FIX: Add event listener for change password button
+  const changePasswordBtn = document.getElementById('changePasswordBtn');
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', () => {
+      showPasswordChangeModal();
+      userDropdown.classList.remove('show');
+    });
+  }
+  
   document.getElementById('wrongQuestionsBtn').addEventListener('click', () => {
     startWrongQuestionsMode();
     userDropdown.classList.remove('show');
   });
   
-  document.getElementById('changePasswordBtn').addEventListener('click', () => {
-    showPasswordChangeModal();
-    userDropdown.classList.remove('show');
-  });
-  
   // FIX: Update settings button click handler
   document.getElementById('settingsBtn').addEventListener('click', () => {
-    showSettingsPage(); // This now opens the full settings page
+    showSettingsPage();
     userDropdown.classList.remove('show');
   });
   
