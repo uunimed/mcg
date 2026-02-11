@@ -601,22 +601,125 @@ body{
   display: none;
 }
 
-/* ==================== TIMER & USER INFO ==================== */
+/* ==================== TIMER & USER INFO - AT VERY TOP EDGE ==================== */
 .timer-user-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 2px; /* Just 2px from the top edge */
+  right: 10px;
   z-index: 999;
   display: flex;
   align-items: center;
-  gap: 25px;
+  gap: 15px;
   font-family: inherit;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.username-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 2px 0;
+  margin: 0;
+  display: inline-block;
+  direction: rtl;
+  text-align: right;
+}
+
+#timer {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  text-align: right;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.timer-time {
+  font-family: inherit;
+  font-weight: 600;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+.timer-separator {
+  color: #cbd5e1;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+
+/* ==================== MOVE QUESTIONS 2CM FROM TOP ==================== */
+.normal-mode-container {
+  margin-top: 0.5cm !important;
+  padding-top: 0 !important;
+}
+
+.question-text {
+  margin-top: 0 !important;
+}
+
+.exam-question-text {
+  margin-top: 0.5cm !important;
+}
+
+.options-screen {
+  margin-top: 2cm;
+}
+
+.exam-countdown {
+  margin-top: 0.7cm !important;
+  margin-bottom: 15px;
+}
+
+/* Adjust the exam right panel layout */
+.exam-right-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left: 20px;
+  border-left: 1px solid #e2e8f0;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+/* Ensure test boxes stay below the countdown */
+.exam-test-boxes {
+  margin-top: 10px;
+}
+/* Ensure the container doesn't override our margins */
+.container {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Fix for when test screen is active */
+.test-screen.active {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Remove any body padding that was added */
+body {
+  padding-top: 0 !important;
 }
 
 .user-menu {
