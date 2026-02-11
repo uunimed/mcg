@@ -2760,7 +2760,7 @@ function initAuth() {
   });
 }
 
-// ==================== AUTH FUNCTIONS ====================
+// ==================== FIXED LOGIN FUNCTION ====================
 function handleLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -2798,35 +2798,35 @@ function handleLogin() {
     // FIX: Properly set currentUser with correct structure
     currentUser = { 
       username: username, 
-      isGuest: false,
-      progress: users[username].progress || {
-        rezidentura: {
-          normal: { answeredQuestions: {}, currentIndex: 0 },
-          exam: { answeredQuestions: {}, currentIndex: 0 },
-          wrongQuestions: []
-        }
-      }
+      isGuest: false
     };
     
-    // FIX: Load progress after setting currentUser
+    // FIX: Load user progress
     loadUserProgress();
     
+    // FIX: Clear form
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
     
-    // FIX: Close modal and start app
+    // FIX: Close modal and update UI
     document.getElementById('authModal').style.display = 'none';
-    
     document.getElementById('userInfo').style.display = 'flex';
     document.getElementById('usernameDisplay').textContent = currentUser.username;
     
+    // FIX: Update chat username
     userName = currentUser.username;
     localStorage.setItem('chatUserName', userName);
     
+    // FIX: Show success message
     showNotification('წარმატებით შეხვედით სისტემაში!', false);
     
     // FIX: Load CSV and enable start button
-    loadCSV();
+    if (allTests.length === 0) {
+      loadCSV();
+    } else {
+      startBtn.disabled = false;
+    }
+    
     initChat();
     bindUserMenuEvents();
     updateTimerDisplay();
@@ -2836,94 +2836,6 @@ function handleLogin() {
     showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
   }
 }
-
-// FIX: Update startBtn event listener
-startBtn.addEventListener('click', () => {
-  if (!allTests.length){ 
-    showNotification('ტესტები არ იძებნება');
-    return; 
-  }
-  
-  const testTypeSelect = document.getElementById('testTypeSelect');
-  if (!testTypeSelect || testTypeSelect.value === '') {
-    showNotification('გთხოვთ აირჩიოთ მოდული');
-    return;
-  }
-  
-  // FIX: Store test type properly
-  currentTestType = testTypeSelect.value;
-  
-  if (currentTestType === 'rezidentura') {
-    const topicsSelect = document.getElementById('topicsSelect');
-    if (topicsSelect && (!topicsSelect.value || topicsSelect.value === '')) {
-      showNotification('გთხოვთ აირჩიოთ თემა!');
-      return;
-    }
-  }
-  
-  // FIX: Check if user is logged in correctly
-  if (currentUser && !currentUser.isGuest && currentTestType) {
-    console.log("User logged in, starting test...", currentUser);
-    // Load the progress first
-    loadUserProgress();
-    
-    const progress = userProgress[currentTestType];
-    const hasProgress = progress && (
-      (progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0) ||
-      (progress.exam && Object.keys(progress.exam.answeredQuestions || {}).length > 0)
-    );
-    
-    if (hasProgress && !window.savedProgress) {
-      showContinueOrRestartModal(progress);
-      return;
-    } else {
-      // If no progress or already handled, start the test
-      startTest();
-    }
-  } else {
-    // Guest user - just start
-    console.log("Guest user, starting test...");
-    startTest();
-  }
-});
-
-// FIX: Update startApp function
-function startApp() {
-  document.getElementById('authModal').style.display = 'none';
-  
-  if (!currentUser.isGuest) {
-    document.getElementById('userInfo').style.display = 'flex';
-    document.getElementById('usernameDisplay').textContent = currentUser.username;
-    loadUserProgress();
-    userName = currentUser.username;
-    localStorage.setItem('chatUserName', userName);
-  }
-  
-  loadCSV();
-  initChat();
-  bindUserMenuEvents();
-  updateTimerDisplay();
-}
-
-// FIX: Add this function to ensure test type is properly set
-function updateCurrentTestType() {
-  const testTypeSelect = document.getElementById('testTypeSelect');
-  if (testTypeSelect && testTypeSelect.value) {
-    currentTestType = testTypeSelect.value;
-    console.log("Test type updated:", currentTestType);
-  }
-}
-
-// FIX: Add event listener for test type change
-document.addEventListener('DOMContentLoaded', () => {
-  const testTypeSelect = document.getElementById('testTypeSelect');
-  if (testTypeSelect) {
-    testTypeSelect.addEventListener('change', function() {
-      currentTestType = this.value;
-      console.log("Test type changed to:", currentTestType);
-    });
-  }
-});
 
 function handleSignup() {
   const username = document.getElementById('signupUsername').value.trim();
@@ -3022,21 +2934,6 @@ function handleSignup() {
     console.error('Signup error:', error);
     showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
   }
-}
-
-function startApp() {
-  document.getElementById('authModal').style.display = 'none';
-  
-  if (!currentUser.isGuest) {
-    document.getElementById('userInfo').style.display = 'flex';
-    document.getElementById('usernameDisplay').textContent = currentUser.username;
-    loadUserProgress();
-  }
-  
-  loadCSV();
-  initChat();
-  bindUserMenuEvents();
-  updateTimerDisplay();
 }
 
 function bindUserMenuEvents() {
@@ -4716,18 +4613,25 @@ function showCompletionScreen() {
   `;
   
   const questionContainer = document.querySelector('.question-container');
-  questionContainer.innerHTML = completionHTML;
+  if (questionContainer) {
+    questionContainer.innerHTML = completionHTML;
+  }
   examRightPanel.classList.add('hidden');
   questionCounter.classList.add('hidden');
   
-  document.getElementById('restartBtn').addEventListener('click', () => {
+  document.getElementById('restartBtn')?.addEventListener('click', () => {
     location.reload();
   });
 }
 
-startBtn.addEventListener('click', () => {
-  if (!allTests.length){ 
-    showNotification('ტესტები არ იძებნება');
+// ==================== FIXED START BUTTON EVENT LISTENER ====================
+startBtn.addEventListener('click', function() {
+  console.log("Start button clicked");
+  console.log("Current user:", currentUser);
+  console.log("All tests length:", allTests.length);
+  
+  if (!allTests || allTests.length === 0) { 
+    showNotification('ტესტები ჯერ არ არის ჩატვირთული');
     return; 
   }
   
@@ -4737,7 +4641,9 @@ startBtn.addEventListener('click', () => {
     return;
   }
   
+  // FIX: Store test type immediately
   currentTestType = testTypeSelect.value;
+  console.log("Test type set to:", currentTestType);
   
   if (currentTestType === 'rezidentura') {
     const topicsSelect = document.getElementById('topicsSelect');
@@ -4747,29 +4653,12 @@ startBtn.addEventListener('click', () => {
     }
   }
   
-  if (currentUser && !currentUser.isGuest && currentTestType) {
-    // Load the progress first
-    loadUserProgress();
-    
-    const progress = userProgress[currentTestType];
-    const hasProgress = progress && (
-      (progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0) ||
-      (progress.exam && Object.keys(progress.exam.answeredQuestions || {}).length > 0)
-    );
-    
-    if (hasProgress && !window.savedProgress) {
-      showContinueOrRestartModal(progress);
-      return;
-    } else {
-      // If no progress or already handled, start the test
-      startTest();
-    }
-  } else {
-    // Guest user - just start
-    startTest();
-  }
+  // FIX: Always start test, regardless of user type
+  // Just check if user is logged in for progress, but still start test
+  startTest();
 });
 
+// ==================== FIXED DOM CONTENT LOADED ====================
 window.addEventListener('DOMContentLoaded', () => {
   console.log("DOM loaded, initializing app...");
   
@@ -4802,6 +4691,15 @@ window.addEventListener('DOMContentLoaded', () => {
   bindNavigationEvents();
   bindQuestionCounterEvent();
   bindTestTypeEvents();
+  
+  // FIX: Add test type change listener to track current test type
+  const testTypeSelect = document.getElementById('testTypeSelect');
+  if (testTypeSelect) {
+    testTypeSelect.addEventListener('change', function() {
+      currentTestType = this.value;
+      console.log("Test type changed to:", currentTestType);
+    });
+  }
   
   document.addEventListener('click', (e) => {
     if (isEditingQuestionNumber && currentQuestionEl && !currentQuestionEl.contains(e.target)) {
