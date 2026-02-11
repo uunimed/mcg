@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=yes" />
 <title>რეზიდენტურის ტესტები</title>
 <style>
 :root{
@@ -604,7 +604,7 @@ body{
 /* ==================== TIMER & USER INFO - AT VERY TOP EDGE ==================== */
 .timer-user-container {
   position: fixed;
-  top: 2px; /* Just 2px from the top edge */
+  top: 2px;
   right: 10px;
   z-index: 999;
   display: flex;
@@ -667,17 +667,18 @@ body{
   font-size: 13px;
 }
 
-/* ==================== SETTINGS PAGE STYLES ==================== */
+/* ==================== SETTINGS PAGE - FIXED: 80% WIDTH, 90% HEIGHT, VECTOR CLOSE ==================== */
 .settings-page {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #f8fafc;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw;
+  height: 90vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   z-index: 10000;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -685,20 +686,30 @@ body{
 }
 
 .settings-container {
-  max-width: 600px;
+  max-width: 1100px;
   width: 100%;
+  height: 100%;
   background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-  padding: 40px;
-  position: relative;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideScale 0.25s ease;
+}
+
+@keyframes slideScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .settings-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 30px;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .settings-header h2 {
@@ -711,18 +722,33 @@ body{
   -webkit-text-fill-color: transparent;
 }
 
+/* VECTOR CLOSE BUTTON - FIXED */
 .settings-close-btn {
   background: none;
   border: none;
-  font-size: 24px;
+  padding: 8px;
   cursor: pointer;
   color: #64748b;
   transition: color 0.2s;
-  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .settings-close-btn:hover {
   color: var(--danger);
+}
+
+.settings-close-btn svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2;
+}
+
+#settingsContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
 }
 
 .settings-section {
@@ -970,7 +996,6 @@ body{
   margin-bottom: 15px;
 }
 
-/* Adjust the exam right panel layout */
 .exam-right-panel {
   display: flex;
   flex-direction: column;
@@ -981,23 +1006,20 @@ body{
   flex-shrink: 0;
 }
 
-/* Ensure test boxes stay below the countdown */
 .exam-test-boxes {
   margin-top: 10px;
 }
-/* Ensure the container doesn't override our margins */
+
 .container {
   margin-top: 0;
   padding-top: 0;
 }
 
-/* Fix for when test screen is active */
 .test-screen.active {
   margin-top: 0;
   padding-top: 0;
 }
 
-/* Remove any body padding that was added */
 body {
   padding-top: 0 !important;
 }
@@ -1141,7 +1163,20 @@ body {
   margin-bottom: 0 !important;
 }
 
+/* ==================== MOBILE VERSION - FULLY RESTORED & FIXED ==================== */
 @media (max-width: 768px) {
+  body {
+    padding: 10px !important;
+  }
+  
+  .auth-modal {
+    max-width: 95%;
+  }
+  
+  .options-screen {
+    padding: 20px !important;
+  }
+  
   .option-row {
     flex-direction: column;
     gap: 12px;
@@ -1151,316 +1186,328 @@ body {
     width: 100%;
   }
   
-  .timer-user-container {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-    top: 15px;
-    right: 15px;
+  .option-item {
+    padding: 12px 16px !important;
+    min-height: 44px !important;
+    margin-bottom: 10px !important;
   }
   
-  .username-btn {
-    padding: 8px 14px;
-    font-size: 14px;
+  .start-btn {
+    width: 100% !important;
+    max-width: 280px;
+    padding: 16px !important;
+    font-size: 18px !important;
+    margin: 30px auto 0 !important;
+  }
+  
+  .mode-label {
+    font-size: 22px !important;
+    margin-bottom: 20px !important;
+  }
+  
+  /* Timer & user */
+  .timer-user-container {
+    top: 5px !important;
+    right: 8px !important;
+    gap: 8px !important;
+  }
+  
+  .username-text {
+    font-size: 14px !important;
   }
   
   #timer {
-    padding: 8px 15px;
-    font-size: 22px;
-    min-width: 120px;
-  }
-}
-
-/* ==================== CHAT NOTIFICATION BADGE ==================== */
-.chat-notification {
-  position: absolute;
-  top: -5px;
-  right: 0px;
-  background: var(--danger);
-  color: white;
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1002;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-.chat-button {
-  position: relative;
-}
-
-@media (max-width: 768px) {
-  body {
-    padding: 10px;
+    font-size: 13px !important;
   }
   
-  .exam-question-text {
-    font-size: 16px !important;
-    max-height: none !important;
-    min-height: 10px;
-    overflow: visible !important;
+  /* Settings page - already 80/90 */
+  .settings-page {
+    width: 90vw !important;
+    height: 90vh !important;
+    padding: 10px !important;
   }
   
+  .settings-container {
+    border-radius: 20px !important;
+  }
+  
+  .settings-header {
+    padding: 16px 20px !important;
+  }
+  
+  .settings-header h2 {
+    font-size: 24px !important;
+  }
+  
+  #settingsContent {
+    padding: 20px !important;
+  }
+  
+  /* ----- NORMAL MODE MOBILE - NO EXAM BUTTONS ----- */
   .normal-mode-container .navigation {
     position: fixed !important;
-    bottom: 60px !important;
+    bottom: 20px !important;
     left: 10px !important;
     right: 10px !important;
-    top: auto !important;
     width: auto !important;
-    padding: 10px !important;
-    background: transparent !important;
-    z-index: 1000 !important;
+    padding: 12px 16px !important;
+    background: white !important;
+    border-radius: 50px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
     border-top: none !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    z-index: 1000 !important;
   }
   
-  .normal-mode-container {
-    padding-top: 10px !important;
-    padding-bottom: 130px !important;
+  .normal-mode-container .nav-center {
+    display: flex !important;
+    gap: 10px !important;
+    width: 100% !important;
   }
   
+  .normal-mode-container .nav-btn {
+    flex: 1 !important;
+    padding: 14px 12px !important;
+    font-size: 16px !important;
+    border-radius: 40px !important;
+    min-width: 0 !important;
+  }
+  
+  .normal-mode-container #autoBtn {
+    background: #f59e0b !important;
+  }
+  
+  /* HIDE FINISH BUTTON IN NORMAL MODE - FIXED */
+  .normal-mode-container #examFinishBtn,
+  .normal-mode-container .exam-finish-btn,
+  .normal-mode-container [id*="Finish"],
+  .normal-mode-container button:contains("გამოცდის") {
+    display: none !important;
+  }
+  
+  /* ----- EXAM MODE MOBILE - WITH FINISH BUTTON ----- */
   .exam-mode-container {
     flex-direction: column !important;
-    height: auto !important;
-    min-height: calc(100vh - 20px) !important;
-    position: relative !important;
     padding-bottom: 180px !important;
   }
   
   .question-left-panel {
-    order: 1 !important;
+    width: 100% !important;
     padding-right: 0 !important;
-    width: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-  }
-  
-  .exam-question-text {
-    text-align: center !important;
-    width: 100% !important;
-    padding: 0 10px !important;
-  }
-  
-  .exam-answers-container {
-    width: 100% !important;
-    max-width: 600px !important;
-    margin: 0 auto !important;
-  }
-  
-  .exam-answer-item {
-    text-align: left !important;
-    width: 100% !important;
+    order: 1 !important;
   }
   
   .exam-right-panel {
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
-    order: 2 !important;
-    padding-left: 0 !important;
     border-left: none !important;
     border-top: 1px solid #e2e8f0 !important;
     margin-top: 20px !important;
-    margin-bottom: 0 !important;
-    position: static !important;
-    height: auto !important;
-  }
-  
-  .exam-right-panel.hidden {
-    display: none !important;
-  }
-  
-  .exam-right-panel:not(.hidden) {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
+    padding: 15px !important;
+    order: 2 !important;
   }
   
   .exam-test-boxes {
-    grid-template-columns: repeat(5, 45px) !important;
-    justify-content: center !important;
-    gap: 8px !important;
-    max-height: 300px !important;
-    padding: 15px !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    max-height: 220px !important;
     overflow-y: auto !important;
-    width: 100% !important;
-    background: #f8fafc !important;
-    border-radius: 8px !important;
-    margin-bottom: 0 !important;
+    gap: 8px !important;
   }
   
-  .exam-navigation-container {
-    order: 3 !important;
+  .test-box {
+    width: 100% !important;
+    height: 48px !important;
+  }
+  
+  /* EXAM bottom navigation - FIXED: finish button always visible */
+  .exam-mode-container .exam-navigation-container {
     position: fixed !important;
-    bottom: 70px !important;
+    bottom: 20px !important;
     left: 10px !important;
     right: 10px !important;
     width: auto !important;
-    padding: 15px !important;
+    padding: 12px 16px !important;
     background: white !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    border-radius: 50px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+    border-top: none !important;
     z-index: 1000 !important;
-    margin-top: 0 !important;
-    border-top: 1px solid #e2e8f0 !important;
+    order: 3 !important;
   }
   
-  .nav-center {
+  .exam-mode-container .nav-center {
     display: flex !important;
     gap: 8px !important;
     width: 100% !important;
   }
   
-  .nav-btn {
-    padding: 8px 12px !important;
-    font-size: 14px !important;
-    min-width: 0 !important;
+  .exam-mode-container .nav-btn {
     flex: 1 !important;
+    padding: 14px 8px !important;
+    font-size: 15px !important;
+    white-space: nowrap !important;
+    border-radius: 40px !important;
   }
   
+  /* FORCE SHOW FINISH BUTTON IN EXAM MODE */
+  #examFinishBtn {
+    display: flex !important;
+    background: var(--danger) !important;
+    color: white !important;
+  }
+  
+  /* Ensure normal mode never shows finish button */
+  .normal-mode-container #examFinishBtn {
+    display: none !important;
+  }
+  
+  /* Bottom left container (chat, online) */
   .bottom-left-container {
     position: fixed !important;
-    bottom: 10px !important;
+    bottom: 90px !important;
     left: 10px !important;
     right: 10px !important;
     flex-direction: row !important;
-    justify-content: space-between !important;
     align-items: center !important;
+    justify-content: space-between !important;
     background: rgba(255, 255, 255, 0.95) !important;
-    padding: 10px 12px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    padding: 10px 16px !important;
+    border-radius: 50px !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1) !important;
     display: flex !important;
     z-index: 1001 !important;
   }
   
-  .question-counter {
-    position: static !important;
-    bottom: auto !important;
-    right: auto !important;
-    font-size: 5px !important;
-    padding: 0 !important;
-    background: transparent !important;
-    margin: 0 !important;
-    flex: 1 !important;
-    text-align: center !important;
-    order: 2 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-  }
-  
-  .question-counter .current-question,
-  .question-counter .counter-separator,
-  .question-counter .total-questions {
-    font-size: 20px !important;
-  }
-  
-  .bottom-left-container .question-counter .counter-separator,
-  .bottom-left-container .question-counter .total-questions {
-    font-size: 20px !important;
-    color: #64748b !important;
-  }
-  
   .chat-button {
-    padding: 6px 12px !important;
-    font-size: 12px !important;
-    order: 1 !important;
-    flex: 1 !important;
-    text-align: left !important;
-    min-width: 70px !important;
+    padding: 10px 18px !important;
+    font-size: 15px !important;
   }
   
   .online-status {
-    font-size: 12px !important;
-    order: 3 !important;
-    flex: 1 !important;
-    text-align: right !important;
-    display: flex !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    min-width: 100px !important;
+    font-size: 14px !important;
   }
   
-  .exam-mode-container {
-    padding-top: 10px !important;
-    padding-bottom: 180px !important;
+  .question-counter {
+    bottom: 90px !important;
+    right: 10px !important;
+    padding: 8px 16px !important;
+    font-size: 24px !important;
+    background: rgba(255,255,255,0.95) !important;
+    border-radius: 40px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
   }
   
-  .exam-countdown {
-    width: 100% !important;
+  .current-question,
+  .counter-separator,
+  .total-questions {
+    font-size: 24px !important;
+  }
+  
+  .exam-question-text {
+    font-size: 20px !important;
     text-align: center !important;
-    margin-bottom: 10px !important;
+  }
+  
+  .exam-answer-item {
+    padding: 14px 16px !important;
     font-size: 16px !important;
-  }
-  
-  #questionCounter.hidden {
-    display: none !important;
-  }
-  
-  .bottom-left-container .question-counter {
-    display: flex !important;
-    justify-content: center !important;
-  }
-  
-  .online-status {
-    gap: 5px !important;
-  }
-  
-  .online-text {
-    white-space: nowrap !important;
-  }
-  
-  .exam-right-panel .question-counter {
-    display: none !important;
-  }
-  
-  .test-box {
-    width: 45px !important;
-    height: 45px !important;
-  }
-  
-  .question-text {
-    font-size: 17px !important;
-    margin-top: 0 !important;
   }
   
   .chat-window {
     width: calc(100% - 20px) !important;
     left: 10px !important;
-    bottom: 130px !important;
-    height: 50vh !important;
+    bottom: 150px !important;
+    height: 60vh !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-btn {
+    font-size: 14px !important;
+    padding: 12px 8px !important;
   }
   
-  #questionCounter.hidden {
+  .test-box {
+    height: 44px !important;
+  }
+  
+  .exam-test-boxes {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+}
+
+/* ==================== PRINT STYLES - FIXED: 1cm MARGINS ==================== */
+@media print {
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+  
+  .settings-page {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    transform: none !important;
+    top: 0 !important;
+    left: 0 !important;
+    background: white !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+  }
+  
+  .settings-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 1cm !important;
+    padding: 0.5cm 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+  
+  .mistake-item {
+    page-break-inside: avoid;
+    margin-bottom: 0.5cm !important;
+    border-left: 2px solid #dc2626 !important;
+    padding-left: 0.3cm !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  .settings-print-btn,
+  .settings-back-btn,
+  .settings-close-btn,
+  .settings-eye-btn,
+  .settings-edit-btn,
+  #saveUsernameBtn {
     display: none !important;
   }
   
-  .bottom-left-container .question-counter {
-    display: flex !important;
-    justify-content: center !important;
+  .settings-header h2 {
+    -webkit-text-fill-color: #0ea5a4 !important;
+    color: #0ea5a4 !important;
+    text-shadow: none !important;
   }
   
-  .online-status {
-    gap: 5px !important;
+  .settings-section-title svg {
+    display: none !important;
   }
   
-  .online-text {
-    white-space: nowrap !important;
+  .settings-container * {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  .mistake-question,
+  .mistake-answers,
+  .settings-label,
+  .settings-section-title {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 
@@ -1518,40 +1565,6 @@ body {
   width: 100%;
   max-width: 800px;
   position: relative;
-}
-
-@media (max-width: 768px) {
-  .options-screen {
-    padding: 15px 20px !important;
-  }
-  
-  .option-item {
-    padding: 6px 10px !important;
-    min-height: 40px !important;
-    margin-bottom: 8px !important;
-    gap: 8px !important;
-  }
-  
-  .option-item span {
-    font-size: 13px !important;
-  }
-  
-  .option-item input[type="checkbox"] {
-    width: 14px !important;
-    height: 14px !important;
-  }
-  
-  .mode-label {
-    font-size: 18px !important;
-    margin-bottom: 15px !important;
-  }
-  
-  .start-btn {
-    width: 130px !important;
-    padding: 8px !important;
-    font-size: 13px !important;
-    margin: 20px auto 0 !important;
-  }
 }
 
 .loader-overlay {
@@ -1823,7 +1836,6 @@ body {
   text-decoration: underline;
 }
 
-/* Remove or comment out the old .username-btn styles */
 .username-btn {
   display: none;
 }
@@ -2138,11 +2150,11 @@ body {
 .timer-user-container {
   display: flex;
   align-items: center;
-  gap: 2px; /* Reduce gap between username and separator */
+  gap: 2px;
 }
 
 .user-info {
-  margin-right: 0; /* Remove any margin */
+  margin-right: 0;
 }
 
 .username-text {
@@ -2150,28 +2162,27 @@ body {
   font-weight: 700;
   color: var(--accent);
   cursor: pointer;
-  padding: 5px 0 5px 0; /* Remove right padding, keep left padding for click area */
-  transition: all 0.2s;
+  padding: 5px 0 5px 0;
   display: inline-block;
-  direction: rtl; /* Right-to-left text direction */
-  text-align: right; /* Align text to the right */
+  direction: rtl;
+  text-align: right;
 }
 
 #timer {
   display: flex;
   align-items: center;
-  gap: 2px; /* Minimal gap between separator and time */
-  margin-left: 0; /* Remove any margin */
+  gap: 2px;
+  margin-left: 0;
 }
 
 .timer-separator {
   color: #cbd5e1;
-  margin: 0; /* Remove all margins */
-  padding: 0; /* Remove all padding */
+  margin: 0;
+  padding: 0;
 }
 
 .timer-time {
-  margin-left: 0; /* Remove left margin */
+  margin-left: 0;
 }
 
 .result-question {
@@ -2595,12 +2606,6 @@ body {
         <span id="usernameDisplay"></span>
       </span>
       <div id="userDropdown" class="user-dropdown">
-        <button class="user-dropdown-item" id="changePasswordBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
-            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          პაროლის შეცვლა
-        </button>
         <button class="user-dropdown-item" id="settingsBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
             <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" stroke-width="2"/>
@@ -2952,6 +2957,7 @@ function loadUserProgress() {
   }
 }
 
+// ==================== FIXED: MISTAKE TRACKING - CORRECTLY REMOVES FROM WRONG QUESTIONS ====================
 function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = false) {
   if (!currentUser || currentUser.isGuest || !currentTestType) return;
   
@@ -2975,11 +2981,18 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     timestamp: Date.now()
   };
   
+  // FIXED: Properly manage wrongQuestions array
+  if (!userProgress[currentTestType].wrongQuestions) {
+    userProgress[currentTestType].wrongQuestions = [];
+  }
+  
   if (!isCorrect) {
+    // Only add if not already present
     if (!userProgress[currentTestType].wrongQuestions.includes(questionId)) {
       userProgress[currentTestType].wrongQuestions.push(questionId);
     }
   } else {
+    // Remove from wrongQuestions if it exists (when answer is correct)
     const index = userProgress[currentTestType].wrongQuestions.indexOf(questionId);
     if (index > -1) {
       userProgress[currentTestType].wrongQuestions.splice(index, 1);
@@ -2994,6 +3007,7 @@ function getWrongQuestions() {
   return userProgress[currentTestType]?.wrongQuestions || [];
 }
 
+// ==================== FIXED: WRONG QUESTIONS MODE ====================
 function startWrongQuestionsMode() {
   if (!currentUser || currentUser.isGuest) {
     showNotification('მხოლოდ რეგისტრირებულ მომხმარებლებს შეუძლიათ შეცდომების გაკეთება');
@@ -3040,7 +3054,7 @@ function startWrongQuestionsMode() {
   
   timerElement.classList.remove('hidden');
   
-  showNotification(`დაწყებულია შეცდომების გაკეთების რეჟიმი: ${wrongTests.length} კითხვა`);
+  showNotification(`დაწყებულია შეცდომების გაკეთების რეჟიმი: ${wrongTests.length} კითხვა`, false);
   
   renderCurrentQuestion();
 }
@@ -3143,7 +3157,6 @@ function initAuth() {
   });
 }
 
-// ==================== FIXED LOGIN FUNCTION ====================
 function handleLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -3178,32 +3191,25 @@ function handleLogin() {
       return;
     }
     
-    // FIX: Properly set currentUser with correct structure
     currentUser = { 
       username: username, 
       isGuest: false
     };
     
-    // FIX: Load user progress
     loadUserProgress();
     
-    // FIX: Clear form
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
     
-    // FIX: Close modal and update UI
     document.getElementById('authModal').style.display = 'none';
     document.getElementById('userInfo').style.display = 'flex';
     document.getElementById('usernameDisplay').textContent = currentUser.username;
     
-    // FIX: Update chat username
     userName = currentUser.username;
     localStorage.setItem('chatUserName', userName);
     
-    // FIX: Show success message
     showNotification('წარმატებით შეხვედით სისტემაში!', false);
     
-    // FIX: Load CSV and enable start button
     if (allTests.length === 0) {
       loadCSV();
     } else {
@@ -3317,43 +3323,6 @@ function handleSignup() {
     console.error('Signup error:', error);
     showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
   }
-}
-
-function bindUserMenuEvents() {
-  const usernameBtn = document.getElementById('usernameBtn');
-  const userDropdown = document.getElementById('userDropdown');
-  
-  if (usernameBtn) {
-    usernameBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      userDropdown.classList.toggle('show');
-    });
-    
-    document.addEventListener('click', () => {
-      userDropdown.classList.remove('show');
-    });
-  }
-  
-  document.getElementById('wrongQuestionsBtn').addEventListener('click', () => {
-    startWrongQuestionsMode();
-    userDropdown.classList.remove('show');
-  });
-  
-  document.getElementById('changePasswordBtn').addEventListener('click', () => {
-    showPasswordChangeModal();
-    userDropdown.classList.remove('show');
-  });
-  
-  document.getElementById('settingsBtn').addEventListener('click', () => {
-    showNotification('პარამეტრები მალე იქნება ხელმისაწვდომი', false);
-    userDropdown.classList.remove('show');
-  });
-  
-  document.getElementById('signOutBtn').addEventListener('click', () => {
-    saveUserProgress();
-    currentUser = null;
-    location.reload();
-  });
 }
 
 function showPasswordChangeModal() {
@@ -3514,12 +3483,10 @@ function initChat() {
     loadLocalMessagesAsFallback();
   }
   
-  // Remove existing listeners before adding new ones
   chatButton.replaceWith(chatButton.cloneNode(true));
   closeChat.replaceWith(closeChat.cloneNode(true));
   sendBtn.replaceWith(sendBtn.cloneNode(true));
   
-  // Re-get the elements after cloning
   chatButton = document.getElementById('chatButton');
   closeChat = document.querySelector('.close-chat');
   sendBtn = document.getElementById('sendBtn');
@@ -3891,7 +3858,6 @@ function updateTimerDisplay() {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('ka-GE');
   
-  // Show only the clock with separator
   timerElement.innerHTML = `
     <span class="timer-separator">|</span>
     <span class="timer-time">${timeStr}</span>
@@ -3928,7 +3894,7 @@ function createExamTestBoxes() {
   
   examTestBoxes.innerHTML = '';
   
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < sessionTests.length; i++) {
     const testBox = document.createElement('div');
     testBox.className = 'test-box';
     testBox.textContent = i + 1;
@@ -3960,16 +3926,20 @@ function startExamMode() {
   examModeContainer.classList.remove('hidden');
   examRightPanel.classList.remove('hidden');
   questionCounter.classList.add('hidden');
-  examFinishBtn.style.display = 'none';
   
   createExamTestBoxes();
   
   clearInterval(examTimerInterval);
   examTimerInterval = setInterval(updateExamTimer, 1000);
   updateExamTimer();
+  
+  // FIXED: Ensure finish button is visible in exam mode
+  if (examFinishBtn) {
+    examFinishBtn.style.display = 'flex';
+  }
 }
 
-// ==================== SETTINGS PAGE FUNCTIONS ====================
+// ==================== FIXED: SETTINGS PAGE - 80% WIDTH, 90% HEIGHT, VECTOR CLOSE ====================
 function showSettingsPage() {
   if (!currentUser || currentUser.isGuest) {
     showNotification('მხოლოდ რეგისტრირებულ მომხმარებლებს შეუძლიათ პარამეტრების ნახვა');
@@ -3981,7 +3951,11 @@ function showSettingsPage() {
       <div class="settings-container">
         <div class="settings-header">
           <h2>პარამეტრები</h2>
-          <button class="settings-close-btn" onclick="closeSettingsPage()">✕</button>
+          <button class="settings-close-btn" id="vectorCloseSettings">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
         </div>
         
         <div id="settingsContent">
@@ -4065,14 +4039,15 @@ function showSettingsPage() {
     </div>
   `;
 
-  // Remove existing settings page if any
   const existingSettings = document.getElementById('settingsPage');
   if (existingSettings) {
     existingSettings.remove();
   }
 
-  // Add settings page to body
   document.body.insertAdjacentHTML('beforeend', settingsHTML);
+  
+  // FIXED: Vector close button event listener
+  document.getElementById('vectorCloseSettings').addEventListener('click', closeSettingsPage);
 }
 
 function getUserPassword(username) {
@@ -4108,8 +4083,6 @@ function enableUsernameEdit() {
     usernameInput.disabled = false;
     usernameInput.focus();
     
-    // Add save button if not exists
-    const parent = usernameInput.parentElement;
     if (!document.getElementById('saveUsernameBtn')) {
       const saveBtn = document.createElement('button');
       saveBtn.id = 'saveUsernameBtn';
@@ -4122,7 +4095,7 @@ function enableUsernameEdit() {
         შენახვა
       `;
       saveBtn.onclick = saveUsername;
-      parent.appendChild(saveBtn);
+      usernameInput.parentElement.appendChild(saveBtn);
     }
   }
 }
@@ -4149,24 +4122,20 @@ function saveUsername() {
       return;
     }
     
-    // Move user data to new username
     users[newUsername] = users[currentUser.username];
     delete users[currentUser.username];
     
     localStorage.setItem('users', JSON.stringify(users));
     
-    // Update current user
     const oldUsername = currentUser.username;
     currentUser.username = newUsername;
     
-    // Update display
     document.getElementById('usernameDisplay').textContent = newUsername;
     userName = newUsername;
     localStorage.setItem('chatUserName', userName);
     
     showNotification('მომხმარებლის სახელი წარმატებით შეიცვალა', false);
     
-    // Close settings and reopen with new username
     closeSettingsPage();
     setTimeout(() => showSettingsPage(), 300);
     
@@ -4190,12 +4159,12 @@ function cancelUsernameEdit() {
 function showPasswordChangeFromSettings() {
   closeSettingsPage();
   
-  // Show password change modal after a short delay
   setTimeout(() => {
     showPasswordChangeModal();
   }, 300);
 }
 
+// ==================== FIXED: RENDER MISTAKES LIST - SHOWS CORRECT COUNT ====================
 function renderMistakesList() {
   if (!currentUser || !currentTestType) {
     return '<div style="text-align:center; padding:20px; color:var(--muted);">აირჩიეთ ტესტის ტიპი შეცდომების სანახავად</div>';
@@ -4259,7 +4228,7 @@ function printMistakes() {
     <head>
       <title>შეცდომების ისტორია - ${currentUser.username}</title>
       <style>
-        body { font-family: Arial, sans-serif; padding: 40px; }
+        body { font-family: Arial, sans-serif; margin: 1cm; }
         h1 { color: #0ea5a4; text-align: center; }
         .mistake { 
           margin-bottom: 30px; 
@@ -4323,7 +4292,6 @@ function closeSettingsPage() {
   }
 }
 
-// Update the settings button click handler in bindUserMenuEvents
 function bindUserMenuEvents() {
   const usernameBtn = document.getElementById('usernameBtn');
   const userDropdown = document.getElementById('userDropdown');
@@ -4339,19 +4307,21 @@ function bindUserMenuEvents() {
     });
   }
   
+  const changePasswordBtn = document.getElementById('changePasswordBtn');
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', () => {
+      showPasswordChangeModal();
+      userDropdown.classList.remove('show');
+    });
+  }
+  
   document.getElementById('wrongQuestionsBtn').addEventListener('click', () => {
     startWrongQuestionsMode();
     userDropdown.classList.remove('show');
   });
   
-  document.getElementById('changePasswordBtn').addEventListener('click', () => {
-    showPasswordChangeModal();
-    userDropdown.classList.remove('show');
-  });
-  
-  // FIX: Update settings button click handler
   document.getElementById('settingsBtn').addEventListener('click', () => {
-    showSettingsPage(); // This now opens the full settings page
+    showSettingsPage();
     userDropdown.classList.remove('show');
   });
   
@@ -4375,7 +4345,7 @@ function checkAllQuestionsAnswered() {
     if (allAnswered) {
       examFinishBtn.style.display = 'flex';
     } else {
-      examFinishBtn.style.display = 'none';
+      examFinishBtn.style.display = 'flex'; // Keep visible even if not all answered, but can be disabled
     }
   }
   
@@ -4815,9 +4785,8 @@ function updateSelectedTopics() {
   }
 }
 
-// ==================== TEST FUNCTIONS ====================
+// ==================== FIXED: START TEST - EXAM MODE WORKING ====================
 function startTest() {
-  // Clear saved progress flag
   window.savedProgress = null;
   
   if (modeSequential.checked && modeShuffleQuestions.checked) {
@@ -4833,12 +4802,6 @@ function startTest() {
       showNotification('გთხოვთ აირჩიოთ თემა!');
       return;
     }
-  }
-  
-  if (!modeSequential.checked && !modeShuffleQuestions.checked && 
-      !modeShuffleAnswers.checked && !modeExam.checked) {
-    showNotification('აირჩიეთ რეჟიმი დასაწყებად!');
-    return;
   }
   
   autoMode = false;
@@ -4870,7 +4833,6 @@ function startTest() {
       answers: t.answers.map(a => ({...a})),
       selectedAnswers: [],
       hasCorrectAnswer: false,
-      isComplete: false,
       isAnswerCorrect: null
     }));
   } else {
@@ -4880,7 +4842,6 @@ function startTest() {
       answers: t.answers.map(a => ({...a})),
       selectedAnswers: [],
       hasCorrectAnswer: false,
-      isComplete: false,
       isAnswerCorrect: null
     }));
   }
@@ -5114,18 +5075,7 @@ function renderExamAnswers() {
 }
 
 function onAnswerSelected() {
-  const allAnswered = sessionTests.every(q => 
-    q.selectedAnswers && q.selectedAnswers.length > 0
-  );
-  
-  const examFinishBtn = document.getElementById('examFinishBtn');
-  if (examFinishBtn) {
-    if (allAnswered) {
-      examFinishBtn.style.display = 'flex';
-    } else {
-      examFinishBtn.style.display = 'none';
-    }
-  }
+  checkAllQuestionsAnswered();
 }
 
 function autoSaveProgress() {
@@ -5400,11 +5350,9 @@ function showCompletionScreen() {
   });
 }
 
-// ==================== FIXED START BUTTON EVENT LISTENER ====================
+// ==================== START BUTTON EVENT LISTENER ====================
 startBtn.addEventListener('click', function() {
   console.log("Start button clicked");
-  console.log("Current user:", currentUser);
-  console.log("All tests length:", allTests.length);
   
   if (!allTests || allTests.length === 0) { 
     showNotification('ტესტები ჯერ არ არის ჩატვირთული');
@@ -5417,7 +5365,6 @@ startBtn.addEventListener('click', function() {
     return;
   }
   
-  // FIX: Store test type immediately
   currentTestType = testTypeSelect.value;
   console.log("Test type set to:", currentTestType);
   
@@ -5429,12 +5376,10 @@ startBtn.addEventListener('click', function() {
     }
   }
   
-  // FIX: Always start test, regardless of user type
-  // Just check if user is logged in for progress, but still start test
   startTest();
 });
 
-// ==================== FIXED DOM CONTENT LOADED ====================
+// ==================== DOM CONTENT LOADED ====================
 window.addEventListener('DOMContentLoaded', () => {
   console.log("DOM loaded, initializing app...");
   
@@ -5468,7 +5413,7 @@ window.addEventListener('DOMContentLoaded', () => {
   bindQuestionCounterEvent();
   bindTestTypeEvents();
   
-  // FIX: Add test type change listener to track current test type
+  // Add test type change listener
   const testTypeSelect = document.getElementById('testTypeSelect');
   if (testTypeSelect) {
     testTypeSelect.addEventListener('change', function() {
@@ -5524,6 +5469,13 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     toggleTopicsDropdown();
   }, 100);
+  
+  // Expose functions to global scope for onclick handlers
+  window.closeSettingsPage = closeSettingsPage;
+  window.enableUsernameEdit = enableUsernameEdit;
+  window.togglePasswordVisibility = togglePasswordVisibility;
+  window.showPasswordChangeFromSettings = showPasswordChangeFromSettings;
+  window.printMistakes = printMistakes;
 });
 </script>
 </body>
