@@ -667,7 +667,7 @@ body{
   font-size: 13px;
 }
 
-/* ==================== SETTINGS PAGE STYLES ==================== */
+/* ==================== SETTINGS PAGE STYLES - 5cm MARGINS ==================== */
 .settings-page {
   position: fixed;
   top: 0;
@@ -692,6 +692,8 @@ body{
   box-shadow: 0 20px 40px rgba(0,0,0,0.1);
   padding: 40px;
   position: relative;
+  margin-left: 5cm !important;
+  margin-right: 5cm !important;
 }
 
 .settings-header {
@@ -2480,28 +2482,21 @@ body {
     background: white !important;
   }
   
-  .settings-page,
-  .settings-container,
-  .mistakes-container,
-  .mistake-item,
-  .mistake-question,
-  .mistake-answers {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: white !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-  
   .settings-page {
     position: relative !important;
     display: block !important;
-    padding: 0 1cm !important; /* 1cm left and right padding */
+    padding: 0 !important;
+    background: white !important;
   }
   
   .settings-container {
     max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 1cm !important; /* 1cm left and right margins */
     padding: 0.5cm 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
   }
   
   .mistake-item {
@@ -2509,6 +2504,9 @@ body {
     margin-bottom: 0.5cm !important;
     border-left: 2px solid #dc2626 !important;
     padding-left: 0.3cm !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
   
   .settings-print-btn,
@@ -2530,8 +2528,8 @@ body {
     display: none !important;
   }
   
-  /* Ensure text stays within 1cm margins */
-  * {
+  /* Ensure all text stays within 1cm margins */
+  .settings-container * {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
@@ -2543,6 +2541,7 @@ body {
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
+}
 }
 
 .hidden{
