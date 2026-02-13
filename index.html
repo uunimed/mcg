@@ -675,8 +675,6 @@ body{
   transform: translate(-50%, -50%);
   width: 80vw;
   height: 90vh;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
   z-index: 10000;
   display: flex;
   align-items: center;
@@ -927,6 +925,40 @@ body{
   color: var(--danger);
 }
 
+/* Messenger-style chat notification */
+.chat-notification {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #f02849;  /* Messenger's red color */
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;  /* Pill shape that becomes circle with 1-2 digits */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 2px solid white;  /* White border like Messenger */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1;
+  z-index: 10;
+  pointer-events: none;  /* Clicks pass through to the button */
+}
+
+/* When there are 3 or more digits (100+) */
+.chat-notification[data-count="many"] {
+  font-size: 10px;
+  padding: 0 3px;
+}
+
+/* For 1 digit - perfect circle */
+.chat-notification:not([data-count="many"]) {
+  min-width: 20px;
+}
 .mistake-correct-answer {
   color: var(--success);
 }
@@ -1561,7 +1593,7 @@ body {
   border-radius: 10px;
   padding: 30px 40px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.06);
-  margin: 0 auto;
+  margin: 0.8cm auto 0;  /* 2cm top margin, auto horizontal, 0 bottom */
   width: 100%;
   max-width: 800px;
   position: relative;
@@ -2483,6 +2515,41 @@ body {
   color: white;
 }
 
+/* Ensure modal is visible */
+.modal-overlay.active {
+  display: flex !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10001;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  animation: modalAppear 0.3s ease;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .hidden{
   display: none;
 }
@@ -2870,8 +2937,10 @@ let isEditingQuestionNumber = false;
 let allTestsWithTopics = [];
 let availableTopics = new Set();
 let selectedTopic = null;
+let lastTimerUpdate = Date.now();
 
-// Chat global variables
+
+// ==================== CHAT FUNCTIONS ====================
 let chatMessages = [];
 let onlineUsers = 1;
 let userName = localStorage.getItem('chatUserName') || ('სტუმარი ' + Math.floor(Math.random() * 1000));
@@ -2880,16 +2949,17 @@ let isOnline = false;
 let displayedMessageKeys = new Set();
 let unreadMessagesCount = 0;
 let isChatOpen = false;
-let lastSeenMessageTime = Date.now();
+let lastSeenMessageTime = parseInt(localStorage.getItem('lastSeenMessageTime')) || Date.now();
+let allMessagesLoaded = false;
 
-if (!userId) {
-  userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+if (!userId) {  userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   localStorage.setItem('chatUserId', userId);
 }
 
 if (!localStorage.getItem('chatUserName')) {
   localStorage.setItem('chatUserName', userName);
 }
+
 
 // ==================== DOM ELEMENTS ====================
 const optionsScreen = document.getElementById('optionsScreen');
@@ -2957,12 +3027,13 @@ function loadUserProgress() {
   }
 }
 
-// ==================== FIXED: MISTAKE TRACKING - CORRECTLY REMOVES FROM WRONG QUESTIONS ====================
+// ==================== FIXED: MISTAKE TRACKING - CORRECTLY MANAGES WRONG QUESTIONS ====================
 function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = false) {
   if (!currentUser || currentUser.isGuest || !currentTestType) return;
   
   const mode = isExamMode ? 'exam' : 'normal';
   
+  // Initialize user progress structure if needed
   if (!userProgress[currentTestType]) {
     userProgress[currentTestType] = {
       normal: { answeredQuestions: {}, currentIndex: 0 },
@@ -2975,6 +3046,11 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
   }
   
+  if (!userProgress[currentTestType].wrongQuestions) {
+    userProgress[currentTestType].wrongQuestions = [];
+  }
+  
+  // Save the answer
   userProgress[currentTestType][mode].answeredQuestions[questionId] = {
     selectedAnswer: selectedAnswer,
     isCorrect: isCorrect,
@@ -2982,24 +3058,92 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
   };
   
   // FIXED: Properly manage wrongQuestions array
-  if (!userProgress[currentTestType].wrongQuestions) {
-    userProgress[currentTestType].wrongQuestions = [];
-  }
+  const wrongQuestions = userProgress[currentTestType].wrongQuestions;
+  const questionIndex = wrongQuestions.indexOf(questionId);
   
   if (!isCorrect) {
-    // Only add if not already present
-    if (!userProgress[currentTestType].wrongQuestions.includes(questionId)) {
-      userProgress[currentTestType].wrongQuestions.push(questionId);
+    // If answer is incorrect and question is not already in wrongQuestions, add it
+    if (questionIndex === -1) {
+      wrongQuestions.push(questionId);
     }
+    // If it's already there, leave it (don't add duplicate)
   } else {
-    // Remove from wrongQuestions if it exists (when answer is correct)
-    const index = userProgress[currentTestType].wrongQuestions.indexOf(questionId);
-    if (index > -1) {
-      userProgress[currentTestType].wrongQuestions.splice(index, 1);
+    // If answer is correct, remove it from wrongQuestions if it exists
+    if (questionIndex !== -1) {
+      wrongQuestions.splice(questionIndex, 1);
     }
   }
   
   saveUserProgress();
+  
+  // FIXED: Check if this was the last wrong question immediately
+  setTimeout(() => {
+    // Check if we're in wrong questions mode and all wrong questions are gone
+    if (sessionTests.length > 0 && getWrongQuestions().length === 0) {
+      showWrongQuestionsExhaustedModal();
+    }
+  }, 100);
+}
+
+// ==================== FIXED: CHECK IF WRONG QUESTIONS ARE EXHAUSTED ====================
+function checkWrongQuestionsExhausted() {
+  if (!currentUser || currentUser.isGuest || !currentTestType) return false;
+  
+  // Check if we're in wrong questions mode by comparing sessionTests with wrongQuestions
+  const wrongQuestions = getWrongQuestions();
+  
+  // If sessionTests length is different from wrong questions count, or if we're not in wrong questions mode, return
+  if (sessionTests.length !== wrongQuestions.length) return false;
+  
+  // If there are no wrong questions left, show the modal
+  if (wrongQuestions.length === 0) {
+    showWrongQuestionsExhaustedModal();
+    return true;
+  }
+  
+  return false;
+}
+
+// ==================== SIMPLIFIED: DIRECT RETURN TO MAIN PAGE ====================
+function showWrongQuestionsExhaustedModal() {
+  console.log("showWrongQuestionsExhaustedModal called!"); // Debug log
+  
+  // Show notification
+  showNotification('ყველა შეცდომა გამოსწორებულია! ბრუნდებით მთავარ გვერდზე.', false);
+  
+  // Directly return to main page after a short delay
+  setTimeout(() => {
+    returnToMainPage();
+  }, 1500);
+}
+
+function returnToMainPage() {
+  console.log("Returning to main page..."); // Debug log
+  
+  // Reset all test-related variables
+  sessionTests = [];
+  currentIndex = 0;
+  autoMode = false;
+  examMode = false;
+  
+  // Hide test screen and show options screen
+  testScreen.classList.remove('active');
+  optionsScreen.style.display = 'block';
+  
+  // Hide all mode containers
+  normalModeContainer.classList.add('hidden');
+  examModeContainer.classList.add('hidden');
+  examRightPanel.classList.add('hidden');
+  questionCounter.classList.add('hidden');
+  
+  // Show timer
+  timerElement.classList.remove('hidden');
+  
+  // Reset timer display
+  updateTimerDisplay();
+  
+  // Show notification
+  showNotification('აირჩიეთ თემა სამუშაოდ', false);
 }
 
 function getWrongQuestions() {
@@ -3029,8 +3173,10 @@ function startWrongQuestionsMode() {
     return;
   }
   
+  // FIXED: Store original IDs to maintain correct tracking
   sessionTests = wrongTests.map((t, idx) => ({ 
-    id: idx.toString(),
+    id: wrongQuestions[idx], // Use the original question ID, not the index
+    originalId: wrongQuestions[idx],
     question: t.question, 
     answers: t.answers.map(a => ({...a})),
     selectedAnswers: [],
@@ -3475,6 +3621,10 @@ function initChat() {
     localStorage.setItem('chatUserName', userName);
   }
   
+  // აღვადგინოთ unreadMessagesCount 0-ზე, რადგან ახლა ვტვირთავთ გვერდს
+  unreadMessagesCount = 0;
+  updateChatNotification();
+  
   if (firebaseInitialized && database) {
     console.log("Setting up Firebase chat...");
     setupFirebaseListeners();
@@ -3496,8 +3646,8 @@ function initChat() {
     chatWindow.classList.toggle('active');
     if (chatWindow.classList.contains('active')) {
       isChatOpen = true;
-      unreadMessagesCount = 0;
-      updateChatNotification();
+      // როცა ჩატს ვხსნით, ყველა წაკითხულად ჩაითვლება
+      markAllMessagesAsRead();
       chatInput.focus();
       
       setTimeout(() => {
@@ -3520,10 +3670,20 @@ function initChat() {
   });
 }
 
+function markAllMessagesAsRead() {
+  unreadMessagesCount = 0;
+  updateChatNotification();
+  // შევინახოთ მიმდინარე დრო, როგორც ბოლო ნანახი წერილის დრო
+  lastSeenMessageTime = Date.now();
+  localStorage.setItem('lastSeenMessageTime', lastSeenMessageTime.toString());
+}
+
+
 function setupFirebaseListeners() {
   try {
     displayedMessageKeys.clear();
     
+    // ჯერ ჩავტვირთოთ ბოლო 50 წერილი
     database.ref('chat/messages').limitToLast(50).once('value').then((snapshot) => {
       if (snapshot.exists()) {
         const messages = [];
@@ -3539,9 +3699,19 @@ function setupFirebaseListeners() {
         messages.forEach(msg => {
           displayedMessageKeys.add(msg.key);
           const isMyMessage = msg.userId === userId;
+          
+          // დავამატოთ წერილი ჩატში
           addMessageToChat(msg.author, msg.text, isMyMessage, new Date(msg.timestamp));
-          lastSeenMessageTime = Math.max(lastSeenMessageTime, msg.timestamp || 0);
+          
+          // განვაახლოთ unreadMessagesCount - მხოლოდ იმ წერილებისთვის, რომლებიც უფრო გვიანია ვიდრე lastSeenMessageTime
+          // და არ არის ჩემი საკუთარი წერილი
+          if (!isMyMessage && msg.timestamp > lastSeenMessageTime) {
+            unreadMessagesCount++;
+          }
         });
+        
+        // განვაახლოთ ნოტიფიკაცია
+        updateChatNotification();
         
         setTimeout(() => {
           if (isChatOpen) {
@@ -3549,15 +3719,19 @@ function setupFirebaseListeners() {
           }
         }, 200);
       }
+      
+      allMessagesLoaded = true;
     }).catch(error => {
       console.error('Error loading initial messages:', error);
       loadLocalMessagesAsFallback();
     });
     
-    database.ref('chat/messages').limitToLast(1).on('child_added', (snapshot) => {
+    // მოვუსმინოთ ახალ წერილებს
+    database.ref('chat/messages').orderByKey().limitToLast(1).on('child_added', (snapshot) => {
       const message = snapshot.val();
       const messageKey = snapshot.key;
       
+      // თუ უკვე გვაქვს ეს წერილი, გამოვტოვოთ
       if (displayedMessageKeys.has(messageKey)) {
         return;
       }
@@ -3567,7 +3741,16 @@ function setupFirebaseListeners() {
       
       if (!isMyMessage) {
         const messageTime = message.timestamp || Date.now();
+        
+        // დავამატოთ წერილი ჩატში
         addMessageToChat(message.author, message.text, false, new Date(messageTime));
+        
+        // თუ ჩატი არ არის გახსნილი და წერილი ახალია (უფრო გვიანი ვიდრე lastSeenMessageTime)
+        if (!isChatOpen && messageTime > lastSeenMessageTime) {
+          unreadMessagesCount++;
+          updateChatNotification();
+        }
+        
         lastSeenMessageTime = Math.max(lastSeenMessageTime, messageTime);
       }
     });
@@ -3623,6 +3806,7 @@ function loadLocalMessagesAsFallback() {
     addMessageToChat('სისტემა', 'კეთილი იყოს თქვენი მობრძანება!', false, new Date());
   }
 }
+
 
 function setUserOnline() {
   if (!firebaseInitialized || !database) return;
@@ -3754,12 +3938,11 @@ function addMessageToChat(author, message, isSent, timestamp) {
   
   chatMessagesEl.appendChild(messageDiv);
   
-  if (!isChatOpen && !isSent) {
-    unreadMessagesCount++;
-    updateChatNotification();
+  // განვაახლოთ lastSeenMessageTime, თუ წერილი ჩემია
+  if (isSent) {
+    lastSeenMessageTime = Math.max(lastSeenMessageTime, timestamp.getTime());
+    localStorage.setItem('lastSeenMessageTime', lastSeenMessageTime.toString());
   }
-  
-  lastSeenMessageTime = Math.max(lastSeenMessageTime, timestamp.getTime());
   
   if (isChatOpen) {
     setTimeout(() => {
@@ -3773,12 +3956,19 @@ function updateChatNotification() {
   if (notification) {
     if (unreadMessagesCount > 0) {
       notification.style.display = 'flex';
-      notification.textContent = unreadMessagesCount > 99 ? '99+' : unreadMessagesCount.toString();
+      if (unreadMessagesCount > 99) {
+        notification.textContent = '99+';
+        notification.setAttribute('data-count', 'many');
+      } else {
+        notification.textContent = unreadMessagesCount.toString();
+        notification.removeAttribute('data-count');
+      }
     } else {
       notification.style.display = 'none';
     }
   }
 }
+
 
 // ==================== TOPIC FUNCTIONS ====================
 function toggleTopicsDropdown() {
@@ -3874,6 +4064,15 @@ function updateTimer() {
 function updateExamTimer() {
   if (!examMode) return;
   
+  // Calculate actual elapsed time
+  const now = Date.now();
+  const elapsed = Math.floor((now - lastTimerUpdate) / 1000);
+  
+  if (elapsed > 0) {
+    examTimeRemaining = Math.max(0, examTimeRemaining - elapsed);
+    lastTimerUpdate = now;
+  }
+  
   const hours = Math.floor(examTimeRemaining / 3600);
   const minutes = Math.floor((examTimeRemaining % 3600) / 60);
   const seconds = examTimeRemaining % 60;
@@ -3882,9 +4081,8 @@ function updateExamTimer() {
   
   if (examTimeRemaining <= 0) {
     clearInterval(examTimerInterval);
+    examTimerInterval = null;
     completeExam();
-  } else {
-    examTimeRemaining--;
   }
 }
 
@@ -3919,7 +4117,13 @@ function createExamTestBoxes() {
 
 function startExamMode() {
   examMode = true;
-  examTimeRemaining = 3 * 60 * 60;
+  
+  // Reset timer when starting new exam
+  if (!window.savedProgress || !window.savedProgress.exam?.examTimeRemaining) {
+    examTimeRemaining = 3 * 60 * 60;
+  }
+  
+  lastTimerUpdate = Date.now();
   
   timerElement.classList.add('hidden');
   normalModeContainer.classList.add('hidden');
@@ -3929,9 +4133,15 @@ function startExamMode() {
   
   createExamTestBoxes();
   
-  clearInterval(examTimerInterval);
+  // Clear any existing interval
+  if (examTimerInterval) {
+    clearInterval(examTimerInterval);
+    examTimerInterval = null;
+  }
+  
+  // Start new interval
   examTimerInterval = setInterval(updateExamTimer, 1000);
-  updateExamTimer();
+  updateExamTimer(); // Immediate update
   
   // FIXED: Ensure finish button is visible in exam mode
   if (examFinishBtn) {
@@ -4824,53 +5034,56 @@ function startTest() {
     }
   }
   
-  if (examMode) {
-    const shuffledAll = [...testsToUse];
-    shuffleArray(shuffledAll);
-    sessionTests = shuffledAll.slice(0, Math.min(200, shuffledAll.length)).map((t, idx) => ({ 
-      id: idx.toString(),
-      question: t.question, 
-      answers: t.answers.map(a => ({...a})),
-      selectedAnswers: [],
-      hasCorrectAnswer: false,
-      isAnswerCorrect: null
-    }));
-  } else {
-    sessionTests = testsToUse.map((t, idx) => ({ 
-      id: idx.toString(),
-      question: t.question, 
-      answers: t.answers.map(a => ({...a})),
-      selectedAnswers: [],
-      hasCorrectAnswer: false,
-      isAnswerCorrect: null
-    }));
-  }
+if (examMode) {
+  const shuffledAll = [...testsToUse];
+  shuffleArray(shuffledAll);
+  sessionTests = shuffledAll.slice(0, Math.min(200, shuffledAll.length)).map((t, idx) => ({ 
+    id: idx.toString(), // For exam mode, we use index as ID (temporary)
+    question: t.question, 
+    answers: t.answers.map(a => ({...a})),
+    selectedAnswers: [],
+    hasCorrectAnswer: false,
+    isAnswerCorrect: null
+  }));
+} else {
+  sessionTests = testsToUse.map((t, idx) => ({ 
+    id: idx.toString(), // For normal mode, we use index as ID
+    originalId: idx.toString(), // Store original index for reference
+    question: t.question, 
+    answers: t.answers.map(a => ({...a})),
+    selectedAnswers: [],
+    hasCorrectAnswer: false,
+    isAnswerCorrect: null
+  }));
+}
   
-  if (window.savedProgress && currentUser && !currentUser.isGuest) {
-    const progress = window.savedProgress;
-    const mode = examMode ? 'exam' : 'normal';
-    
-    if (progress[mode] && progress[mode].answeredQuestions) {
-      Object.keys(progress[mode].answeredQuestions).forEach(questionId => {
-        const idx = parseInt(questionId);
-        if (idx < sessionTests.length) {
-          const answerData = progress[mode].answeredQuestions[questionId];
-          sessionTests[idx].selectedAnswers = [answerData.selectedAnswer];
-          sessionTests[idx].hasCorrectAnswer = answerData.isCorrect;
-          sessionTests[idx].isAnswerCorrect = answerData.isCorrect;
-        }
-      });
-      
-      currentIndex = progress[mode].currentIndex || 0;
-      
-      if (examMode && progress.exam && progress.exam.examTimeRemaining) {
-        examTimeRemaining = progress.exam.examTimeRemaining;
+if (window.savedProgress && currentUser && !currentUser.isGuest) {
+  const progress = window.savedProgress;
+  const mode = examMode ? 'exam' : 'normal';
+  
+  if (progress[mode] && progress[mode].answeredQuestions) {
+    Object.keys(progress[mode].answeredQuestions).forEach(questionId => {
+      const idx = parseInt(questionId);
+      if (idx < sessionTests.length) {
+        const answerData = progress[mode].answeredQuestions[questionId];
+        sessionTests[idx].selectedAnswers = [answerData.selectedAnswer];
+        sessionTests[idx].hasCorrectAnswer = answerData.isCorrect;
+        sessionTests[idx].isAnswerCorrect = answerData.isCorrect;
       }
-      
-      showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
+    });
+    
+    currentIndex = progress[mode].currentIndex || 0;
+    
+    // FIXED: Load exam time remaining
+    if (examMode && progress.exam && progress.exam.examTimeRemaining) {
+      examTimeRemaining = progress.exam.examTimeRemaining;
+      lastTimerUpdate = Date.now(); // Reset the last update time
     }
-    window.savedProgress = null;
+    
+    showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
   }
+  window.savedProgress = null;
+}
   
   if (shuffleQuestions && !examMode) {
     shuffleArray(sessionTests);
@@ -4938,6 +5151,7 @@ function renderCurrentQuestion() {
   }
 }
 
+// ==================== FIXED: RENDER NORMAL ANSWERS WITH PROPER WRONG QUESTIONS CHECK ====================
 function renderNormalAnswers() {
   const question = sessionTests[currentIndex];
   answersContainer.innerHTML = '';
@@ -4982,7 +5196,11 @@ function renderNormalAnswers() {
           }
           feedback.innerHTML = `<div style="color:var(--success); font-size:16px; font-weight:600;">✓ სწორი პასუხი!</div>`;
           
+          // Update progress with the original question ID
           updateUserProgress(question.id, idx, true, false);
+          
+          // FIXED: Check if we're in wrong questions mode and if all wrong questions are exhausted
+          const isWrongQuestionsMode = sessionTests.length === getWrongQuestions().length + 1; // Approximately
           
           if (autoMode && currentIndex < sessionTests.length - 1) {
             setTimeout(() => {
@@ -4990,7 +5208,21 @@ function renderNormalAnswers() {
               autoSaveProgress();
               renderCurrentQuestion();
             }, 500);
+          } else {
+            // FIXED: Immediate check for wrong questions exhaustion
+            setTimeout(() => {
+              const wrongQuestionsAfter = getWrongQuestions();
+              console.log("Wrong questions after:", wrongQuestionsAfter.length);
+              console.log("Session tests length:", sessionTests.length);
+              
+              // If we're in wrong questions mode and there are no wrong questions left
+              if (sessionTests.length > 0 && wrongQuestionsAfter.length === 0) {
+                console.log("Showing exhausted modal!");
+                showWrongQuestionsExhaustedModal();
+              }
+            }, 200);
           }
+          
         } else {
           answerEl.classList.add('incorrect');
           feedback.innerHTML = `<div style="color:var(--danger); font-size:16px; font-weight:600;">✗ არასწორი პასუხი</div>`;
@@ -5014,6 +5246,25 @@ function renderNormalAnswers() {
   }
   
   updateAutoButton();
+}
+
+// ==================== FIXED: HANDLE WRONG QUESTIONS MODE COMPLETION ====================
+function handleWrongQuestionsCompletion() {
+  // Check if we're in wrong questions mode
+  const wrongQuestions = getWrongQuestions();
+  
+  // If there are no wrong questions and we're currently in a session that matches the previous wrong questions count
+  if (wrongQuestions.length === 0 && sessionTests.length > 0) {
+    // Check if this session was likely the wrong questions session
+    // We can check by seeing if all questions in sessionTests have been answered correctly
+    const allCorrectInSession = sessionTests.every(q => 
+      q.hasCorrectAnswer === true
+    );
+    
+    if (allCorrectInSession) {
+      showWrongQuestionsExhaustedModal();
+    }
+  }
 }
 
 function renderExamAnswers() {
@@ -5098,6 +5349,7 @@ function autoSaveProgress() {
   userProgress[currentTestType][mode].currentIndex = currentIndex;
   
   if (examMode) {
+    // Save remaining time
     userProgress[currentTestType].exam.examTimeRemaining = examTimeRemaining;
   }
   
