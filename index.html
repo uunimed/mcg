@@ -3372,15 +3372,20 @@ function handleLogin() {
       window.pendingProgressCheck = true;
     }
     
-    if (allTests.length === 0) {
-      loadCSV();
+if (allTests.length === 0) {
+  loadCSV();
+} else {
+  startBtn.disabled = false;
+  // Check progress now since CSV is already loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი
+  setTimeout(() => {
+    const examModeCheckbox = document.getElementById('modeExam');
+    if (!examModeCheckbox || !examModeCheckbox.checked) {
+      checkExistingProgress();
     } else {
-      startBtn.disabled = false;
-      // Check progress now since CSV is already loaded
-      setTimeout(() => {
-        checkExistingProgress();
-      }, 500);
+      console.log("Exam mode is checked - skipping progress modal on login");
     }
+  }, 500);
+}
 
     initChat();
     bindUserMenuEvents();
@@ -5308,17 +5313,28 @@ function loadCSV() {
 loaderOverlay.style.display = 'none';
 startBtn.disabled = false;
 
-// Check for existing progress AFTER CSV is loaded
+// Check for existing progress AFTER CSV is loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი მონიშნული
 if (currentUser && !currentUser.isGuest) {
-  // Check if we have pending progress to show
+  const examModeCheckbox = document.getElementById('modeExam');
+  const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
+  
+  // Check if we have pending progress to show and not in exam mode
   if (window.pendingProgressCheck) {
     setTimeout(() => {
-      checkExistingProgress();
+      if (!isExamModeChecked) {
+        checkExistingProgress();
+      } else {
+        console.log("Exam mode is checked - skipping progress modal");
+      }
       window.pendingProgressCheck = false;
     }, 500);
   } else {
     setTimeout(() => {
-      checkExistingProgress();
+      if (!isExamModeChecked) {
+        checkExistingProgress();
+      } else {
+        console.log("Exam mode is checked - skipping progress modal");
+      }
     }, 500);
   }
 }
@@ -6163,8 +6179,14 @@ function bindQuestionCounterEvent() {
   });
 }
 
-// ==================== FIXED: CHECK EXISTING PROGRESS ====================
+// ==================== FIXED: CHECK EXISTING PROGRESS - ONLY IN NORMAL MODE ====================
 function checkExistingProgress() {
+  // არ ვაჩვენოთ მოდალი, თუ გამოცდის რეჟიმი აქტიურია
+  if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
+    console.log("Exam mode is active - skipping progress modal");
+    return;
+  }
+  
   if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
   
   // მიმდინარე არჩეული მოდული
