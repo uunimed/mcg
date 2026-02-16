@@ -2769,12 +2769,14 @@ body {
       <div class="option-row">
         <div class="option-item-half" style="display: flex; flex-direction: column;">
           <label style="font-size: 14px; color: #64748b; margin-bottom: 5px;">მოდული:</label>
-          <select id="testTypeSelect" class="topic-select">
-            <option value="" selected disabled hidden>აირჩიეთ</option>
-            <option value="rezidentura">რეზიდენტურა</option>
-            <option value="cardiology" disabled>სალიცენზიო კარდიოლოგია (მალე)</option>
-            <option value="neurology" disabled>სალიცენზიო ნევროლოგია (მალე)</option>
-          </select>
+<select id="testTypeSelect" class="topic-select">
+  <option value="" selected disabled hidden>აირჩიეთ</option>
+  <option value="rezidentura">რეზიდენტურა</option>
+  <option value="internalMedicine">სალიცენზიო - შინაგანი მედიცინა</option>
+  <option value="pathology">სალიცენზიო - პათოლოგია</option>
+  <option value="cardiology" disabled>სალიცენზიო კარდიოლოგია (მალე)</option>
+  <option value="neurology" disabled>სალიცენზიო ნევროლოგია (მალე)</option>
+</select>
         </div>
       </div>
       
@@ -4248,6 +4250,10 @@ function bindTestTypeEvents() {
       if (startBtn) {
         startBtn.disabled = !this.value;
       }
+      // ჩატვირთეთ ახალი ტესტები ტიპის შეცვლისას
+      if (this.value && allTests.length > 0) {
+        loadCSV();
+      }
     });
   }
 }
@@ -5223,9 +5229,24 @@ function loadCSV() {
   resetLoader();
   startBtn.disabled = true;
   
-  const defaultUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv";
+  // მიმდინარე არჩეული ტესტის ტიპი
+  const testType = document.getElementById('testTypeSelect').value;
   
-  fetch(defaultUrl).then(r => {
+  let csvUrl;
+  
+  // სხვადასხვა ტესტის ლინკები
+  if (testType === 'rezidentura') {
+    csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv";
+  } else if (testType === 'internalMedicine') {
+    csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=779421848&single=true&output=csv";
+  } else if (testType === 'pathology') {
+    csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=150316971&single=true&output=csv";
+  } else {
+    // default
+    csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv";
+  }
+  
+  fetch(csvUrl).then(r => {
     if (!r.ok) throw new Error('Network error: ' + r.status);
     return r.text();
   }).then(txt => {
@@ -5505,6 +5526,12 @@ function updateSelectedTopics() {
     selectedTopic = null;
   } else {
     selectedTopic = selectedValue;
+  }
+  
+  // დაიმახსოვრეთ მიმდინარე ტესტის ტიპი
+  const testTypeSelect = document.getElementById('testTypeSelect');
+  if (testTypeSelect) {
+    currentTestType = testTypeSelect.value;
   }
 }
 
