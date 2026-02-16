@@ -5572,17 +5572,14 @@ function startTest() {
   }
   
 // In startTest function, this part is correct:
-// In startTest function, replace the progress loading section with this:
 if (window.savedProgress && currentUser && !currentUser.isGuest) {
   const progress = window.savedProgress;
   const mode = examMode ? 'exam' : 'normal';
   
   if (progress[mode] && progress[mode].answeredQuestions) {
-    // FIXED: Properly find the last answered question index
+    // FIXED: Find the last answered question to continue from next
     let lastAnsweredIndex = -1;
-    let answeredCount = 0;
     
-    // First, load all answered questions and find the highest index
     Object.keys(progress[mode].answeredQuestions).forEach(questionId => {
       const idx = parseInt(questionId);
       if (idx < sessionTests.length) {
@@ -5595,27 +5592,17 @@ if (window.savedProgress && currentUser && !currentUser.isGuest) {
         if (idx > lastAnsweredIndex) {
           lastAnsweredIndex = idx;
         }
-        answeredCount++;
       }
     });
     
-    console.log(`Loaded ${answeredCount} answered questions. Last answered index: ${lastAnsweredIndex}`);
-    
     // FIXED: Start from the next unanswered question (lastAnsweredIndex + 1)
-    if (lastAnsweredIndex >= 0) {
-      if (lastAnsweredIndex < sessionTests.length - 1) {
-        // There are more questions after the last answered one
-        currentIndex = lastAnsweredIndex + 1;
-        console.log(`Continuing from question ${currentIndex + 1}`);
-      } else if (lastAnsweredIndex === sessionTests.length - 1) {
-        // All questions are answered, stay at the last one
-        currentIndex = lastAnsweredIndex;
-        console.log(`All questions answered. Staying at last question: ${currentIndex + 1}`);
-      }
+    if (lastAnsweredIndex >= 0 && lastAnsweredIndex < sessionTests.length - 1) {
+      currentIndex = lastAnsweredIndex + 1;
+    } else if (lastAnsweredIndex === sessionTests.length - 1) {
+      // If all questions are answered, stay at the last one
+      currentIndex = lastAnsweredIndex;
     } else {
-      // No questions answered, use saved index or start from beginning
       currentIndex = progress[mode].currentIndex || 0;
-      console.log(`Using saved index: ${currentIndex}`);
     }
     
     // FIXED: Load exam time remaining
@@ -5624,7 +5611,7 @@ if (window.savedProgress && currentUser && !currentUser.isGuest) {
       lastTimerUpdate = Date.now(); // Reset the last update time
     }
     
-    showNotification(`პროგრესი წარმატებით ჩაიტვირთა. გაგრძელდება კითხვა #${currentIndex + 1}`, false);
+    showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
   }
   window.savedProgress = null;
 }
