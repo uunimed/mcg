@@ -2938,6 +2938,7 @@ let allTestsWithTopics = [];
 let availableTopics = new Set();
 let selectedTopic = null;
 let lastTimerUpdate = Date.now();
+let isWrongQuestionsMode = false;
 
 
 // ==================== CHAT FUNCTIONS ====================
@@ -3089,11 +3090,10 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
 function checkWrongQuestionsExhausted() {
   if (!currentUser || currentUser.isGuest || !currentTestType) return false;
   
-  // Check if we're in wrong questions mode by comparing sessionTests with wrongQuestions
-  const wrongQuestions = getWrongQuestions();
+  // მხოლოდ მაშინ შევამოწმოთ, თუ რეალურად ვართ შეცდომების რეჟიმში
+  if (!isWrongQuestionsMode) return false;
   
-  // If sessionTests length is different from wrong questions count, or if we're not in wrong questions mode, return
-  if (sessionTests.length !== wrongQuestions.length) return false;
+  const wrongQuestions = getWrongQuestions();
   
   // If there are no wrong questions left, show the modal
   if (wrongQuestions.length === 0) {
@@ -3103,7 +3103,6 @@ function checkWrongQuestionsExhausted() {
   
   return false;
 }
-
 // ==================== SIMPLIFIED: DIRECT RETURN TO MAIN PAGE ====================
 function showWrongQuestionsExhaustedModal() {
   console.log("showWrongQuestionsExhaustedModal called!"); // Debug log
@@ -3125,6 +3124,7 @@ function returnToMainPage() {
   currentIndex = 0;
   autoMode = false;
   examMode = false;
+  isWrongQuestionsMode = false; // გადატვირთეთ რეჟიმი
   
   // Hide test screen and show options screen
   testScreen.classList.remove('active');
@@ -3173,6 +3173,9 @@ function startWrongQuestionsMode() {
     return;
   }
   
+  // მონიშნეთ, რომ ვართ შეცდომების რეჟიმში
+  isWrongQuestionsMode = true;
+  
   // FIXED: Store original IDs to maintain correct tracking
   sessionTests = wrongTests.map((t, idx) => ({ 
     id: wrongQuestions[idx], // Use the original question ID, not the index
@@ -3181,7 +3184,6 @@ function startWrongQuestionsMode() {
     answers: t.answers.map(a => ({...a})),
     selectedAnswers: [],
     hasCorrectAnswer: false,
-    isComplete: false,
     isAnswerCorrect: null
   }));
   
@@ -3472,20 +3474,26 @@ function handleSignup() {
 }
 
 function showPasswordChangeModal() {
+  // წავშალოთ არსებული მოდალი თუ არსებობს
+  const existingModal = document.querySelector('.modal-overlay');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
   const modalHTML = `
-    <div class="modal-overlay active">
-      <div class="modal">
-        <div class="modal-header">პაროლის შეცვლა</div>
-        <div class="modal-content">
+    <div class="modal-overlay active" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;">
+      <div class="modal" style="background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <div class="modal-header" style="font-size: 24px; font-weight: 600; color: #1e293b; margin-bottom: 20px; text-align: center;">პაროლის შეცვლა</div>
+        <div class="modal-content" style="margin-bottom: 30px;">
           <div style="margin-bottom: 20px;">
-            <input type="password" id="currentPassword" placeholder="მიმდინარე პაროლი" class="auth-input" style="margin-bottom: 10px;">
-            <input type="password" id="newPassword" placeholder="ახალი პაროლი (მინიმუმ 6 სიმბოლო)" class="auth-input" style="margin-bottom: 10px;">
-            <input type="password" id="confirmNewPassword" placeholder="გაიმეორეთ ახალი პაროლი" class="auth-input">
+            <input type="password" id="currentPassword" placeholder="მიმდინარე პაროლი" class="auth-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; margin-bottom: 15px;">
+            <input type="password" id="newPassword" placeholder="ახალი პაროლი (მინიმუმ 6 სიმბოლო)" class="auth-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; margin-bottom: 15px;">
+            <input type="password" id="confirmNewPassword" placeholder="გაიმეორეთ ახალი პაროლი" class="auth-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px;">
           </div>
         </div>
-        <div class="modal-buttons">
-          <button id="savePasswordBtn" class="modal-btn confirm">შენახვა</button>
-          <button id="cancelPasswordBtn" class="modal-btn cancel">გაუქმება</button>
+        <div class="modal-buttons" style="display: flex; gap: 15px; justify-content: center;">
+          <button id="savePasswordBtn" class="modal-btn confirm" style="padding: 12px 24px; background: var(--success); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">შენახვა</button>
+          <button id="cancelPasswordBtn" class="modal-btn cancel" style="padding: 12px 24px; background: var(--danger); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">გაუქმება</button>
         </div>
       </div>
     </div>
@@ -3495,6 +3503,7 @@ function showPasswordChangeModal() {
   modalContainer.innerHTML = modalHTML;
   document.body.appendChild(modalContainer.firstChild);
   
+  // დავამატოთ ივენთების მოსმენა
   document.getElementById('savePasswordBtn').addEventListener('click', () => {
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
@@ -3515,22 +3524,28 @@ function showPasswordChangeModal() {
       return;
     }
     
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    if (users[currentUser.username]?.password !== currentPassword) {
-      showNotification('მიმდინარე პაროლი არასწორია');
-      return;
+    try {
+      const users = JSON.parse(localStorage.getItem('users') || '{}');
+      if (users[currentUser.username]?.password !== currentPassword) {
+        showNotification('მიმდინარე პაროლი არასწორია');
+        return;
+      }
+      
+      users[currentUser.username].password = newPassword;
+      localStorage.setItem('users', JSON.stringify(users));
+      showNotification('პაროლი წარმატებით შეიცვალა', false);
+      modalContainer.remove();
+    } catch (error) {
+      console.error('Error changing password:', error);
+      showNotification('შეცდომა პაროლის შეცვლისას');
     }
-    
-    users[currentUser.username].password = newPassword;
-    localStorage.setItem('users', JSON.stringify(users));
-    showNotification('პაროლი წარმატებით შეიცვალა', false);
-    modalContainer.remove();
   });
   
   document.getElementById('cancelPasswordBtn').addEventListener('click', () => {
     modalContainer.remove();
   });
 }
+
 
 function showContinueOrRestartModal(progress) {
   const hasNormal = progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0;
@@ -4370,6 +4385,7 @@ function showPasswordChangeFromSettings() {
   closeSettingsPage();
   
   setTimeout(() => {
+    // პირდაპირ მოვუწოდოთ არსებულ ფუნქციას
     showPasswordChangeModal();
   }, 300);
 }
@@ -4995,7 +5011,6 @@ function updateSelectedTopics() {
   }
 }
 
-// ==================== FIXED: START TEST - EXAM MODE WORKING ====================
 function startTest() {
   window.savedProgress = null;
   
@@ -5015,6 +5030,7 @@ function startTest() {
   }
   
   autoMode = false;
+  isWrongQuestionsMode = false; // გადატვირთეთ რეჟიმი
   
   examMode = modeExam.checked;
   const shuffleQuestions = modeShuffleQuestions.checked || examMode;
@@ -5033,6 +5049,7 @@ function startTest() {
       return;
     }
   }
+  
   
 if (examMode) {
   const shuffledAll = [...testsToUse];
@@ -5199,9 +5216,6 @@ function renderNormalAnswers() {
           // Update progress with the original question ID
           updateUserProgress(question.id, idx, true, false);
           
-          // FIXED: Check if we're in wrong questions mode and if all wrong questions are exhausted
-          const isWrongQuestionsMode = sessionTests.length === getWrongQuestions().length + 1; // Approximately
-          
           if (autoMode && currentIndex < sessionTests.length - 1) {
             setTimeout(() => {
               currentIndex++;
@@ -5209,18 +5223,20 @@ function renderNormalAnswers() {
               renderCurrentQuestion();
             }, 500);
           } else {
-            // FIXED: Immediate check for wrong questions exhaustion
-            setTimeout(() => {
-              const wrongQuestionsAfter = getWrongQuestions();
-              console.log("Wrong questions after:", wrongQuestionsAfter.length);
-              console.log("Session tests length:", sessionTests.length);
-              
-              // If we're in wrong questions mode and there are no wrong questions left
-              if (sessionTests.length > 0 && wrongQuestionsAfter.length === 0) {
-                console.log("Showing exhausted modal!");
-                showWrongQuestionsExhaustedModal();
-              }
-            }, 200);
+            // FIXED: Check if we're in wrong questions mode and all wrong questions are gone
+            if (isWrongQuestionsMode) {
+              setTimeout(() => {
+                const wrongQuestionsAfter = getWrongQuestions();
+                console.log("Wrong questions after:", wrongQuestionsAfter.length);
+                console.log("Session tests length:", sessionTests.length);
+                
+                // If we're in wrong questions mode and there are no wrong questions left
+                if (wrongQuestionsAfter.length === 0) {
+                  console.log("Showing exhausted modal!");
+                  showWrongQuestionsExhaustedModal();
+                }
+              }, 200);
+            }
           }
           
         } else {
@@ -5728,6 +5744,8 @@ window.addEventListener('DOMContentLoaded', () => {
   window.togglePasswordVisibility = togglePasswordVisibility;
   window.showPasswordChangeFromSettings = showPasswordChangeFromSettings;
   window.printMistakes = printMistakes;
+  window.showPasswordChangeModal = showPasswordChangeModal;
+
 });
 </script>
 </body>
