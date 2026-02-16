@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=yes" />
-<title>რეზიდენტურის ტესტები</title>
+<title>საგამოცდო ტესტები</title>
 <style>
 :root{
   --bg:#f6f8fb; --muted:#6b7280; --accent:#0ea5a4;
@@ -2726,7 +2726,7 @@ body {
   <!-- Chat Window - 80% height -->
   <div id="chatWindow" class="chat-window">
     <div class="chat-header">
-      <span>ჩატი</span>
+      <span>მიმოწერები</span>
 <button class="close-chat">
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2944,7 +2944,7 @@ let isWrongQuestionsMode = false;
 // ==================== CHAT FUNCTIONS ====================
 let chatMessages = [];
 let onlineUsers = 1;
-let userName = localStorage.getItem('chatUserName') || ('სტუმარი ' + Math.floor(Math.random() * 1000));
+let userName = localStorage.getItem('chatUserName') || ('სტუმარი N' + Math.floor(Math.random() * 1000));
 let userId = localStorage.getItem('chatUserId');
 let isOnline = false;
 let displayedMessageKeys = new Set();
@@ -3108,7 +3108,7 @@ function showWrongQuestionsExhaustedModal() {
   console.log("showWrongQuestionsExhaustedModal called!"); // Debug log
   
   // Show notification
-  showNotification('ყველა შეცდომა გამოსწორებულია! ბრუნდებით მთავარ გვერდზე.', false);
+  showNotification('კითხვები ამოიწურა. ბრუნდებით მთავარ გვერდზე!', false);
   
   // Directly return to main page after a short delay
   setTimeout(() => {
@@ -3143,7 +3143,7 @@ function returnToMainPage() {
   updateTimerDisplay();
   
   // Show notification
-  showNotification('აირჩიეთ თემა სამუშაოდ', false);
+  showNotification('აირჩიეთ მოდული', false);
 }
 
 function getWrongQuestions() {
@@ -3160,7 +3160,7 @@ function startWrongQuestionsMode() {
   
   const wrongQuestions = getWrongQuestions();
   if (wrongQuestions.length === 0) {
-    showNotification('თქვენ არ გაქვთ შეცდომები გასასწორებლად!', false);
+    showNotification('შეცდომები ვერ მოიძებნა!', false);
     return;
   }
   
@@ -3169,7 +3169,7 @@ function startWrongQuestionsMode() {
   );
   
   if (wrongTests.length === 0) {
-    showNotification('შეცდომები ვერ მოიძებნა');
+    showNotification('შეცდომები ვერ მოიძებნა!');
     return;
   }
   
@@ -3202,7 +3202,7 @@ function startWrongQuestionsMode() {
   
   timerElement.classList.remove('hidden');
   
-  showNotification(`დაწყებულია შეცდომების გაკეთების რეჟიმი: ${wrongTests.length} კითხვა`, false);
+  showNotification(`შეცდომების რეჟიმი. სულ: ${wrongTests.length} ტესტი`, false);
   
   renderCurrentQuestion();
 }
@@ -3263,7 +3263,7 @@ function initAuth() {
     initChat();
     updateTimerDisplay();
     
-    showNotification('კეთილი იყოს თქვენი მობრძანება!', false);
+    showNotification('მოგესალმებით!', false);
   });
   
   document.getElementById('showLoginFromGuest').addEventListener('click', () => {
@@ -3356,7 +3356,7 @@ function handleLogin() {
     userName = currentUser.username;
     localStorage.setItem('chatUserName', userName);
     
-    showNotification('წარმატებით შეხვედით სისტემაში!', false);
+    showNotification('მოგესალმებით!', false);
     
     if (allTests.length === 0) {
       loadCSV();
@@ -3451,7 +3451,7 @@ function handleSignup() {
     document.getElementById('signupPassword').value = '';
     document.getElementById('signupConfirmPassword').value = '';
     
-    showNotification('რეგისტრაცია წარმატებულია! შეგიძლიათ შეხვიდეთ', false);
+    showNotification('რეგისტრაცია წარმატებულია!', false);
     
     setTimeout(() => {
       document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -3492,7 +3492,7 @@ function showPasswordChangeModal() {
           </div>
         </div>
         <div class="modal-buttons" style="display: flex; gap: 15px; justify-content: center;">
-          <button id="savePasswordBtn" class="modal-btn confirm" style="padding: 12px 24px; background: var(--success); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">შენახვა</button>
+          <button id="savePasswordBtn" class="modal-btn confirm" style="padding: 12px 24px; background: var(--success); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">განახლება</button>
           <button id="cancelPasswordBtn" class="modal-btn cancel" style="padding: 12px 24px; background: var(--danger); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">გაუქმება</button>
         </div>
       </div>
@@ -3520,7 +3520,7 @@ function showPasswordChangeModal() {
     }
     
     if (newPassword !== confirmPassword) {
-      showNotification('ახალი პაროლები არ ემთხვევა');
+      showNotification('ახალი პაროლი არ ემთხვევა');
       return;
     }
     
@@ -3570,17 +3570,17 @@ function showContinueOrRestartModal(progress) {
           <div style="margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 8px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
               <span>ნორმალური რეჟიმი:</span>
-              <span style="font-weight: 600;">${hasNormal ? Object.keys(progress.normal.answeredQuestions || {}).length + ' კითხვა უპასუხია' : 'არ არის დაწყებული'}</span>
+              <span style="font-weight: 600;">${hasNormal ? Object.keys(progress.normal.answeredQuestions || {}).length + ' კითხვა უპასუხოა' : 'არ არის დაწყებული'}</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
               <span>საგამოცდო რეჟიმი:</span>
-              <span style="font-weight: 600;">${hasExam ? Object.keys(progress.exam.answeredQuestions || {}).length + ' კითხვა უპასუხია' : 'არ არის დაწყებული'}</span>
+              <span style="font-weight: 600;">${hasExam ? Object.keys(progress.exam.answeredQuestions || {}).length + ' კითხვა უპასუხოა' : 'არ არის დაწყებული'}</span>
             </div>
           </div>
         </div>
         <div class="modal-buttons">
           <button id="continueBtn" class="modal-btn confirm">გაგრძელება</button>
-          <button id="restartBtnModal" class="modal-btn cancel">ახლიდან დაწყება</button>
+          <button id="restartBtnModal" class="modal-btn cancel">თავიდან დაწყება</button>
         </div>
       </div>
     </div>
@@ -3612,7 +3612,7 @@ function showContinueOrRestartModal(progress) {
       }
     }
     modalContainer.remove();
-    showNotification('პროგრესი წაიშალა. შეგიძლიათ ახლიდან დაიწყოთ.', false);
+    showNotification('პროგრესი წაიშალა. შეგიძლიათ თავიდან დაიწყოთ.', false);
     if (typeof startTest === 'function') {
       startTest();
     }
@@ -3882,7 +3882,7 @@ function sendMessageToFirebase() {
     if (currentUser && currentUser.username) {
       userName = currentUser.username;
     } else {
-      userName = 'სტუმარი ' + Math.floor(Math.random() * 1000);
+      userName = 'სტუმარი N' + Math.floor(Math.random() * 1000);
     }
     localStorage.setItem('chatUserName', userName);
   }
@@ -4190,19 +4190,19 @@ function showSettingsPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="${currentUser ? '#0ea5a4' : '#64748b'}"/>
               </svg>
-              მომხმარებლის ინფორმაცია
+              პირადი ინფორმაცია
             </div>
             
             <!-- Username Field -->
             <div class="settings-field">
-              <label class="settings-label">მომხმარებლის სახელი</label>
+              <label class="settings-label">მომხმარებელი</label>
               <div class="settings-input-group">
                 <input type="text" id="settingsUsername" class="settings-input" value="${escapeHtml(currentUser?.username || '')}" disabled>
                 <button class="settings-edit-btn" onclick="enableUsernameEdit()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" stroke="currentColor" fill="currentColor"/>
                   </svg>
-                  შეცვლა
+                  სახელის შეცვლა
                 </button>
               </div>
             </div>
@@ -4222,7 +4222,7 @@ function showSettingsPage() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" stroke="currentColor" fill="currentColor"/>
                   </svg>
-                  შეცვლა
+                  პაროლის შეცვლა
                 </button>
               </div>
             </div>
@@ -4246,7 +4246,7 @@ function showSettingsPage() {
                 <path d="M6 9V3h12v6m0 4h.01M6 15h12v6H6v-6z" stroke="white" stroke-width="2"/>
                 <path d="M6 19v-4h12v4" stroke="white" stroke-width="2"/>
               </svg>
-              შეცდომების დაბეჭდვა
+              ბეჭდვა
             </button>
           </div>
           
@@ -4256,7 +4256,7 @@ function showSettingsPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              მთავარ გვერდზე დაბრუნება
+              მთავარი გვერდი
             </button>
           </div>
         </div>
@@ -4399,7 +4399,7 @@ function renderMistakesList() {
   const wrongQuestionIds = userProgress[currentTestType]?.wrongQuestions || [];
   
   if (wrongQuestionIds.length === 0) {
-    return '<div style="text-align:center; padding:20px; color:var(--muted);">შეცდომები არ არის! 🎉</div>';
+    return '<div style="text-align:center; padding:20px; color:var(--muted);">შეცდომები არ არის!</div>';
   }
   
   let html = '';
@@ -4455,7 +4455,7 @@ function printMistakes() {
       <title>შეცდომების ისტორია - ${currentUser.username}</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 1cm; }
-        h1 { color: #0ea5a4; text-align: center; }
+        h1 { color: #0ea5a4; text-align: left; }
         .mistake { 
           margin-bottom: 30px; 
           padding: 20px; 
@@ -4472,8 +4472,8 @@ function printMistakes() {
     </head>
     <body>
       <h1>შეცდომების ისტორია</h1>
-      <p style="text-align: center; color: #64748b;">მომხმარებელი: ${escapeHtml(currentUser.username)}</p>
-      <p style="text-align: center; color: #64748b;">თარიღი: ${new Date().toLocaleDateString('ka-GE')}</p>
+      <p style="text-align: left; color: #64748b;">მომხმარებელი: ${escapeHtml(currentUser.username)}</p>
+      <p style="text-align: left; color: #64748b;">თარიღი: ${new Date().toLocaleDateString('ka-GE')}</p>
       <hr>
   `;
   
@@ -5595,10 +5595,10 @@ function showCompletionScreen() {
   const completionHTML = `
     <div style="text-align:center; padding:40px 20px; width:100%;">
       <div style="font-size:24px; font-weight:600; color:#1e293b; margin-bottom:20px;">
-        ტესტი დასრულდა! 🎉
+        ტესტი დასრულდა! 
       </div>
       <div style="font-size:18px; color:#64748b; margin-bottom:30px;">
-        თქვენ მიიღეთ ${totalQuestions} კითხვიდან ${correctCount} სწორად (${percentage}%)
+        თქვენ დაწერეთ ${totalQuestions} კითხვიდან ${correctCount} სწორად (${percentage}%)
       </div>
       <button id="restartBtn" style="padding:14px 40px; background:var(--accent); color:white; border:none; border-radius:8px; font-size:16px; font-weight:600; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s;">
         თავიდან დაწყება
