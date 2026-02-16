@@ -4810,7 +4810,7 @@ function showPasswordChangeFromSettings() {
   });
 }
 
-// ==================== FIXED: RENDER MISTAKES LIST - SHOWS CORRECT COUNT ====================
+// ==================== FIXED: RENDER MISTAKES LIST WITH MODULE NAME ====================
 function renderMistakesList() {
   if (!currentUser || !currentTestType) {
     return '<div style="text-align:center; padding:20px; color:var(--muted);">აირჩიეთ ტესტის ტიპი შეცდომების სანახავად</div>';
@@ -4818,11 +4818,27 @@ function renderMistakesList() {
   
   const wrongQuestionIds = userProgress[currentTestType]?.wrongQuestions || [];
   
-  if (wrongQuestionIds.length === 0) {
-    return '<div style="text-align:center; padding:20px; color:var(--muted);">შეცდომები არ არის!</div>';
+  // მოდულის სახელი ადამიანურად გასაგებად
+  let moduleDisplayName = '';
+  switch(currentTestType) {
+    case 'rezidentura':
+      moduleDisplayName = 'რეზიდენტურა';
+      break;
+    case 'internalMedicine':
+      moduleDisplayName = 'შინაგანი მედიცინა';
+      break;
+    case 'pathology':
+      moduleDisplayName = 'პათოლოგია';
+      break;
+    default:
+      moduleDisplayName = currentTestType;
   }
   
-  let html = '';
+  if (wrongQuestionIds.length === 0) {
+    return `<div style="text-align:center; padding:20px; color:var(--muted);">${moduleDisplayName} მოდულში შეცდომები არ არის!</div>`;
+  }
+  
+  let html = `<div style="margin-bottom: 15px; padding: 10px; background: #f1f5f9; border-radius: 6px; text-align: center; font-weight: 600; color: var(--accent);">მოდული: ${moduleDisplayName}</div>`;
   
   wrongQuestionIds.forEach((questionId, index) => {
     const question = allTestsWithTopics[parseInt(questionId)];
@@ -5289,8 +5305,23 @@ function loadCSV() {
       }
     }
 
-    loaderOverlay.style.display = 'none';
-    startBtn.disabled = false;
+loaderOverlay.style.display = 'none';
+startBtn.disabled = false;
+
+// Check for existing progress AFTER CSV is loaded
+if (currentUser && !currentUser.isGuest) {
+  // Check if we have pending progress to show
+  if (window.pendingProgressCheck) {
+    setTimeout(() => {
+      checkExistingProgress();
+      window.pendingProgressCheck = false;
+    }, 500);
+  } else {
+    setTimeout(() => {
+      checkExistingProgress();
+    }, 500);
+  }
+}
     
   }).catch(err => {
     console.error("Fetch error:", err);
@@ -5537,6 +5568,12 @@ function updateSelectedTopics() {
 
 // ==================== FIXED: START TEST WITH PROGRESS ====================
 function startTest() {
+  // Check for existing progress BEFORE starting
+  if (currentUser && !currentUser.isGuest && allTestsWithTopics.length > 0) {
+    // This will show the modal if progress exists
+    checkExistingProgress();
+  }
+  
   window.savedProgress = null;
   
   if (modeSequential.checked && modeShuffleQuestions.checked) {
@@ -6130,8 +6167,15 @@ function bindQuestionCounterEvent() {
 function checkExistingProgress() {
   if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
   
-  // Check rezidentura module progress
-  const progress = userProgress.rezidentura;
+  // მიმდინარე არჩეული მოდული
+  const testTypeSelect = document.getElementById('testTypeSelect');
+  if (!testTypeSelect || testTypeSelect.value === '') return;
+  
+  const selectedModule = testTypeSelect.value;
+  console.log("Checking progress for module:", selectedModule);
+  
+  // შევამოწმოთ არჩეული მოდულის პროგრესი
+  const progress = userProgress[selectedModule];
   if (!progress) return;
   
   const hasNormalProgress = progress.normal && 
@@ -6141,35 +6185,37 @@ function checkExistingProgress() {
   
   if (!hasNormalProgress && !hasExamProgress) return;
   
-  // Count answered questions for each module
+  // გამოვთვალოთ გაკეთებული ტესტების რაოდენობა
   const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
   const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
+  const totalAnswered = normalCount + examCount;
   
-  // Determine which module has progress
-  let moduleName = '';
-  let totalCount = 0;
-  
-  if (hasNormalProgress && hasExamProgress) {
-    moduleName = 'ნორმალურ და საგამოცდო';
-    totalCount = normalCount + examCount;
-  } else if (hasNormalProgress) {
-    moduleName = 'ნორმალურ';
-    totalCount = normalCount;
-  } else if (hasExamProgress) {
-    moduleName = 'საგამოცდო';
-    totalCount = examCount;
+  // მოდულის სახელი ადამიანურად გასაგებად
+  let moduleDisplayName = '';
+  switch(selectedModule) {
+    case 'rezidentura':
+      moduleDisplayName = 'რეზიდენტურა';
+      break;
+    case 'internalMedicine':
+      moduleDisplayName = 'შინაგანი მედიცინა';
+      break;
+    case 'pathology':
+      moduleDisplayName = 'პათოლოგია';
+      break;
+    default:
+      moduleDisplayName = selectedModule;
   }
   
-  // Show the modal
-  showProgressResumeModal(totalCount, moduleName, progress);
+  // გამოვიძახოთ მოდალი შესაბამისი ინფორმაციით
+  showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
 }
 
 
-// ==================== FIXED: SHOW PROGRESS RESUME MODAL ====================
-function showProgressResumeModal(totalAnswered, moduleName, progress) {
-  console.log("Showing progress resume modal with total:", totalAnswered); // Debug log
+// ==================== FIXED: SHOW PROGRESS RESUME MODAL WITH MODULE NAME ====================
+function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
+  console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
   
-  // Remove existing modal if any
+  // წავშალოთ არსებული მოდალი თუ არსებობს
   const existingModal = document.querySelector('.modal-overlay[data-type="progress-resume"]');
   if (existingModal) existingModal.remove();
   
@@ -6204,7 +6250,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress) {
   content.appendChild(p1);
   content.appendChild(p2);
   
-  // Modal Buttons - FIXED: on one line with flex-wrap
+  // Modal Buttons
   const buttons = document.createElement('div');
   buttons.style.cssText = 'display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;';
   
@@ -6238,28 +6284,15 @@ function showProgressResumeModal(totalAnswered, moduleName, progress) {
   continueBtn.addEventListener('click', function() {
     modalOverlay.remove();
     
-    // Auto-select the appropriate mode and topic
-    const testTypeSelect = document.getElementById('testTypeSelect');
-    if (testTypeSelect) {
-      testTypeSelect.value = 'rezidentura';
-      currentTestType = 'rezidentura';
-      toggleTopicsDropdown();
-    }
-    
-    const topicsSelect = document.getElementById('topicsSelect');
-    if (topicsSelect) {
-      topicsSelect.value = 'all';
-      selectedTopic = null;
-    }
-    
-    // Determine last mode from progress
-    const lastNormalIndex = progress.normal?.currentIndex || 0;
-    const lastExamIndex = progress.exam?.currentIndex || 0;
-    
+    // Auto-select the appropriate mode
     const modeExam = document.getElementById('modeExam');
     const modeSequential = document.getElementById('modeSequential');
     const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
     const modeShuffleAnswers = document.getElementById('modeShuffleAnswers');
+    
+    // Determine last mode from progress
+    const lastNormalIndex = progress.normal?.currentIndex || 0;
+    const lastExamIndex = progress.exam?.currentIndex || 0;
     
     if (lastExamIndex > 0) {
       // Last used exam mode
@@ -6291,28 +6324,19 @@ function showProgressResumeModal(totalAnswered, moduleName, progress) {
   restartBtn.addEventListener('click', function() {
     modalOverlay.remove();
     
-    // Clear the progress for this user
-    if (currentUser && currentUser.username) {
+    // Clear the progress only for this specific module
+    if (currentUser && currentUser.username && selectedModule) {
       const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username]) {
-        users[currentUser.username].progress = {
-          rezidentura: {
-            normal: { answeredQuestions: {}, currentIndex: 0 },
-            exam: { answeredQuestions: {}, currentIndex: 0 },
-            wrongQuestions: []
-          }
+      if (users[currentUser.username] && users[currentUser.username].progress) {
+        // Reset only the selected module's progress
+        users[currentUser.username].progress[selectedModule] = {
+          normal: { answeredQuestions: {}, currentIndex: 0 },
+          exam: { answeredQuestions: {}, currentIndex: 0 },
+          wrongQuestions: []
         };
         localStorage.setItem('users', JSON.stringify(users));
         userProgress = users[currentUser.username].progress;
       }
-    }
-    
-    // Auto-select the appropriate mode and topic
-    const testTypeSelect = document.getElementById('testTypeSelect');
-    if (testTypeSelect) {
-      testTypeSelect.value = 'rezidentura';
-      currentTestType = 'rezidentura';
-      toggleTopicsDropdown();
     }
     
     showNotification('პროგრესი გასუფთავდა. დაიწყეთ თავიდან!', false);
@@ -6322,14 +6346,13 @@ function showProgressResumeModal(totalAnswered, moduleName, progress) {
     modalOverlay.remove();
   });
   
-  // Close on overlay click (optional)
+  // Close on overlay click
   modalOverlay.addEventListener('click', function(e) {
     if (e.target === modalOverlay) {
       modalOverlay.remove();
     }
   });
 }
-
 
 function showCompletionScreen() {
   const totalQuestions = sessionTests.length;
