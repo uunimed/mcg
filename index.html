@@ -3000,6 +3000,7 @@ let examPrevBtn, examNextBtn, examAutoBtn, examFinishBtn;
 let detailedResultsModal = document.getElementById('detailedResultsModal');
 let detailedResultsContent = document.getElementById('detailedResultsContent');
 
+
 // ==================== USER PROGRESS FUNCTIONS ====================
 function saveUserProgress() {
   if (currentUser && currentUser.username && currentTestType && !currentUser.isGuest) {
@@ -3371,7 +3372,6 @@ function handleLogin() {
       // Store progress to show modal after CSV loads
       window.pendingProgressCheck = true;
     }
-    
 if (allTests.length === 0) {
   loadCSV();
 } else {
@@ -5347,6 +5347,70 @@ if (currentUser && !currentUser.isGuest) {
   });
 }
 
+// ==================== FIXED: CHECK EXISTING PROGRESS - ONLY ONCE AND NOT IN EXAM MODE ====================
+let progressModalShown = false; // გლობალური ცვლადი, დაამატეთ სკრიპტის დასაწყისში
+
+function checkExistingProgress() {
+  // არ ვაჩვენოთ მოდალი, თუ უკვე ნაჩვენებია
+  if (progressModalShown) {
+    console.log("Progress modal already shown - skipping");
+    return;
+  }
+  
+  // არ ვაჩვენოთ მოდალი, თუ გამოცდის რეჟიმი აქტიურია
+  if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
+    console.log("Exam mode is active - skipping progress modal");
+    return;
+  }
+  
+  if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
+  
+  // მიმდინარე არჩეული მოდული
+  const testTypeSelect = document.getElementById('testTypeSelect');
+  if (!testTypeSelect || testTypeSelect.value === '') return;
+  
+  const selectedModule = testTypeSelect.value;
+  console.log("Checking progress for module:", selectedModule);
+  
+  // შევამოწმოთ არჩეული მოდულის პროგრესი
+  const progress = userProgress[selectedModule];
+  if (!progress) return;
+  
+  const hasNormalProgress = progress.normal && 
+                           Object.keys(progress.normal.answeredQuestions || {}).length > 0;
+  const hasExamProgress = progress.exam && 
+                         Object.keys(progress.exam.answeredQuestions || {}).length > 0;
+  
+  if (!hasNormalProgress && !hasExamProgress) return;
+  
+  // მოვნიშნოთ, რომ მოდალი უკვე ნაჩვენებია
+  progressModalShown = true;
+  
+  // გამოვთვალოთ გაკეთებული ტესტების რაოდენობა
+  const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
+  const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
+  const totalAnswered = normalCount + examCount;
+  
+  // მოდულის სახელი ადამიანურად გასაგებად
+  let moduleDisplayName = '';
+  switch(selectedModule) {
+    case 'rezidentura':
+      moduleDisplayName = 'რეზიდენტურა';
+      break;
+    case 'internalMedicine':
+      moduleDisplayName = 'შინაგანი მედიცინა';
+      break;
+    case 'pathology':
+      moduleDisplayName = 'პათოლოგია';
+      break;
+    default:
+      moduleDisplayName = selectedModule;
+  }
+  
+  // გამოვიძახოთ მოდალი შესაბამისი ინფორმაციით
+  showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
+}
+
 function parseCSVTwoColumns(csvText){
   if (!csvText) return [];
   
@@ -5585,10 +5649,10 @@ function updateSelectedTopics() {
 // ==================== FIXED: START TEST WITH PROGRESS ====================
 function startTest() {
   // Check for existing progress BEFORE starting
-  if (currentUser && !currentUser.isGuest && allTestsWithTopics.length > 0) {
-    // This will show the modal if progress exists
-    checkExistingProgress();
-  }
+  // if (currentUser && !currentUser.isGuest && allTestsWithTopics.length > 0) {
+  //   // This will show the modal if progress exists
+  //   checkExistingProgress();
+  // }
   
   window.savedProgress = null;
   
