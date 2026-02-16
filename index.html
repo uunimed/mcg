@@ -4813,7 +4813,7 @@ function showPasswordChangeFromSettings() {
 // ==================== FIXED: RENDER MISTAKES LIST WITH MODULE NAME ====================
 function renderMistakesList() {
   if (!currentUser || !currentTestType) {
-    return '<div style="text-align:center; padding:20px; color:var(--muted);">აირჩიეთ ტესტის ტიპი შეცდომების სანახავად</div>';
+    return '<div style="text-align:center; padding:20px; color:var(--muted);">აირჩიეთ მოდული შეცდომების სანახავად</div>';
   }
   
   const wrongQuestionIds = userProgress[currentTestType]?.wrongQuestions || [];
@@ -6241,7 +6241,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const p1 = document.createElement('p');
   p1.style.cssText = 'margin-bottom: 15px; font-size: 16px;';
-  p1.innerHTML = `თქვენ უკვე გაქვთ <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> დაწერილი <strong style="color: var(--accent);">${moduleName}</strong> მოდულში.`;
+  p1.innerHTML = `თქვენ უკვე გაქვთ <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> დაწერილი მოდულში: <strong style="color: var(--accent);">${moduleName}</strong>`;
   
   const p2 = document.createElement('p');
   p2.style.cssText = 'margin-bottom: 20px; color: #64748b;';
