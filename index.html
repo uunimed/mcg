@@ -2599,7 +2599,7 @@ body {
       <div id="loginTab" class="auth-tab-content">
         <div class="auth-form">
           <div class="form-group">
-            <input type="text" id="loginUsername" class="auth-input" placeholder="მომხმარებლის სახელი">
+            <input type="text" id="loginUsername" class="auth-input" placeholder="მომხმარებელი">
             <div id="loginUsernameError" class="form-error"></div>
           </div>
           <div class="form-group">
@@ -2626,8 +2626,8 @@ body {
       <div id="signupTab" class="auth-tab-content">
         <div class="auth-form">
           <div class="form-group">
-            <label class="form-label">მომხმარებლის სახელი</label>
-            <input type="text" id="signupUsername" class="auth-input" placeholder="მომხმარებელი">
+            <label class="form-label">მომხმარებელი</label>
+            <input type="text" id="signupUsername" class="auth-input" placeholder="სახელი და გვარი">
             <div id="signupUsernameError" class="form-error"></div>
           </div>
           <div class="form-group">
@@ -3319,7 +3319,15 @@ function handleLogin() {
   document.getElementById('loginPasswordError').style.display = 'none';
   
   if (!username) {
-    document.getElementById('loginUsernameError').textContent = 'მომხმარებლის სახელი აუცილებელია';
+    document.getElementById('loginUsernameError').textContent = 'სახელი და გვარი აუცილებელია';
+    document.getElementById('loginUsernameError').style.display = 'block';
+    return;
+  }
+  
+  // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
+  const nameParts = username.split(/\s+/);
+  if (nameParts.length < 2) {
+    document.getElementById('loginUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელიც და გვარიც';
     document.getElementById('loginUsernameError').style.display = 'block';
     return;
   }
@@ -3374,20 +3382,20 @@ function handleLogin() {
       // Store progress to show modal after CSV loads
       window.pendingProgressCheck = true;
     }
-if (allTests.length === 0) {
-  loadCSV();
-} else {
-  startBtn.disabled = false;
-  // Check progress now since CSV is already loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი
-  setTimeout(() => {
-    const examModeCheckbox = document.getElementById('modeExam');
-    if (!examModeCheckbox || !examModeCheckbox.checked) {
-      checkExistingProgress();
+    if (allTests.length === 0) {
+      loadCSV();
     } else {
-      console.log("Exam mode is checked - skipping progress modal on login");
+      startBtn.disabled = false;
+      // Check progress now since CSV is already loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი
+      setTimeout(() => {
+        const examModeCheckbox = document.getElementById('modeExam');
+        if (!examModeCheckbox || !examModeCheckbox.checked) {
+          checkExistingProgress();
+        } else {
+          console.log("Exam mode is checked - skipping progress modal on login");
+        }
+      }, 500);
     }
-  }, 500);
-}
 
     initChat();
     bindUserMenuEvents();
@@ -3409,19 +3417,23 @@ function handleSignup() {
   document.getElementById('signupConfirmError').style.display = 'none';
   
   if (!username) {
-    document.getElementById('signupUsernameError').textContent = 'მომხმარებლის სახელი აუცილებელია';
+    document.getElementById('signupUsernameError').textContent = 'სახელი და გვარი აუცილებელია';
     document.getElementById('signupUsernameError').style.display = 'block';
     return;
   }
   
-  if (username.length < 3) {
-    document.getElementById('signupUsernameError').textContent = 'აუცილებელია მინიმუმ 3 სიმბოლო';
+  // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
+  const nameParts = username.split(/\s+/);
+  if (nameParts.length < 2) {
+    document.getElementById('signupUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელი და გვარი';
     document.getElementById('signupUsernameError').style.display = 'block';
     return;
   }
   
-  if (/[^a-zA-Z0-9ა-ჰ_]/.test(username)) {
-    document.getElementById('signupUsernameError').textContent = 'მომხმარებლის სახელი უნდა შეიცავდეს მხოლოდ ასოებს, ციფრებს და ქართულ ასოებს';
+  // დავუშვათ მოკლე სახელებიც (თუნდაც 1 ასო), მთავარია იყოს ორი სიტყვა
+  // რეგექსი იძლევა ქართული, ინგლისური ასოების, ციფრების და სფეისების გამოყენების საშუალებას
+  if (/[^a-zA-Z0-9ა-ჰ\s]/.test(username)) {
+    document.getElementById('signupUsernameError').textContent = 'სახელი და გვარი უნდა შეიცავდეს მხოლოდ ასოებს, ციფრებს, ქართულ ასოებს და სფეისებს';
     document.getElementById('signupUsernameError').style.display = 'block';
     return;
   }
@@ -3497,7 +3509,6 @@ function handleSignup() {
     showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
   }
 }
-
 // ==================== FIXED: SHOW PASSWORD MODAL WITH FIELD-SPECIFIC ERRORS ====================
 function showPasswordChangeModal() {
   // წავშალოთ არსებული მოდალი თუ არსებობს
