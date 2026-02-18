@@ -2559,6 +2559,7 @@ body {
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   
 <!-- Enhanced Login/Signup Modal -->
 <div id="authModal" class="auth-modal-overlay">
@@ -2892,6 +2893,7 @@ body {
 <script>
 // ==================== FIREBASE INITIALIZATION ====================
 let database = null;
+let auth = null;
 let firebaseInitialized = false;
 
 try {
@@ -2911,6 +2913,7 @@ try {
       firebase.initializeApp(firebaseConfig);
     }
     database = firebase.database();
+    auth = firebase.auth();
     firebaseInitialized = true;
     console.log("Firebase initialized successfully");
   }
@@ -2920,11 +2923,18 @@ try {
 
 // ==================== ENHANCED USER MANAGEMENT ====================
 let currentUser = null;
+let currentUserId = null;
 let currentTestType = null;
 let userProgress = {
   rezidentura: {
-    normal: {},
-    exam: {},
+    normal: {
+      answeredQuestions: {},
+      currentIndex: 0
+    },
+    exam: {
+      answeredQuestions: {},
+      examTimeRemaining: 10800
+    },
     wrongQuestions: []
   }
 };
@@ -3003,30 +3013,116 @@ let detailedResultsModal = document.getElementById('detailedResultsModal');
 let detailedResultsContent = document.getElementById('detailedResultsContent');
 
 
+// ==================== FIREBASE USER FUNCTIONS ====================
+async function saveUserProgressToFirebase() {
+  if (!currentUser || !currentUserId || !firebaseInitialized || !auth?.currentUser) {
+    return;
+  }
+  
+  try {
+    const userId = auth.currentUser.uid;
+    const userRef = database.ref('users/' + userId);
+    
+    await userRef.update({
+      username: currentUser.username,
+      progress: userProgress,
+      lastUpdated: firebase.database.ServerValue.TIMESTAMP
+    });
+    
+    console.log('Progress saved to Firebase for user:', userId);
+  } catch (error) {
+    console.error('Error saving progress to Firebase:', error);
+  }
+}
+
+async function loadUserProgressFromFirebase() {
+  if (!firebaseInitialized || !auth?.currentUser) {
+    return false;
+  }
+  
+  try {
+    const userId = auth.currentUser.uid;
+    const userRef = database.ref('users/' + userId);
+    const snapshot = await userRef.once('value');
+    
+    if (snapshot.exists()) {
+      const userData = snapshot.val();
+      if (userData.progress) {
+        userProgress = userData.progress;
+        console.log('Progress loaded from Firebase for user:', userId);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading progress from Firebase:', error);
+  }
+  
+  return false;
+}
+
+async function saveUsernameToFirebase(newUsername) {
+  if (!firebaseInitialized || !auth?.currentUser) {
+    return false;
+  }
+  
+  try {
+    const userId = auth.currentUser.uid;
+    const userRef = database.ref('users/' + userId);
+    
+    await userRef.update({
+      username: newUsername,
+      lastUpdated: firebase.database.ServerValue.TIMESTAMP
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving username to Firebase:', error);
+    return false;
+  }
+}
+
 // ==================== USER PROGRESS FUNCTIONS ====================
 function saveUserProgress() {
-  if (currentUser && currentUser.username && currentTestType && !currentUser.isGuest) {
+  if (currentUser && currentUserId && !currentUser.isGuest && firebaseInitialized) {
+    saveUserProgressToFirebase();
+  } else if (currentUser && !currentUser.isGuest) {
+    // Local backup
     try {
       const users = JSON.parse(localStorage.getItem('users') || '{}');
       if (users[currentUser.username]) {
         users[currentUser.username].progress = userProgress;
         localStorage.setItem('users', JSON.stringify(users));
-        console.log('Progress saved for', currentUser.username);
+        console.log('Progress saved locally for', currentUser.username);
       }
     } catch (error) {
-      console.error('Error saving user progress:', error);
+      console.error('Error saving user progress locally:', error);
     }
   }
 }
 
-function loadUserProgress() {
-  if (currentUser && currentUser.username) {
+async function loadUserProgress() {
+  if (currentUser && currentUserId && !currentUser.isGuest && firebaseInitialized) {
+    const loaded = await loadUserProgressFromFirebase();
+    if (!loaded) {
+      // Try local as backup
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (users[currentUser.username] && users[currentUser.username].progress) {
+          userProgress = users[currentUser.username].progress;
+          console.log('Progress loaded locally for', currentUser.username);
+          // Save to Firebase
+          saveUserProgressToFirebase();
+        }
+      } catch (error) {
+        console.error('Error loading user progress locally:', error);
+      }
+    }
+  } else if (currentUser && !currentUser.isGuest) {
     try {
       const users = JSON.parse(localStorage.getItem('users') || '{}');
       if (users[currentUser.username] && users[currentUser.username].progress) {
         userProgress = users[currentUser.username].progress;
-        console.log('Progress loaded for', currentUser.username);
-        console.log('Progress data:', JSON.stringify(userProgress, null, 2));
+        console.log('Progress loaded locally for', currentUser.username);
       }
     } catch (error) {
       console.error('Error loading user progress:', error);
@@ -3044,13 +3140,17 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
   if (!userProgress[currentTestType]) {
     userProgress[currentTestType] = {
       normal: { answeredQuestions: {}, currentIndex: 0 },
-      exam: { answeredQuestions: {}, currentIndex: 0 },
+      exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
       wrongQuestions: []
     };
   }
   
   if (!userProgress[currentTestType][mode]) {
-    userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
+    if (mode === 'exam') {
+      userProgress[currentTestType][mode] = { answeredQuestions: {}, examTimeRemaining: 10800 };
+    } else {
+      userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
+    }
   }
   
   if (!userProgress[currentTestType].wrongQuestions) {
@@ -3311,6 +3411,7 @@ function initAuth() {
       isGuest: true,
       progress: {}
     };
+    currentUserId = 'guest_' + Date.now();
     
     document.getElementById('authModal').style.display = 'none';
     document.getElementById('userInfo').style.display = 'flex';
@@ -3363,10 +3464,69 @@ function initAuth() {
       document.getElementById('loginTab').classList.add('active');
     }
   });
+  
+  // Check if user was previously logged in
+  if (firebaseInitialized && auth) {
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        // Auto-login
+        handleFirebaseUser(user);
+      }
+    });
+  }
 }
 
-// ==================== FIXED: HANDLE LOGIN WITH IMMEDIATE PROGRESS CHECK ====================
-function handleLogin() {
+async function handleFirebaseUser(firebaseUser) {
+  try {
+    const userId = firebaseUser.uid;
+    const userRef = database.ref('users/' + userId);
+    const snapshot = await userRef.once('value');
+    
+    if (snapshot.exists()) {
+      const userData = snapshot.val();
+      currentUser = { 
+        username: userData.username, 
+        isGuest: false,
+        uid: userId
+      };
+      currentUserId = userId;
+      
+      if (userData.progress) {
+        userProgress = userData.progress;
+      }
+      
+      document.getElementById('authModal').style.display = 'none';
+      document.getElementById('userInfo').style.display = 'flex';
+      document.getElementById('usernameDisplay').textContent = currentUser.username;
+      
+      userName = currentUser.username;
+      localStorage.setItem('chatUserName', userName);
+      
+      showNotification('მოგესალმებით!', false);
+      
+      if (allTests.length === 0) {
+        loadCSV();
+      } else {
+        startBtn.disabled = false;
+        setTimeout(() => {
+          const examModeCheckbox = document.getElementById('modeExam');
+          if (!examModeCheckbox || !examModeCheckbox.checked) {
+            checkExistingProgress();
+          }
+        }, 500);
+      }
+      
+      initChat();
+      bindUserMenuEvents();
+      updateTimerDisplay();
+    }
+  } catch (error) {
+    console.error('Error handling Firebase user:', error);
+  }
+}
+
+// ==================== FIXED: HANDLE LOGIN WITH FIREBASE ====================
+async function handleLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
   
@@ -3393,81 +3553,123 @@ function handleLogin() {
     return;
   }
   
-  try {
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    
-    if (!users[username]) {
-      document.getElementById('loginUsernameError').textContent = 'ასეთი მომხმარებელი არ არსებობს';
-      document.getElementById('loginUsernameError').style.display = 'block';
-      return;
-    }
-    
-    if (users[username].password !== password) {
-      document.getElementById('loginPasswordError').textContent = 'პაროლი არასწორია';
-      document.getElementById('loginPasswordError').style.display = 'block';
-      return;
-    }
-    
-    currentUser = { 
-      username: username, 
-      isGuest: false
-    };
-    
-    loadUserProgress();
-    
-    document.getElementById('loginUsername').value = '';
-    document.getElementById('loginPassword').value = '';
-    
-    document.getElementById('authModal').style.display = 'none';
-    document.getElementById('userInfo').style.display = 'flex';
-    document.getElementById('usernameDisplay').textContent = currentUser.username;
-    
-    userName = currentUser.username;
-    localStorage.setItem('chatUserName', userName);
-    
-    showNotification('მოგესალმებით!', false);
-    
-    // FIXED: Check for existing progress IMMEDIATELY, before CSV loads
-    // We'll store a flag that progress was checked
-// FIXED: Check for existing progress IMMEDIATELY, before CSV loads
-const hasProgress = userProgress && Object.keys(userProgress).length > 0 && 
-                   (Object.keys(userProgress.rezidentura?.normal?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.rezidentura?.exam?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.internalMedicine?.normal?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.internalMedicine?.exam?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.pathology?.normal?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.pathology?.exam?.answeredQuestions || {}).length > 0);
-    
-    if (hasProgress) {
-      // Store progress to show modal after CSV loads
-      window.pendingProgressCheck = true;
-    }
-    if (allTests.length === 0) {
-      loadCSV();
-    } else {
-      startBtn.disabled = false;
-      // Check progress now since CSV is already loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი
-      setTimeout(() => {
-        const examModeCheckbox = document.getElementById('modeExam');
-        if (!examModeCheckbox || !examModeCheckbox.checked) {
-          checkExistingProgress();
-        } else {
-          console.log("Exam mode is checked - skipping progress modal on login");
+  if (firebaseInitialized && auth) {
+    try {
+      // Try to sign in with Firebase
+      const userCredential = await auth.signInWithEmailAndPassword(username + '@unimed.app', password);
+      const user = userCredential.user;
+      
+      // Load user data from database
+      const userRef = database.ref('users/' + user.uid);
+      const snapshot = await userRef.once('value');
+      
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        currentUser = { 
+          username: userData.username, 
+          isGuest: false,
+          uid: user.uid
+        };
+        currentUserId = user.uid;
+        
+        if (userData.progress) {
+          userProgress = userData.progress;
         }
-      }, 500);
+        
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
+        
+        document.getElementById('authModal').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'flex';
+        document.getElementById('usernameDisplay').textContent = currentUser.username;
+        
+        userName = currentUser.username;
+        localStorage.setItem('chatUserName', userName);
+        
+        showNotification('მოგესალმებით!', false);
+        
+        if (allTests.length === 0) {
+          loadCSV();
+        } else {
+          startBtn.disabled = false;
+          setTimeout(() => {
+            const examModeCheckbox = document.getElementById('modeExam');
+            if (!examModeCheckbox || !examModeCheckbox.checked) {
+              checkExistingProgress();
+            }
+          }, 500);
+        }
+        
+        initChat();
+        bindUserMenuEvents();
+        updateTimerDisplay();
+      }
+    } catch (error) {
+      console.error('Firebase login error:', error);
+      document.getElementById('loginPasswordError').textContent = 'მომხმარებელი ან პაროლი არასწორია';
+      document.getElementById('loginPasswordError').style.display = 'block';
     }
-
-    initChat();
-    bindUserMenuEvents();
-    updateTimerDisplay();
-    
-  } catch (error) {
-    console.error('Login error:', error);
-    showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
+  } else {
+    // Fallback to local storage
+    try {
+      const users = JSON.parse(localStorage.getItem('users') || '{}');
+      
+      if (!users[username]) {
+        document.getElementById('loginUsernameError').textContent = 'ასეთი მომხმარებელი არ არსებობს';
+        document.getElementById('loginUsernameError').style.display = 'block';
+        return;
+      }
+      
+      if (users[username].password !== password) {
+        document.getElementById('loginPasswordError').textContent = 'პაროლი არასწორია';
+        document.getElementById('loginPasswordError').style.display = 'block';
+        return;
+      }
+      
+      currentUser = { 
+        username: username, 
+        isGuest: false
+      };
+      currentUserId = 'local_' + username;
+      
+      loadUserProgress();
+      
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+      
+      document.getElementById('authModal').style.display = 'none';
+      document.getElementById('userInfo').style.display = 'flex';
+      document.getElementById('usernameDisplay').textContent = currentUser.username;
+      
+      userName = currentUser.username;
+      localStorage.setItem('chatUserName', userName);
+      
+      showNotification('მოგესალმებით!', false);
+      
+      if (allTests.length === 0) {
+        loadCSV();
+      } else {
+        startBtn.disabled = false;
+        setTimeout(() => {
+          const examModeCheckbox = document.getElementById('modeExam');
+          if (!examModeCheckbox || !examModeCheckbox.checked) {
+            checkExistingProgress();
+          }
+        }, 500);
+      }
+      
+      initChat();
+      bindUserMenuEvents();
+      updateTimerDisplay();
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
+    }
   }
 }
 
-function handleSignup() {
+async function handleSignup() {
   const username = document.getElementById('signupUsername').value.trim();
   const password = document.getElementById('signupPassword').value;
   const confirmPassword = document.getElementById('signupConfirmPassword').value;
@@ -3522,51 +3724,106 @@ function handleSignup() {
     return;
   }
   
-  try {
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    
-    if (users[username]) {
-      document.getElementById('signupUsernameError').textContent = 'მსგავსი მომხმარებელი უკვე არსებობს';
-      document.getElementById('signupUsernameError').style.display = 'block';
-      return;
-    }
-    
-    users[username] = {
-      password: password,
-      progress: {
-        rezidentura: {
-          normal: { answeredQuestions: {}, currentIndex: 0 },
-          exam: { answeredQuestions: {}, currentIndex: 0 },
-          wrongQuestions: []
+  if (firebaseInitialized && auth) {
+    try {
+      // Create user in Firebase Auth
+      const email = username + '@unimed.app';
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      
+      // Save user data to database
+      const userRef = database.ref('users/' + user.uid);
+      await userRef.set({
+        username: username,
+        email: email,
+        progress: {
+          rezidentura: {
+            normal: { answeredQuestions: {}, currentIndex: 0 },
+            exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
+            wrongQuestions: []
+          }
+        },
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        lastUpdated: firebase.database.ServerValue.TIMESTAMP
+      });
+      
+      document.getElementById('signupUsername').value = '';
+      document.getElementById('signupPassword').value = '';
+      document.getElementById('signupConfirmPassword').value = '';
+      
+      showNotification('რეგისტრაცია წარმატებულია!', false);
+      
+      setTimeout(() => {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-tab-content').forEach(c => c.classList.remove('active'));
+        
+        const loginTab = document.querySelector('[data-tab="login"]');
+        if (loginTab) {
+          loginTab.classList.add('active');
+          document.getElementById('loginTab').classList.add('active');
         }
-      }
-    };
-    
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    document.getElementById('signupUsername').value = '';
-    document.getElementById('signupPassword').value = '';
-    document.getElementById('signupConfirmPassword').value = '';
-    
-    showNotification('რეგისტრაცია წარმატებულია!', false);
-    
-    setTimeout(() => {
-      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.auth-tab-content').forEach(c => c.classList.remove('active'));
+        
+        document.getElementById('loginUsername').value = username;
+        document.getElementById('loginPassword').focus();
+      }, 1000);
       
-      const loginTab = document.querySelector('[data-tab="login"]');
-      if (loginTab) {
-        loginTab.classList.add('active');
-        document.getElementById('loginTab').classList.add('active');
+    } catch (error) {
+      console.error('Firebase signup error:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        document.getElementById('signupUsernameError').textContent = 'ეს მომხმარებელი უკვე არსებობს';
+        document.getElementById('signupUsernameError').style.display = 'block';
+      } else {
+        showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
+      }
+    }
+  } else {
+    // Fallback to local storage
+    try {
+      const users = JSON.parse(localStorage.getItem('users') || '{}');
+      
+      if (users[username]) {
+        document.getElementById('signupUsernameError').textContent = 'მსგავსი მომხმარებელი უკვე არსებობს';
+        document.getElementById('signupUsernameError').style.display = 'block';
+        return;
       }
       
-      document.getElementById('loginUsername').value = username;
-      document.getElementById('loginPassword').focus();
-    }, 1000);
-    
-  } catch (error) {
-    console.error('Signup error:', error);
-    showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
+      users[username] = {
+        password: password,
+        progress: {
+          rezidentura: {
+            normal: { answeredQuestions: {}, currentIndex: 0 },
+            exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
+            wrongQuestions: []
+          }
+        }
+      };
+      
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      document.getElementById('signupUsername').value = '';
+      document.getElementById('signupPassword').value = '';
+      document.getElementById('signupConfirmPassword').value = '';
+      
+      showNotification('რეგისტრაცია წარმატებულია!', false);
+      
+      setTimeout(() => {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-tab-content').forEach(c => c.classList.remove('active'));
+        
+        const loginTab = document.querySelector('[data-tab="login"]');
+        if (loginTab) {
+          loginTab.classList.add('active');
+          document.getElementById('loginTab').classList.add('active');
+        }
+        
+        document.getElementById('loginUsername').value = username;
+        document.getElementById('loginPassword').focus();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Signup error:', error);
+      showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
+    }
   }
 }
 // ==================== FIXED: SHOW PASSWORD MODAL WITH FIELD-SPECIFIC ERRORS ====================
@@ -3727,24 +3984,37 @@ function showPasswordChangeModal() {
     
     if (hasError) return;
     
-    try {
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username]?.password !== currentPassword) {
-        currentPassError.textContent = 'მიმდინარე პაროლი არასწორია';
-        currentPassError.style.display = 'block';
-        return;
+    if (firebaseInitialized && auth?.currentUser) {
+      // Update password in Firebase
+      auth.currentUser.updatePassword(newPassword)
+        .then(() => {
+          modalOverlay.remove();
+          showNotification('პაროლი წარმატებით შეიცვალა', false);
+        })
+        .catch((error) => {
+          console.error('Error changing password:', error);
+          newPassError.textContent = 'შეცდომა პაროლის შეცვლისას';
+          newPassError.style.display = 'block';
+        });
+    } else {
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (users[currentUser.username]?.password !== currentPassword) {
+          currentPassError.textContent = 'მიმდინარე პაროლი არასწორია';
+          currentPassError.style.display = 'block';
+          return;
+        }
+        
+        users[currentUser.username].password = newPassword;
+        localStorage.setItem('users', JSON.stringify(users));
+        
+        modalOverlay.remove();
+        showNotification('პაროლი წარმატებით შეიცვალა', false);
+      } catch (error) {
+        console.error('Error changing password:', error);
+        newPassError.textContent = 'შეცდომა პაროლის შეცვლისას';
+        newPassError.style.display = 'block';
       }
-      
-      users[currentUser.username].password = newPassword;
-      localStorage.setItem('users', JSON.stringify(users));
-      
-      // Close modal and show success
-      modalOverlay.remove();
-      showNotification('პაროლი წარმატებით შეიცვალა', false);
-    } catch (error) {
-      console.error('Error changing password:', error);
-      newPassError.textContent = 'შეცდომა პაროლის შეცვლისას';
-      newPassError.style.display = 'block';
     }
   });
   
@@ -3825,17 +4095,38 @@ function showContinueOrRestartModal(progress) {
   document.getElementById('restartProgressBtn').addEventListener('click', () => {
     // წავშალოთ პროგრესი და დავიწყოთ თავიდან
     if (currentUser && currentUser.username) {
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username] && users[currentUser.username].progress) {
-        users[currentUser.username].progress = {
+      if (firebaseInitialized && auth?.currentUser) {
+        // Clear progress in Firebase
+        const userId = auth.currentUser.uid;
+        const userRef = database.ref('users/' + userId + '/progress');
+        userRef.set({
           rezidentura: {
             normal: { answeredQuestions: {}, currentIndex: 0 },
-            exam: { answeredQuestions: {}, currentIndex: 0 },
+            exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
             wrongQuestions: []
           }
-        };
-        localStorage.setItem('users', JSON.stringify(users));
-        userProgress = users[currentUser.username].progress;
+        }).then(() => {
+          userProgress = {
+            rezidentura: {
+              normal: { answeredQuestions: {}, currentIndex: 0 },
+              exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
+              wrongQuestions: []
+            }
+          };
+        });
+      } else {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (users[currentUser.username] && users[currentUser.username].progress) {
+          users[currentUser.username].progress = {
+            rezidentura: {
+              normal: { answeredQuestions: {}, currentIndex: 0 },
+              exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
+              wrongQuestions: []
+            }
+          };
+          localStorage.setItem('users', JSON.stringify(users));
+          userProgress = users[currentUser.username].progress;
+        }
       }
     }
     modalContainer.remove();
@@ -4407,6 +4698,18 @@ function updateExamTimer() {
   if (elapsed > 0) {
     examTimeRemaining = Math.max(0, examTimeRemaining - elapsed);
     lastTimerUpdate = now;
+    
+    // Save exam time remaining to progress
+    if (currentUser && !currentUser.isGuest && currentTestType) {
+      if (!userProgress[currentTestType]) {
+        userProgress[currentTestType] = { exam: { answeredQuestions: {}, examTimeRemaining: 10800 }, normal: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] };
+      }
+      if (!userProgress[currentTestType].exam) {
+        userProgress[currentTestType].exam = { answeredQuestions: {}, examTimeRemaining: 10800 };
+      }
+      userProgress[currentTestType].exam.examTimeRemaining = examTimeRemaining;
+      saveUserProgress();
+    }
   }
   
   const hours = Math.floor(examTimeRemaining / 3600);
@@ -4457,6 +4760,8 @@ function startExamMode() {
   // Reset timer when starting new exam
   if (!window.savedProgress || !window.savedProgress.exam?.examTimeRemaining) {
     examTimeRemaining = 3 * 60 * 60;
+  } else {
+    examTimeRemaining = window.savedProgress.exam.examTimeRemaining;
   }
   
   lastTimerUpdate = Date.now();
@@ -4532,7 +4837,7 @@ function showSettingsPage() {
             <div class="settings-field">
               <label class="settings-label">პაროლი</label>
               <div class="settings-input-group">
-                <input type="password" id="settingsPassword" class="settings-input" value="${escapeHtml(getUserPassword(currentUser?.username) || '')}" disabled>
+                <input type="password" id="settingsPassword" class="settings-input" value="********" disabled>
                 <button class="settings-eye-btn" onclick="togglePasswordVisibility('settingsPassword', this)">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" stroke-width="2"/>
@@ -4623,7 +4928,7 @@ function togglePasswordVisibility(inputId, button) {
   }
 }
 
-function enableUsernameEdit() {
+async function enableUsernameEdit() {
   const usernameInput = document.getElementById('settingsUsername');
   if (usernameInput) {
     usernameInput.disabled = false;
@@ -4646,7 +4951,7 @@ function enableUsernameEdit() {
   }
 }
 
-function saveUsername() {
+async function saveUsername() {
   const newUsername = document.getElementById('settingsUsername').value.trim();
   
   if (!newUsername) {
@@ -4674,39 +4979,49 @@ function saveUsername() {
     return;
   }
   
-  try {
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    
-    if (users[newUsername]) {
-      showNotification('ეს სახელი უკვე გამოყენებულია');
-      return;
+  // Save to Firebase
+  if (firebaseInitialized && auth?.currentUser) {
+    const saved = await saveUsernameToFirebase(newUsername);
+    if (saved) {
+      currentUser.username = newUsername;
+      document.getElementById('usernameDisplay').textContent = newUsername;
+      userName = newUsername;
+      localStorage.setItem('chatUserName', userName);
+      showNotification('მომხმარებელი წარმატებით შეიცვალა', false);
+      closeSettingsPage();
+      setTimeout(() => showSettingsPage(), 300);
+    } else {
+      showNotification('შეცდომა სახელის შეცვლისას');
     }
-    
-    // შევინახოთ ძველი სახელი წასაშლელად
-    const oldUsername = currentUser.username;
-    
-    // გადავიტანოთ მომხმარებლის მონაცემები ახალ სახელზე
-    users[newUsername] = users[oldUsername];
-    delete users[oldUsername];
-    
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    // განვაახლოთ currentUser
-    currentUser.username = newUsername;
-    
-    // განვაახლოთ UI
-    document.getElementById('usernameDisplay').textContent = newUsername;
-    userName = newUsername;
-    localStorage.setItem('chatUserName', userName);
-    
-    showNotification('მომხმარებელი წარმატებით შეიცვალა', false);
-    
-    closeSettingsPage();
-    setTimeout(() => showSettingsPage(), 300);
-    
-  } catch (error) {
-    console.error('Error saving username:', error);
-    showNotification('შეცდომა სახელის შეცვლისას');
+  } else {
+    // Local backup
+    try {
+      const users = JSON.parse(localStorage.getItem('users') || '{}');
+      
+      if (users[newUsername]) {
+        showNotification('ეს სახელი უკვე გამოყენებულია');
+        return;
+      }
+      
+      const oldUsername = currentUser.username;
+      
+      users[newUsername] = users[oldUsername];
+      delete users[oldUsername];
+      
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      currentUser.username = newUsername;
+      document.getElementById('usernameDisplay').textContent = newUsername;
+      userName = newUsername;
+      localStorage.setItem('chatUserName', userName);
+      
+      showNotification('მომხმარებელი წარმატებით შეიცვალა', false);
+      closeSettingsPage();
+      setTimeout(() => showSettingsPage(), 300);
+    } catch (error) {
+      console.error('Error saving username:', error);
+      showNotification('შეცდომა სახელის შეცვლისას');
+    }
   }
 }
 
@@ -4876,22 +5191,40 @@ function showPasswordChangeFromSettings() {
     
     if (hasError) return;
     
-    try {
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username]?.password !== currentPassword) {
-        currentPassError.textContent = 'მიმდინარე პაროლი არასწორია';
-        currentPassError.style.display = 'block';
-        return;
+    if (firebaseInitialized && auth?.currentUser) {
+      auth.currentUser.updatePassword(newPassword)
+        .then(() => {
+          showNotification('პაროლი წარმატებით შეიცვალა', false);
+          document.getElementById('passwordModalOverlay').remove();
+        })
+        .catch((error) => {
+          console.error('Error changing password:', error);
+          if (error.code === 'auth/requires-recent-login') {
+            currentPassError.textContent = 'გთხოვთ ხელახლა შეხვიდეთ სისტემაში';
+            currentPassError.style.display = 'block';
+          } else {
+            newPassError.textContent = 'შეცდომა პაროლის შეცვლისას';
+            newPassError.style.display = 'block';
+          }
+        });
+    } else {
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (users[currentUser.username]?.password !== currentPassword) {
+          currentPassError.textContent = 'მიმდინარე პაროლი არასწორია';
+          currentPassError.style.display = 'block';
+          return;
+        }
+        
+        users[currentUser.username].password = newPassword;
+        localStorage.setItem('users', JSON.stringify(users));
+        showNotification('პაროლი წარმატებით შეიცვალა', false);
+        document.getElementById('passwordModalOverlay').remove();
+      } catch (error) {
+        console.error('Error changing password:', error);
+        newPassError.textContent = 'შეცდომა პაროლის შეცვლისას';
+        newPassError.style.display = 'block';
       }
-      
-      users[currentUser.username].password = newPassword;
-      localStorage.setItem('users', JSON.stringify(users));
-      showNotification('პაროლი წარმატებით შეიცვალა', false);
-      document.getElementById('passwordModalOverlay').remove();
-    } catch (error) {
-      console.error('Error changing password:', error);
-      newPassError.textContent = 'შეცდომა პაროლის შეცვლისას';
-      newPassError.style.display = 'block';
     }
   });
   
@@ -5085,9 +5418,16 @@ function bindUserMenuEvents() {
   });
   
   document.getElementById('signOutBtn').addEventListener('click', () => {
-    saveUserProgress();
-    currentUser = null;
-    location.reload();
+    if (firebaseInitialized && auth) {
+      auth.signOut().then(() => {
+        location.reload();
+      }).catch((error) => {
+        console.error('Sign out error:', error);
+        location.reload();
+      });
+    } else {
+      location.reload();
+    }
   });
 }
 
@@ -5314,20 +5654,36 @@ function showPasswordChangeModalWithoutClose() {
       return;
     }
     
-    try {
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username]?.password !== currentPassword) {
-        showNotification('მიმდინარე პაროლი არასწორია');
-        return;
+    if (firebaseInitialized && auth?.currentUser) {
+      auth.currentUser.updatePassword(newPassword)
+        .then(() => {
+          showNotification('პაროლი წარმატებით შეიცვალა', false);
+          document.getElementById('passwordModalOverlay').remove();
+        })
+        .catch((error) => {
+          console.error('Error changing password:', error);
+          if (error.code === 'auth/requires-recent-login') {
+            showNotification('გთხოვთ ხელახლა შეხვიდეთ სისტემაში');
+          } else {
+            showNotification('შეცდომა პაროლის შეცვლისას');
+          }
+        });
+    } else {
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (users[currentUser.username]?.password !== currentPassword) {
+          showNotification('მიმდინარე პაროლი არასწორია');
+          return;
+        }
+        
+        users[currentUser.username].password = newPassword;
+        localStorage.setItem('users', JSON.stringify(users));
+        showNotification('პაროლი წარმატებით შეიცვალა', false);
+        document.getElementById('passwordModalOverlay').remove();
+      } catch (error) {
+        console.error('Error changing password:', error);
+        showNotification('შეცდომა პაროლის შეცვლისას');
       }
-      
-      users[currentUser.username].password = newPassword;
-      localStorage.setItem('users', JSON.stringify(users));
-      showNotification('პაროლი წარმატებით შეიცვალა', false);
-      document.getElementById('passwordModalOverlay').remove();
-    } catch (error) {
-      console.error('Error changing password:', error);
-      showNotification('შეცდომა პაროლის შეცვლისას');
     }
   });
   
@@ -6136,18 +6492,24 @@ function autoSaveProgress() {
   if (!userProgress[currentTestType]) {
     userProgress[currentTestType] = {
       normal: { answeredQuestions: {}, currentIndex: 0 },
-      exam: { answeredQuestions: {}, currentIndex: 0 },
+      exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
       wrongQuestions: []
     };
   }
   
   if (!userProgress[currentTestType][mode]) {
-    userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
+    if (mode === 'exam') {
+      userProgress[currentTestType][mode] = { answeredQuestions: {}, examTimeRemaining: 10800 };
+    } else {
+      userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
+    }
   }
   
   // FIXED: შევინახოთ მიმდინარე ინდექსი, არა global ID
   // ეს საშუალებას მოგვცემს გავაგრძელოთ ზუსტად იმავე ადგილიდან
-  userProgress[currentTestType][mode].currentIndex = currentIndex;
+  if (mode === 'normal') {
+    userProgress[currentTestType][mode].currentIndex = currentIndex;
+  }
   
   if (examMode) {
     userProgress[currentTestType].exam.examTimeRemaining = examTimeRemaining;
@@ -6576,30 +6938,46 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
     
     // წავშალოთ პროგრესი არჩეული მოდულისთვის
     if (currentUser && currentUser.username && !currentUser.isGuest) {
-      try {
-        const users = JSON.parse(localStorage.getItem('users') || '{}');
-        if (users[currentUser.username] && users[currentUser.username].progress) {
-          if (users[currentUser.username].progress[selectedModule]) {
-            // გავასუფთავოთ მიმდინარე მოდული
-            users[currentUser.username].progress[selectedModule] = {
-              normal: { answeredQuestions: {}, currentIndex: 0 },
-              exam: { answeredQuestions: {}, currentIndex: 0 },
-              wrongQuestions: []
-            };
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // განვაახლოთ userProgress ცვლადიც
-            userProgress[selectedModule] = {
-              normal: { answeredQuestions: {}, currentIndex: 0 },
-              exam: { answeredQuestions: {}, currentIndex: 0 },
-              wrongQuestions: []
-            };
-            
-            console.log("Progress cleared for module:", selectedModule);
+      if (firebaseInitialized && auth?.currentUser) {
+        const userId = auth.currentUser.uid;
+        const userRef = database.ref('users/' + userId + '/progress/' + selectedModule);
+        userRef.set({
+          normal: { answeredQuestions: {}, currentIndex: 0 },
+          exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
+          wrongQuestions: []
+        }).then(() => {
+          userProgress[selectedModule] = {
+            normal: { answeredQuestions: {}, currentIndex: 0 },
+            exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
+            wrongQuestions: []
+          };
+        });
+      } else {
+        try {
+          const users = JSON.parse(localStorage.getItem('users') || '{}');
+          if (users[currentUser.username] && users[currentUser.username].progress) {
+            if (users[currentUser.username].progress[selectedModule]) {
+              // გავასუფთავოთ მიმდინარე მოდული
+              users[currentUser.username].progress[selectedModule] = {
+                normal: { answeredQuestions: {}, currentIndex: 0 },
+                exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
+                wrongQuestions: []
+              };
+              localStorage.setItem('users', JSON.stringify(users));
+              
+              // განვაახლოთ userProgress ცვლადიც
+              userProgress[selectedModule] = {
+                normal: { answeredQuestions: {}, currentIndex: 0 },
+                exam: { answeredQuestions: {}, examTimeRemaining: 10800 },
+                wrongQuestions: []
+              };
+              
+              console.log("Progress cleared for module:", selectedModule);
+            }
           }
+        } catch (error) {
+          console.error('Error clearing progress:', error);
         }
-      } catch (error) {
-        console.error('Error clearing progress:', error);
       }
     }
     
@@ -6783,7 +7161,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updateTimer();
   
   window.addEventListener('beforeunload', () => {
-    if (currentUser && !currentUser.isGuest && currentTestType) {
+    if (currentUser && !currentUser.isGuest && currentTestType && firebaseInitialized) {
       saveUserProgress();
     }
   });
