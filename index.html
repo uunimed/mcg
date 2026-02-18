@@ -5738,8 +5738,13 @@ function updateSelectedTopics() {
   }
 }
 
-// ==================== FIXED: START TEST WITH PROGRESS ====================
 function startTest() {
+  // FIXED: Check if either sequential OR exam mode is selected
+  if (!modeSequential.checked && !modeExam.checked) {
+    showNotification('გთხოვთ აირჩიოთ რეჟიმი: "ტესტების ჩვენება თანმიმდევრობით" ან "საგამოცდო რეჟიმი"');
+    return;
+  }
+
   // FIXED: Save currentTestType before clearing savedProgress
   if (window.savedProgress && !currentTestType) {
     const testTypeSelect = document.getElementById('testTypeSelect');
@@ -5781,9 +5786,6 @@ function startTest() {
 
   // Exam mode-ში კითხვები ყოველთვის ირევა
   const shuffleQuestions = modeShuffleQuestions.checked || examMode;
-
-  // Exam mode-ში პასუხები არ ირევა
-  const shuffleAnswers = examMode ? false : modeShuffleAnswers.checked;
 
   let testsToUse = allTestsWithTopics;
 
@@ -6813,6 +6815,12 @@ if (modeExam) {
       
       // 3. UNCHECK "shuffle answers" (answers should keep original order)
       if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
+    } else {
+      // FIXED: When exam mode is unchecked, check if any mode is selected
+      // If neither mode is selected, show notification but don't block
+      if (!modeSequential.checked) {
+        console.log("No mode selected after unchecking exam mode");
+      }
     }
   });
 }
