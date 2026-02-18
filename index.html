@@ -4669,7 +4669,7 @@ function saveUsername() {
   }
   
   if (newUsername === currentUser.username) {
-    showNotification('ახალი სახელი ემთხვევა ძველს', false);
+    showNotification('ახალი მომხმარებელი ემთხვევა ძველს', false);
     cancelUsernameEdit();
     return;
   }
@@ -5885,7 +5885,7 @@ function startTest() {
         lastTimerUpdate = Date.now();
       }
 
-      showNotification(`პროგრესი წარმატებით ჩაიტვირთა. გაგრძელდება ${currentIndex + 1} კითხვიდან`, false);
+      showNotification(`გრძელდება ${currentIndex + 1} კითხვიდან`, false);
     }
 
     window.savedProgress = null;
@@ -6565,7 +6565,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       }
     }, 300);
     
-    showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
+    showNotification('წარმატებით ჩაიტვირთა', false);
   });
   
   // ==================== FIXED: RESTART BUTTON ====================
