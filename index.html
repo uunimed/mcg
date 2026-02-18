@@ -1,3 +1,5 @@
+კოდი ახლა ასეთია, მაგრამ გაგრძელებაზე დაჭერისას ტესტი მუდმივად პირველი კითხვიდან იწყება::
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -3000,6 +3002,7 @@ let examPrevBtn, examNextBtn, examAutoBtn, examFinishBtn;
 let detailedResultsModal = document.getElementById('detailedResultsModal');
 let detailedResultsContent = document.getElementById('detailedResultsContent');
 
+
 // ==================== USER PROGRESS FUNCTIONS ====================
 function saveUserProgress() {
   if (currentUser && currentUser.username && currentTestType && !currentUser.isGuest) {
@@ -3022,7 +3025,16 @@ function loadUserProgress() {
       const users = JSON.parse(localStorage.getItem('users') || '{}');
       if (users[currentUser.username] && users[currentUser.username].progress) {
         userProgress = users[currentUser.username].progress;
-        console.log('Progress loaded for', currentUser.username);
+        console.log('Progress loaded for', currentUser.username, userProgress);
+      } else {
+        // Initialize progress if not exists
+        userProgress = {
+          rezidentura: {
+            normal: { answeredQuestions: {}, currentIndex: 0 },
+            exam: { answeredQuestions: {}, currentIndex: 0 },
+            wrongQuestions: []
+          }
+        };
       }
     } catch (error) {
       console.error('Error loading user progress:', error);
@@ -3371,16 +3383,20 @@ function handleLogin() {
       // Store progress to show modal after CSV loads
       window.pendingProgressCheck = true;
     }
-    
-    if (allTests.length === 0) {
-      loadCSV();
+if (allTests.length === 0) {
+  loadCSV();
+} else {
+  startBtn.disabled = false;
+  // Check progress now since CSV is already loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი
+  setTimeout(() => {
+    const examModeCheckbox = document.getElementById('modeExam');
+    if (!examModeCheckbox || !examModeCheckbox.checked) {
+      checkExistingProgress();
     } else {
-      startBtn.disabled = false;
-      // Check progress now since CSV is already loaded
-      setTimeout(() => {
-        checkExistingProgress();
-      }, 500);
+      console.log("Exam mode is checked - skipping progress modal on login");
     }
+  }, 500);
+}
 
     initChat();
     bindUserMenuEvents();
@@ -5308,17 +5324,28 @@ function loadCSV() {
 loaderOverlay.style.display = 'none';
 startBtn.disabled = false;
 
-// Check for existing progress AFTER CSV is loaded
+// Check for existing progress AFTER CSV is loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი მონიშნული
 if (currentUser && !currentUser.isGuest) {
-  // Check if we have pending progress to show
+  const examModeCheckbox = document.getElementById('modeExam');
+  const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
+  
+  // Check if we have pending progress to show and not in exam mode
   if (window.pendingProgressCheck) {
     setTimeout(() => {
-      checkExistingProgress();
+      if (!isExamModeChecked) {
+        checkExistingProgress();
+      } else {
+        console.log("Exam mode is checked - skipping progress modal");
+      }
       window.pendingProgressCheck = false;
     }, 500);
   } else {
     setTimeout(() => {
-      checkExistingProgress();
+      if (!isExamModeChecked) {
+        checkExistingProgress();
+      } else {
+        console.log("Exam mode is checked - skipping progress modal");
+      }
     }, 500);
   }
 }
@@ -5329,6 +5356,70 @@ if (currentUser && !currentUser.isGuest) {
     loaderOverlay.innerHTML = `<div style="color: var(--danger); font-weight: 600; text-align: center; padding: 20px;">შეცდომა ჩატვირთვისას<br><small>${err.message}</small></div>`;
     startBtn.disabled = false;
   });
+}
+
+// ==================== FIXED: CHECK EXISTING PROGRESS - ONLY ONCE AND NOT IN EXAM MODE ====================
+let progressModalShown = false; // გლობალური ცვლადი, დაამატეთ სკრიპტის დასაწყისში
+
+function checkExistingProgress() {
+  // არ ვაჩვენოთ მოდალი, თუ უკვე ნაჩვენებია
+  if (progressModalShown) {
+    console.log("Progress modal already shown - skipping");
+    return;
+  }
+  
+  // არ ვაჩვენოთ მოდალი, თუ გამოცდის რეჟიმი აქტიურია
+  if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
+    console.log("Exam mode is active - skipping progress modal");
+    return;
+  }
+  
+  if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
+  
+  // მიმდინარე არჩეული მოდული
+  const testTypeSelect = document.getElementById('testTypeSelect');
+  if (!testTypeSelect || testTypeSelect.value === '') return;
+  
+  const selectedModule = testTypeSelect.value;
+  console.log("Checking progress for module:", selectedModule);
+  
+  // შევამოწმოთ არჩეული მოდულის პროგრესი
+  const progress = userProgress[selectedModule];
+  if (!progress) return;
+  
+  const hasNormalProgress = progress.normal && 
+                           Object.keys(progress.normal.answeredQuestions || {}).length > 0;
+  const hasExamProgress = progress.exam && 
+                         Object.keys(progress.exam.answeredQuestions || {}).length > 0;
+  
+  if (!hasNormalProgress && !hasExamProgress) return;
+  
+  // მოვნიშნოთ, რომ მოდალი უკვე ნაჩვენებია
+  progressModalShown = true;
+  
+  // გამოვთვალოთ გაკეთებული ტესტების რაოდენობა
+  const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
+  const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
+  const totalAnswered = normalCount + examCount;
+  
+  // მოდულის სახელი ადამიანურად გასაგებად
+  let moduleDisplayName = '';
+  switch(selectedModule) {
+    case 'rezidentura':
+      moduleDisplayName = 'რეზიდენტურა';
+      break;
+    case 'internalMedicine':
+      moduleDisplayName = 'შინაგანი მედიცინა';
+      break;
+    case 'pathology':
+      moduleDisplayName = 'პათოლოგია';
+      break;
+    default:
+      moduleDisplayName = selectedModule;
+  }
+  
+  // გამოვიძახოთ მოდალი შესაბამისი ინფორმაციით
+  showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
 }
 
 function parseCSVTwoColumns(csvText){
@@ -5568,11 +5659,8 @@ function updateSelectedTopics() {
 
 // ==================== FIXED: START TEST WITH PROGRESS ====================
 function startTest() {
-  // Check for existing progress BEFORE starting
-  if (currentUser && !currentUser.isGuest && allTestsWithTopics.length > 0) {
-    // This will show the modal if progress exists
-    checkExistingProgress();
-  }
+  updateCurrentTestType();
+
   
   window.savedProgress = null;
   
@@ -5612,67 +5700,101 @@ function startTest() {
     }
   }
   
-  if (examMode) {
-    const shuffledAll = [...testsToUse];
-    shuffleArray(shuffledAll);
-    sessionTests = shuffledAll.slice(0, Math.min(200, shuffledAll.length)).map((t, idx) => ({ 
-      id: idx.toString(), // For exam mode, we use index as ID (temporary)
-      question: t.question, 
+if (examMode) {
+  const shuffledAll = [...testsToUse];
+  shuffleArray(shuffledAll);
+  sessionTests = shuffledAll.slice(0, Math.min(200, shuffledAll.length)).map((t, originalIdx) => {
+    // ვიპოვოთ ორიგინალი ინდექსი allTestsWithTopics-ში
+    const originalIndex = allTestsWithTopics.findIndex(test => test.question === t.question);
+    return {
+      id: originalIndex.toString(), // გამოვიყენოთ ორიგინალი ინდექსი
+      originalId: originalIndex.toString(),
+      question: t.question,
       answers: t.answers.map(a => ({...a})),
       selectedAnswers: [],
       hasCorrectAnswer: false,
       isAnswerCorrect: null
-    }));
-  } else {
-    sessionTests = testsToUse.map((t, idx) => ({ 
-      id: idx.toString(), // For normal mode, we use index as ID
-      originalId: idx.toString(), // Store original index for reference
-      question: t.question, 
+    };
+  });
+} else {
+  sessionTests = testsToUse.map((t, idx) => {
+    // ვიპოვოთ ორიგინალი ინდექსი allTestsWithTopics-ში
+    const originalIndex = allTestsWithTopics.findIndex(test => test.question === t.question);
+    return {
+      id: originalIndex.toString(), // გამოვიყენოთ ორიგინალი ინდექსი
+      originalId: originalIndex.toString(),
+      question: t.question,
       answers: t.answers.map(a => ({...a})),
       selectedAnswers: [],
       hasCorrectAnswer: false,
       isAnswerCorrect: null
-    }));
-  }
+    };
+  });
+}
   
-// In startTest function, this part is correct:
+// In startTest function, replace the progress restoration part with this:
+
+// In startTest function, replace the progress restoration part with this:
 if (window.savedProgress && currentUser && !currentUser.isGuest) {
   const progress = window.savedProgress;
   const mode = examMode ? 'exam' : 'normal';
   
+  console.log("Restoring progress for mode:", mode);
+  console.log("Progress data:", progress);
+  
   if (progress[mode] && progress[mode].answeredQuestions) {
-    // FIXED: Find the last answered question to continue from next
-    let lastAnsweredIndex = -1;
-    
+    // აღვადგინოთ ნაპასუხი კითხვები
     Object.keys(progress[mode].answeredQuestions).forEach(questionId => {
-      const idx = parseInt(questionId);
-      if (idx < sessionTests.length) {
+      // ვიპოვოთ ეს კითხვა sessionTests-ში
+      const sessionIndex = sessionTests.findIndex(test => test.id === questionId);
+      if (sessionIndex !== -1) {
         const answerData = progress[mode].answeredQuestions[questionId];
-        sessionTests[idx].selectedAnswers = [answerData.selectedAnswer];
-        sessionTests[idx].hasCorrectAnswer = answerData.isCorrect;
-        sessionTests[idx].isAnswerCorrect = answerData.isCorrect;
-        
-        // Track the highest index answered
-        if (idx > lastAnsweredIndex) {
-          lastAnsweredIndex = idx;
-        }
+        sessionTests[sessionIndex].selectedAnswers = [answerData.selectedAnswer];
+        sessionTests[sessionIndex].hasCorrectAnswer = answerData.isCorrect;
+        sessionTests[sessionIndex].isAnswerCorrect = answerData.isCorrect;
       }
     });
     
-    // FIXED: Start from the next unanswered question (lastAnsweredIndex + 1)
-    if (lastAnsweredIndex >= 0 && lastAnsweredIndex < sessionTests.length - 1) {
-      currentIndex = lastAnsweredIndex + 1;
-    } else if (lastAnsweredIndex === sessionTests.length - 1) {
-      // If all questions are answered, stay at the last one
-      currentIndex = lastAnsweredIndex;
+    // გამოვიყენოთ შენახული currentIndex
+    const savedIndex = progress[mode].currentIndex || 0;
+    console.log("Saved currentIndex:", savedIndex);
+    
+    // ვიპოვოთ ეს ინდექსი sessionTests-ში
+    const sessionIndex = sessionTests.findIndex(test => parseInt(test.id) === savedIndex);
+    
+    if (sessionIndex !== -1) {
+      // ვიპოვეთ შესაბამისი კითხვა
+      if (sessionTests[sessionIndex].selectedAnswers && 
+          sessionTests[sessionIndex].selectedAnswers.length > 0) {
+        // თუ ნაპასუხია, გადავიდეთ შემდეგ უპასუხოზე
+        let nextUnanswered = -1;
+        for (let i = 0; i < sessionTests.length; i++) {
+          if (!sessionTests[i].selectedAnswers || sessionTests[i].selectedAnswers.length === 0) {
+            nextUnanswered = i;
+            break;
+          }
+        }
+        currentIndex = nextUnanswered !== -1 ? nextUnanswered : sessionTests.length - 1;
+      } else {
+        // თუ არ არის ნაპასუხი, გავაგრძელოთ აქედან
+        currentIndex = sessionIndex;
+      }
     } else {
-      currentIndex = progress[mode].currentIndex || 0;
+      // თუ ვერ ვიპოვეთ, ვიპოვოთ პირველი უპასუხო
+      for (let i = 0; i < sessionTests.length; i++) {
+        if (!sessionTests[i].selectedAnswers || sessionTests[i].selectedAnswers.length === 0) {
+          currentIndex = i;
+          break;
+        }
+      }
     }
     
-    // FIXED: Load exam time remaining
+    console.log("Final currentIndex:", currentIndex);
+    
+    // აღვადგინოთ გამოცდის დრო
     if (examMode && progress.exam && progress.exam.examTimeRemaining) {
       examTimeRemaining = progress.exam.examTimeRemaining;
-      lastTimerUpdate = Date.now(); // Reset the last update time
+      lastTimerUpdate = Date.now();
     }
     
     showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
@@ -5940,10 +6062,10 @@ function autoSaveProgress() {
     userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
   }
   
+  // შევინახოთ მიმდინარე ინდექსი
   userProgress[currentTestType][mode].currentIndex = currentIndex;
   
   if (examMode) {
-    // Save remaining time
     userProgress[currentTestType].exam.examTimeRemaining = examTimeRemaining;
   }
   
@@ -6163,8 +6285,14 @@ function bindQuestionCounterEvent() {
   });
 }
 
-// ==================== FIXED: CHECK EXISTING PROGRESS ====================
+// ==================== FIXED: CHECK EXISTING PROGRESS - ONLY IN NORMAL MODE ====================
 function checkExistingProgress() {
+  // არ ვაჩვენოთ მოდალი, თუ გამოცდის რეჟიმი აქტიურია
+  if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
+    console.log("Exam mode is active - skipping progress modal");
+    return;
+  }
+  
   if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
   
   // მიმდინარე არჩეული მოდული
@@ -6211,9 +6339,9 @@ function checkExistingProgress() {
 }
 
 
-// ==================== FIXED: SHOW PROGRESS RESUME MODAL WITH MODULE NAME ====================
 function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
   console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
+  console.log("Progress data:", progress);
   
   // წავშალოთ არსებული მოდალი თუ არსებობს
   const existingModal = document.querySelector('.modal-overlay[data-type="progress-resume"]');
@@ -6239,16 +6367,26 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   content.className = 'modal-content';
   content.style.cssText = 'margin-bottom: 30px; text-align: center;';
   
+  // ვაჩვენოთ ინფორმაცია ბოლო ნანახი კითხვის შესახებ
+  const lastNormalIndex = progress.normal?.currentIndex || 0;
+  const lastExamIndex = progress.exam?.currentIndex || 0;
+  const lastIndex = lastExamIndex > 0 ? lastExamIndex : lastNormalIndex;
+  
   const p1 = document.createElement('p');
   p1.style.cssText = 'margin-bottom: 15px; font-size: 16px;';
   p1.innerHTML = `თქვენ უკვე გაქვთ <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> დაწერილი მოდულში: <strong style="color: var(--accent);">${moduleName}</strong>`;
   
   const p2 = document.createElement('p');
-  p2.style.cssText = 'margin-bottom: 20px; color: #64748b;';
+  p2.style.cssText = 'margin-bottom: 10px; color: #64748b;';
   p2.textContent = 'გსურთ გააგრძელოთ ბოლო ტესტიდან თუ თავიდან დაიწყოთ?';
+  
+  const p3 = document.createElement('p');
+  p3.style.cssText = 'margin-bottom: 20px; font-size: 14px; color: var(--accent);';
+  p3.innerHTML = `ბოლო ნანახი კითხვა: <strong>${lastIndex + 1}</strong> / ${allTestsWithTopics.length}`;
   
   content.appendChild(p1);
   content.appendChild(p2);
+  content.appendChild(p3);
   
   // Modal Buttons
   const buttons = document.createElement('div');
@@ -6307,7 +6445,9 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
     }
     
     // Pass progress to startTest
-    window.savedProgress = progress;
+    window.savedProgress = JSON.parse(JSON.stringify(progress)); // ღრმა კოპირება
+    
+    console.log("Saving progress to window.savedProgress:", window.savedProgress);
     
     // Start test with loaded progress
     setTimeout(() => {
@@ -6352,6 +6492,17 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       modalOverlay.remove();
     }
   });
+}
+
+// დაამატეთ ეს ფუნქცია სადმე გლობალურ ფუნქციებთან ერთად
+function updateCurrentTestType() {
+  const testTypeSelect = document.getElementById('testTypeSelect');
+  if (testTypeSelect && testTypeSelect.value) {
+    currentTestType = testTypeSelect.value;
+    console.log("Test type updated to:", currentTestType);
+    return currentTestType;
+  }
+  return null;
 }
 
 function showCompletionScreen() {
@@ -6416,7 +6567,6 @@ startBtn.addEventListener('click', function() {
   startTest();
 });
 
-// ==================== DOM CONTENT LOADED ====================
 window.addEventListener('DOMContentLoaded', () => {
   console.log("DOM loaded, initializing app...");
   
@@ -6450,12 +6600,20 @@ window.addEventListener('DOMContentLoaded', () => {
   bindQuestionCounterEvent();
   bindTestTypeEvents();
   
-  // Add test type change listener
+  // Add test type change listener - შეცვლილი ვერსია
   const testTypeSelect = document.getElementById('testTypeSelect');
   if (testTypeSelect) {
     testTypeSelect.addEventListener('change', function() {
       currentTestType = this.value;
       console.log("Test type changed to:", currentTestType);
+      
+      // როცა ტესტის ტიპი იცვლება, გადავამოწმოთ პროგრესი
+      if (currentUser && !currentUser.isGuest && allTestsWithTopics.length > 0) {
+        // პატარა პაუზით, რომ დავრწმუნდეთ რომ CSV ჩატვირთულია
+        setTimeout(() => {
+          checkExistingProgress();
+        }, 500);
+      }
     });
   }
   
@@ -6514,8 +6672,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.showPasswordChangeFromSettings = showPasswordChangeFromSettings;
   window.printMistakes = printMistakes;
   window.showPasswordChangeModal = showPasswordChangeModal;
-
 });
 </script>
 </body>
-</html>ბ ვერსია
+</html>
