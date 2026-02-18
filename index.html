@@ -2785,8 +2785,8 @@ body {
       <!-- Two-column layout for sequential and topic filter -->
 <div class="option-row">
   <label class="option-item option-item-half">
-    <input type="checkbox" id="modeSequential" checked>
-    <span>ტესტების ჩვენება თანმიმდევრობით</span>
+<input type="checkbox" id="modeSequential" checked>
+<span>ტესტების ჩვენება თანმიმდევრობით</span>
   </label>
   
   <div id="topicsDropdownContainer" class="option-item-half" style="display: flex; flex-direction: column;">
@@ -5787,6 +5787,9 @@ function startTest() {
   // Exam mode-ში კითხვები ყოველთვის ირევა
   const shuffleQuestions = modeShuffleQuestions.checked || examMode;
 
+  // Exam mode-ში პასუხები არ ირევა
+  const shuffleAnswers = examMode ? false : modeShuffleAnswers.checked;
+
   let testsToUse = allTestsWithTopics;
 
   if (selectedTopic && selectedTopic !== 'all') {
@@ -5841,52 +5844,52 @@ function startTest() {
     });
   }
 
-// ==================== FIXED: LOAD SAVED PROGRESS ====================
-if (progressData && currentUser && !currentUser.isGuest) {
-  const mode = examMode ? 'exam' : 'normal';
+  // ==================== LOAD SAVED PROGRESS ====================
+  if (progressData && currentUser && !currentUser.isGuest) {
+    const mode = examMode ? 'exam' : 'normal';
 
-  console.log("Loading progress for mode:", mode);
-  console.log("Progress data:", progressData[mode]);
+    console.log("Loading progress for mode:", mode);
+    console.log("Progress data:", progressData[mode]);
 
-  if (progressData[mode] && progressData[mode].answeredQuestions) {
+    if (progressData[mode] && progressData[mode].answeredQuestions) {
 
-    // მონიშნე უკვე პასუხგაცემული კითხვები
-    sessionTests.forEach(test => {
-      const globalId = test.originalGlobalId;
-      if (globalId && progressData[mode].answeredQuestions[globalId]) {
-        const answerData = progressData[mode].answeredQuestions[globalId];
-        test.selectedAnswers = [answerData.selectedAnswer];
-        test.hasCorrectAnswer = answerData.isCorrect;
-        test.isAnswerCorrect = answerData.isCorrect;
+      // მონიშნე უკვე პასუხგაცემული კითხვები
+      sessionTests.forEach(test => {
+        const globalId = test.originalGlobalId;
+        if (globalId && progressData[mode].answeredQuestions[globalId]) {
+          const answerData = progressData[mode].answeredQuestions[globalId];
+          test.selectedAnswers = [answerData.selectedAnswer];
+          test.hasCorrectAnswer = answerData.isCorrect;
+          test.isAnswerCorrect = answerData.isCorrect;
+        }
+      });
+
+      // FIXED: გაგრძელების ადგილის განსაზღვრა - ვიპოვოთ პირველი უპასუხო კითხვა
+      const firstUnansweredIndex = sessionTests.findIndex(
+        t => !t.selectedAnswers || t.selectedAnswers.length === 0
+      );
+      
+      if (firstUnansweredIndex !== -1) {
+        // თუ არის უპასუხო კითხვა, დავიწყოთ მისგან
+        currentIndex = firstUnansweredIndex;
+        console.log(`Starting from first unanswered question: ${currentIndex + 1}`);
+      } else {
+        // თუ ყველა უპასუხია, დავრჩეთ ბოლოზე
+        currentIndex = sessionTests.length - 1;
+        console.log(`All questions answered, staying at last: ${currentIndex + 1}`);
       }
-    });
 
-    // FIXED: გაგრძელების ადგილის განსაზღვრა - ვიპოვოთ პირველი უპასუხო კითხვა
-    const firstUnansweredIndex = sessionTests.findIndex(
-      t => !t.selectedAnswers || t.selectedAnswers.length === 0
-    );
-    
-    if (firstUnansweredIndex !== -1) {
-      // თუ არის უპასუხო კითხვა, დავიწყოთ მისგან
-      currentIndex = firstUnansweredIndex;
-      console.log(`Starting from first unanswered question: ${currentIndex + 1}`);
-    } else {
-      // თუ ყველა უპასუხია, დავრჩეთ ბოლოზე
-      currentIndex = sessionTests.length - 1;
-      console.log(`All questions answered, staying at last: ${currentIndex + 1}`);
+      // Exam timer-ის აღდგენა
+      if (examMode && progressData.exam && progressData.exam.examTimeRemaining) {
+        examTimeRemaining = progressData.exam.examTimeRemaining;
+        lastTimerUpdate = Date.now();
+      }
+
+      showNotification(`პროგრესი წარმატებით ჩაიტვირთა. გაგრძელდება ${currentIndex + 1} კითხვიდან`, false);
     }
 
-    // Exam timer-ის აღდგენა
-    if (examMode && progressData.exam && progressData.exam.examTimeRemaining) {
-      examTimeRemaining = progressData.exam.examTimeRemaining;
-      lastTimerUpdate = Date.now();
-    }
-
-    showNotification(`პროგრესი წარმატებით ჩაიტვირთა. გაგრძელდება ${currentIndex + 1} კითხვიდან`, false);
+    window.savedProgress = null;
   }
-
-  window.savedProgress = null;
-}
 
   // ==================== SHUFFLING ====================
   if (shuffleQuestions && !examMode) {
@@ -6785,14 +6788,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  if (modeSequential) {
-    modeSequential.addEventListener('change', () => {
-      if (modeSequential.checked && modeShuffleQuestions.checked) {
-        showNotification('ეს რეჟიმები ერთად შეუძლებელია არსებობდეს!');
-        modeSequential.checked = false;
-      }
-    });
-  }
+if (modeSequential) {
+  modeSequential.addEventListener('change', () => {
+    if (modeSequential.checked && modeExam.checked) {
+      modeExam.checked = false;
+    }
+    
+    // If both are unchecked, but user unchecks sequential without exam, 
+    // we don't auto-check anything - user must choose
+  });
+}
   
   if (modeShuffleQuestions) {
     modeShuffleQuestions.addEventListener('change', () => {
@@ -6816,10 +6821,9 @@ if (modeExam) {
       // 3. UNCHECK "shuffle answers" (answers should keep original order)
       if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
     } else {
-      // FIXED: When exam mode is unchecked, check if any mode is selected
-      // If neither mode is selected, show notification but don't block
+      // FIXED: When exam mode is unchecked, if no mode is selected, enable sequential mode by default
       if (!modeSequential.checked) {
-        console.log("No mode selected after unchecking exam mode");
+        modeSequential.checked = true;
       }
     }
   });
