@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=yes" />
-<title>UniMed</title>
+<title>საგამოცდო ტესტები</title>
 <style>
 :root{
   --bg:#f6f8fb; --muted:#6b7280; --accent:#0ea5a4;
@@ -2891,12 +2891,14 @@ body {
   </div>
 
 <script>
-// ==================== FIREBASE INITIALIZATION ====================
+// ==================== FIREBASE INITIALIZATION WITH DEBUG ====================
 let database = null;
 let auth = null;
 let firebaseInitialized = false;
 
 try {
+  console.log("Attempting to initialize Firebase...");
+  
   const firebaseConfig = {
     apiKey: "AIzaSyAOyV8LZWBkU5W8UbTF082l1ft1T2Rj1Yc",
     authDomain: "rezidentura-7bfd5.firebaseapp.com",
@@ -2909,16 +2911,26 @@ try {
   };
 
   if (typeof firebase !== 'undefined') {
+    console.log("Firebase SDK found");
+    
     if (!firebase.apps.length) {
+      console.log("Initializing Firebase app...");
       firebase.initializeApp(firebaseConfig);
+    } else {
+      console.log("Firebase app already initialized");
     }
+    
     database = firebase.database();
     auth = firebase.auth();
     firebaseInitialized = true;
-    console.log("Firebase initialized successfully");
+    console.log("✅ Firebase initialized successfully");
+    console.log("Auth available:", !!auth);
+    console.log("Database available:", !!database);
+  } else {
+    console.error("❌ Firebase SDK not found!");
   }
 } catch (error) {
-  console.warn("Firebase initialization failed, chat will work in local mode:", error);
+  console.error("❌ Firebase initialization failed:", error);
 }
 
 // ==================== ENHANCED USER MANAGEMENT ====================
@@ -3525,7 +3537,6 @@ async function handleFirebaseUser(firebaseUser) {
   }
 }
 
-// ==================== FIXED: HANDLE LOGIN WITH FIREBASE ====================
 async function handleLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -3539,7 +3550,6 @@ async function handleLogin() {
     return;
   }
   
-  // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
   const nameParts = username.split(/\s+/);
   if (nameParts.length < 2) {
     document.getElementById('loginUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელიც და გვარიც';
@@ -3555,11 +3565,27 @@ async function handleLogin() {
   
   if (firebaseInitialized && auth) {
     try {
-      // Try to sign in with Firebase
-      const userCredential = await auth.signInWithEmailAndPassword(username + '@unimed.app', password);
+      // შევქმნათ იგივე ფორმატის email, როგორც რეგისტრაციის დროს
+      const emailUsername = username
+        .toLowerCase()
+        .replace(/\s+/g, '.')
+        .replace(/[ა-ჰ]/g, (char) => {
+          const geoToLatin = {
+            'ა':'a','ბ':'b','გ':'g','დ':'d','ე':'e','ვ':'v','ზ':'z','თ':'t','ი':'i','კ':'k',
+            'ლ':'l','მ':'m','ნ':'n','ო':'o','პ':'p','ჟ':'zh','რ':'r','ს':'s','ტ':'t','უ':'u',
+            'ფ':'f','ქ':'q','ღ':'gh','ყ':'q','შ':'sh','ჩ':'ch','ც':'ts','ძ':'dz','წ':'ts','ჭ':'ch',
+            'ხ':'kh','ჯ':'j','ჰ':'h'
+          };
+          return geoToLatin[char] || char;
+        })
+        .replace(/[^a-z0-9.]/g, '');
+      
+      const email = emailUsername + '@unimed.app';
+      console.log("Attempting login with email:", email);
+      
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
       
-      // Load user data from database
       const userRef = database.ref('users/' + user.uid);
       const snapshot = await userRef.once('value');
       
@@ -3668,73 +3694,112 @@ async function handleLogin() {
     }
   }
 }
-
 async function handleSignup() {
+  console.log("=".repeat(50));
+  console.log("handleSignup called at:", new Date().toISOString());
+  
   const username = document.getElementById('signupUsername').value.trim();
   const password = document.getElementById('signupPassword').value;
   const confirmPassword = document.getElementById('signupConfirmPassword').value;
   
+  console.log("Input values:", { 
+    username: username ? "✓ provided" : "✗ missing", 
+    password: password ? "✓ provided" : "✗ missing",
+    confirmPassword: confirmPassword ? "✓ provided" : "✗ missing",
+    passwordLength: password ? password.length : 0
+  });
+  
+  // გავასუფთაოთ წინა ერორები
   document.getElementById('signupUsernameError').style.display = 'none';
   document.getElementById('signupPasswordError').style.display = 'none';
   document.getElementById('signupConfirmError').style.display = 'none';
   
+  // ვალიდაცია
   if (!username) {
+    console.log("Validation failed: username missing");
     document.getElementById('signupUsernameError').textContent = 'სახელი და გვარი აუცილებელია';
     document.getElementById('signupUsernameError').style.display = 'block';
     return;
   }
   
-  // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
   const nameParts = username.split(/\s+/);
   if (nameParts.length < 2) {
-    document.getElementById('signupUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელი და გვარი';
-    document.getElementById('signupUsernameError').style.display = 'block';
-    return;
-  }
-  
-  // დავუშვათ მოკლე სახელებიც (თუნდაც 1 ასო), მთავარია იყოს ორი სიტყვა
-  // რეგექსი იძლევა ქართული, ინგლისური ასოების, ციფრების და სფეისების გამოყენების საშუალებას
-  if (/[^a-zA-Z0-9ა-ჰ\s]/.test(username)) {
-    document.getElementById('signupUsernameError').textContent = 'სახელი და გვარი უნდა შეიცავდეს მხოლოდ ასოებს, ციფრებს, ქართულ ასოებს და სფეისებს';
+    console.log("Validation failed: need first and last name");
+    document.getElementById('signupUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელიც და გვარიც';
     document.getElementById('signupUsernameError').style.display = 'block';
     return;
   }
   
   if (!password) {
+    console.log("Validation failed: password missing");
     document.getElementById('signupPasswordError').textContent = 'პაროლი აუცილებელია';
     document.getElementById('signupPasswordError').style.display = 'block';
     return;
   }
   
   if (password.length < 6) {
+    console.log("Validation failed: password too short");
     document.getElementById('signupPasswordError').textContent = 'პაროლი უნდა იყოს მინიმუმ 6 სიმბოლო';
     document.getElementById('signupPasswordError').style.display = 'block';
     return;
   }
   
   if (!confirmPassword) {
-    document.getElementById('signupConfirmError').textContent = 'გაიმეორეთ პაროლი!';
+    console.log("Validation failed: confirm password missing");
+    document.getElementById('signupConfirmError').textContent = 'გთხოვთ გაიმეოროთ პაროლი';
     document.getElementById('signupConfirmError').style.display = 'block';
     return;
   }
   
   if (password !== confirmPassword) {
+    console.log("Validation failed: passwords don't match");
     document.getElementById('signupConfirmError').textContent = 'პაროლი არ ემთხვევა';
     document.getElementById('signupConfirmError').style.display = 'block';
     return;
   }
   
+  console.log("Validation passed!");
+  console.log("Firebase initialized:", firebaseInitialized);
+  console.log("Auth available:", !!auth);
+  console.log("Database available:", !!database);
+  
+  // Firebase-ით რეგისტრაცია
   if (firebaseInitialized && auth) {
     try {
-      // Create user in Firebase Auth
-      const email = username + '@unimed.app';
+      console.log("Starting Firebase signup process...");
+      
+      // შევქმნათ უნიკალური email მომხმარებლის სახელის გამოყენებით
+      // გადავიყვანოთ ყველა ასო lowercase-ში და შევცვალოთ ქართული ასოები ლათინურზე
+      const emailUsername = username
+        .toLowerCase()
+        .replace(/\s+/g, '.')           // space-ები შევცვალოთ წერტილით
+        .replace(/[ა-ჰ]/g, (char) => {   // ქართული ასოების ტრანსლიტერაცია
+          const geoToLatin = {
+            'ა':'a','ბ':'b','გ':'g','დ':'d','ე':'e','ვ':'v','ზ':'z','თ':'t','ი':'i','კ':'k',
+            'ლ':'l','მ':'m','ნ':'n','ო':'o','პ':'p','ჟ':'zh','რ':'r','ს':'s','ტ':'t','უ':'u',
+            'ფ':'f','ქ':'q','ღ':'gh','ყ':'q','შ':'sh','ჩ':'ch','ც':'ts','ძ':'dz','წ':'ts','ჭ':'ch',
+            'ხ':'kh','ჯ':'j','ჰ':'h'
+          };
+          return geoToLatin[char] || char;
+        })
+        .replace(/[^a-z0-9.]/g, '');     // წავშალოთ ყველაფერი რაც არ არის ასო, ციფრი ან წერტილი
+      
+      const email = emailUsername + '@unimed.app';
+      console.log("Using email:", email);
+      
+      console.log("Calling auth.createUserWithEmailAndPassword...");
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      
+      console.log("✅ User created successfully!");
+      console.log("User UID:", userCredential.user.uid);
+      
       const user = userCredential.user;
       
-      // Save user data to database
+      console.log("Saving user data to database...");
       const userRef = database.ref('users/' + user.uid);
+      
       await userRef.set({
-        username: username,
+        username: username,  // შევინახოთ ორიგინალი ქართული სახელი
         email: email,
         progress: {
           rezidentura: {
@@ -3747,12 +3812,16 @@ async function handleSignup() {
         lastUpdated: firebase.database.ServerValue.TIMESTAMP
       });
       
+      console.log("✅ User data saved to database!");
+      
+      // გავასუფთაოთ ველები
       document.getElementById('signupUsername').value = '';
       document.getElementById('signupPassword').value = '';
       document.getElementById('signupConfirmPassword').value = '';
       
-      showNotification('რეგისტრაცია წარმატებულია!', false);
+      showNotification('რეგისტრაცია წარმატებულია! გთხოვთ შეხვიდეთ სისტემაში', false);
       
+      // გადავიდეთ login ტაბზე
       setTimeout(() => {
         document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.auth-tab-content').forEach(c => c.classList.remove('active'));
@@ -3768,20 +3837,33 @@ async function handleSignup() {
       }, 1000);
       
     } catch (error) {
-      console.error('Firebase signup error:', error);
+      console.error("❌ Firebase signup error:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      
       if (error.code === 'auth/email-already-in-use') {
         document.getElementById('signupUsernameError').textContent = 'ეს მომხმარებელი უკვე არსებობს';
         document.getElementById('signupUsernameError').style.display = 'block';
+      } else if (error.code === 'auth/weak-password') {
+        document.getElementById('signupPasswordError').textContent = 'პაროლი ძალიან სუსტია';
+        document.getElementById('signupPasswordError').style.display = 'block';
+      } else if (error.code === 'auth/invalid-email') {
+        document.getElementById('signupUsernameError').textContent = 'მომხმარებლის სახელი შეიცავს აკრძალულ სიმბოლოებს';
+        document.getElementById('signupUsernameError').style.display = 'block';
       } else {
-        showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
+        showNotification('შეცდომა რეგისტრაციის დროს: ' + error.message);
       }
     }
   } else {
-    // Fallback to local storage
+    console.log("Firebase not available, using local storage fallback");
+    
     try {
+      console.log("Reading users from localStorage...");
       const users = JSON.parse(localStorage.getItem('users') || '{}');
+      console.log("Existing users:", Object.keys(users));
       
       if (users[username]) {
+        console.log("Username already exists:", username);
         document.getElementById('signupUsernameError').textContent = 'მსგავსი მომხმარებელი უკვე არსებობს';
         document.getElementById('signupUsernameError').style.display = 'block';
         return;
@@ -3799,12 +3881,13 @@ async function handleSignup() {
       };
       
       localStorage.setItem('users', JSON.stringify(users));
+      console.log("✅ User saved to localStorage");
       
       document.getElementById('signupUsername').value = '';
       document.getElementById('signupPassword').value = '';
       document.getElementById('signupConfirmPassword').value = '';
       
-      showNotification('რეგისტრაცია წარმატებულია!', false);
+      showNotification('რეგისტრაცია წარმატებულია! გთხოვთ შეხვიდეთ სისტემაში', false);
       
       setTimeout(() => {
         document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -3821,11 +3904,14 @@ async function handleSignup() {
       }, 1000);
       
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error("Local storage error:", error);
       showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
     }
   }
+  
+  console.log("=".repeat(50));
 }
+
 // ==================== FIXED: SHOW PASSWORD MODAL WITH FIELD-SPECIFIC ERRORS ====================
 function showPasswordChangeModal() {
   // წავშალოთ არსებული მოდალი თუ არსებობს
@@ -7111,6 +7197,11 @@ startBtn.addEventListener('click', function() {
 window.addEventListener('DOMContentLoaded', () => {
   console.log("DOM loaded, initializing app...");
   
+  // Make functions globally available - დაამატეთ აქ, ყველაფრის შემდეგ
+window.handleSignup = handleSignup;
+window.handleLogin = handleLogin;
+
+
   // Initialize chat elements
   chatButton = document.getElementById('chatButton');
   chatWindow = document.getElementById('chatWindow');
