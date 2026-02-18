@@ -3031,7 +3031,7 @@ function loadUserProgress() {
   }
 }
 
-// ==================== FIXED: UPDATE USER PROGRESS - ONLY SHOW MODAL IN WRONG QUESTIONS MODE ====================
+// ==================== FIXED: UPDATE USER PROGRESS - ONLY COUNT AS LEARNED IF FIRST ATTEMPT IS CORRECT ====================
 function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = false) {
   if (!currentUser || currentUser.isGuest || !currentTestType) return;
   
@@ -3054,6 +3054,10 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     userProgress[currentTestType].wrongQuestions = [];
   }
   
+  // FIXED: Check if this question has been answered before in this session
+  const previousAnswer = userProgress[currentTestType][mode].answeredQuestions[questionId];
+  const hasPreviousAnswer = previousAnswer !== undefined;
+  
   // Save the answer
   userProgress[currentTestType][mode].answeredQuestions[questionId] = {
     selectedAnswer: selectedAnswer,
@@ -3066,15 +3070,35 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
   const questionIndex = wrongQuestions.indexOf(questionId);
   
   if (!isCorrect) {
-    // If answer is incorrect and question is not already in wrongQuestions, add it
+    // If answer is incorrect, ALWAYS add to wrongQuestions (regardless of previous answers)
     if (questionIndex === -1) {
       wrongQuestions.push(questionId);
+      console.log(`Question ${questionId} added to wrong questions (incorrect answer)`);
     }
-    // If it's already there, leave it (don't add duplicate)
   } else {
-    // If answer is correct, remove it from wrongQuestions if it exists
-    if (questionIndex !== -1) {
-      wrongQuestions.splice(questionIndex, 1);
+    // If answer is correct:
+    // IMPORTANT: Only remove from wrongQuestions if this is the FIRST time answering this question
+    // AND the answer is correct. If there was a previous incorrect answer, keep it in wrongQuestions.
+    if (!hasPreviousAnswer) {
+      // This is the first attempt and it's correct - remove from wrongQuestions if present
+      if (questionIndex !== -1) {
+        wrongQuestions.splice(questionIndex, 1);
+        console.log(`Question ${questionId} removed from wrong questions (first attempt correct)`);
+      }
+    } else {
+      // This is not the first attempt - there was a previous answer
+      // Check if the previous answer was incorrect
+      if (previousAnswer && !previousAnswer.isCorrect) {
+        // If previously answered incorrectly, keep in wrongQuestions even if now correct
+        // Only add if not already in the list
+        if (questionIndex === -1) {
+          wrongQuestions.push(questionId);
+          console.log(`Question ${questionId} kept in wrong questions (had previous incorrect attempt)`);
+        }
+      } else if (questionIndex !== -1) {
+        // If previous answer was correct but somehow still in wrongQuestions, remove it
+        wrongQuestions.splice(questionIndex, 1);
+      }
     }
   }
   
@@ -4597,7 +4621,7 @@ function saveUsername() {
   // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
   const nameParts = newUsername.split(/\s+/);
   if (nameParts.length < 2) {
-    showNotification('გთხოვთ შეიყვანოთ სახელიც და გვარიც (მინიმუმ 2 სიტყვა)');
+    showNotification('გთხოვთ შეიყვანოთ სახელი და გვარი');
     return;
   }
   
@@ -4639,7 +4663,7 @@ function saveUsername() {
     userName = newUsername;
     localStorage.setItem('chatUserName', userName);
     
-    showNotification('სახელი და გვარი წარმატებით შეიცვალა', false);
+    showNotification('მომხმარებელი წარმატებით შეიცვალა', false);
     
     closeSettingsPage();
     setTimeout(() => showSettingsPage(), 300);
@@ -5919,7 +5943,6 @@ function renderNormalAnswers() {
               renderCurrentQuestion();
             }, 500);
           }
-          // REMOVED: Wrong questions check from here - it's now handled in updateUserProgress
           
         } else {
           answerEl.classList.add('incorrect');
