@@ -3033,7 +3033,7 @@ function loadUserProgress() {
   }
 }
 
-// ==================== FIXED: UPDATE USER PROGRESS - CORRECTLY HANDLES TOPIC-SPECIFIC TESTS ====================
+// ==================== FIXED: UPDATE USER PROGRESS - EXAM MODE DOESN'T AFFECT WRONG QUESTIONS ====================
 function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = false) {
   if (!currentUser || currentUser.isGuest || !currentTestType) return;
   
@@ -3056,8 +3056,7 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     userProgress[currentTestType].wrongQuestions = [];
   }
   
-  // IMPORTANT FIX: Find the original global question ID
-  // When in topic-specific mode, questionId is the index in sessionTests, not the global index
+  // Find the original global question ID
   let globalQuestionId = questionId;
   
   // If we're in a topic-specific session (sessionTests length < allTestsWithTopics length)
@@ -3069,7 +3068,6 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
       globalQuestionId = currentQuestion.originalGlobalId;
     } else {
       // Alternative: try to find the question in allTestsWithTopics by matching content
-      // This is a fallback in case we don't have originalGlobalId stored
       const matchingGlobalIndex = allTestsWithTopics.findIndex(
         (test, idx) => test.question === currentQuestion.question
       );
@@ -3079,7 +3077,7 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     }
   }
   
-  console.log(`Updating progress: session question ID ${questionId} -> global ID ${globalQuestionId}, correct: ${isCorrect}`);
+  console.log(`Updating progress: session question ID ${questionId} -> global ID ${globalQuestionId}, correct: ${isCorrect}, exam mode: ${isExamMode}`);
   
   // Check if this question has been answered before in this session
   const previousAnswer = userProgress[currentTestType][mode].answeredQuestions[globalQuestionId];
@@ -3092,47 +3090,53 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     timestamp: Date.now()
   };
   
-  // Manage wrongQuestions array using GLOBAL question ID
-  const wrongQuestions = userProgress[currentTestType].wrongQuestions;
-  const questionIndex = wrongQuestions.indexOf(globalQuestionId);
-  
-  if (!isCorrect) {
-    // If answer is incorrect, ALWAYS add to wrongQuestions (regardless of previous answers)
-    if (questionIndex === -1) {
-      wrongQuestions.push(globalQuestionId);
-      console.log(`Question ${globalQuestionId} added to wrong questions (incorrect answer)`);
-    }
-  } else {
-    // If answer is correct:
-    // IMPORTANT: Only remove from wrongQuestions if this is the FIRST time answering this question
-    // AND the answer is correct. If there was a previous incorrect answer, keep it in wrongQuestions.
-    if (!hasPreviousAnswer) {
-      // This is the first attempt and it's correct - remove from wrongQuestions if present
-      if (questionIndex !== -1) {
-        wrongQuestions.splice(questionIndex, 1);
-        console.log(`Question ${globalQuestionId} removed from wrong questions (first attempt correct)`);
+  // ========== FIX: EXAM MODE DOESN'T AFFECT WRONG QUESTIONS ==========
+  // Only update wrongQuestions array if we're NOT in exam mode
+  if (!isExamMode) {
+    // Manage wrongQuestions array using GLOBAL question ID
+    const wrongQuestions = userProgress[currentTestType].wrongQuestions;
+    const questionIndex = wrongQuestions.indexOf(globalQuestionId);
+    
+    if (!isCorrect) {
+      // If answer is incorrect, ALWAYS add to wrongQuestions (regardless of previous answers)
+      if (questionIndex === -1) {
+        wrongQuestions.push(globalQuestionId);
+        console.log(`Question ${globalQuestionId} added to wrong questions (incorrect answer)`);
       }
     } else {
-      // This is not the first attempt - there was a previous answer
-      // Check if the previous answer was incorrect
-      if (previousAnswer && !previousAnswer.isCorrect) {
-        // If previously answered incorrectly, keep in wrongQuestions even if now correct
-        // Only add if not already in the list
-        if (questionIndex === -1) {
-          wrongQuestions.push(globalQuestionId);
-          console.log(`Question ${globalQuestionId} kept in wrong questions (had previous incorrect attempt)`);
+      // If answer is correct:
+      // IMPORTANT: Only remove from wrongQuestions if this is the FIRST time answering this question
+      // AND the answer is correct. If there was a previous incorrect answer, keep it in wrongQuestions.
+      if (!hasPreviousAnswer) {
+        // This is the first attempt and it's correct - remove from wrongQuestions if present
+        if (questionIndex !== -1) {
+          wrongQuestions.splice(questionIndex, 1);
+          console.log(`Question ${globalQuestionId} removed from wrong questions (first attempt correct)`);
         }
-      } else if (questionIndex !== -1) {
-        // If previous answer was correct but somehow still in wrongQuestions, remove it
-        wrongQuestions.splice(questionIndex, 1);
+      } else {
+        // This is not the first attempt - there was a previous answer
+        // Check if the previous answer was incorrect
+        if (previousAnswer && !previousAnswer.isCorrect) {
+          // If previously answered incorrectly, keep in wrongQuestions even if now correct
+          // Only add if not already in the list
+          if (questionIndex === -1) {
+            wrongQuestions.push(globalQuestionId);
+            console.log(`Question ${globalQuestionId} kept in wrong questions (had previous incorrect attempt)`);
+          }
+        } else if (questionIndex !== -1) {
+          // If previous answer was correct but somehow still in wrongQuestions, remove it
+          wrongQuestions.splice(questionIndex, 1);
+        }
       }
     }
+  } else {
+    console.log(`Exam mode: Question ${globalQuestionId} NOT added to wrong questions`);
   }
   
   saveUserProgress();
   
   // Check if we're in wrong questions mode and all wrong questions are gone
-  if (isWrongQuestionsMode) {
+  if (isWrongQuestionsMode && !isExamMode) {
     setTimeout(() => {
       if (sessionTests.length > 0 && getWrongQuestions().length === 0) {
         showWrongQuestionsExhaustedModal();
@@ -5916,7 +5920,7 @@ function renderCurrentQuestion() {
   }
 }
 
-// ==================== FIXED: RENDER NORMAL ANSWERS WITH PROPER WRONG QUESTIONS CHECK ====================
+// ==================== FIXED: RENDER NORMAL ANSWERS ====================
 function renderNormalAnswers() {
   const question = sessionTests[currentIndex];
   answersContainer.innerHTML = '';
@@ -5961,7 +5965,7 @@ function renderNormalAnswers() {
           }
           feedback.innerHTML = `<div style="color:var(--success); font-size:16px; font-weight:600;">✓ სწორი პასუხი!</div>`;
           
-          // Update progress with the original question ID
+          // FIXED: Pass false for isExamMode (normal mode)
           updateUserProgress(question.id, idx, true, false);
           
           if (autoMode && currentIndex < sessionTests.length - 1) {
@@ -5976,6 +5980,7 @@ function renderNormalAnswers() {
           answerEl.classList.add('incorrect');
           feedback.innerHTML = `<div style="color:var(--danger); font-size:16px; font-weight:600;">✗ არასწორი პასუხი</div>`;
           
+          // FIXED: Pass false for isExamMode (normal mode)
           updateUserProgress(question.id, idx, false, false);
         }
         
@@ -6016,6 +6021,7 @@ function handleWrongQuestionsCompletion() {
   }
 }
 
+// ==================== FIXED: RENDER EXAM ANSWERS ====================
 function renderExamAnswers() {
   const question = sessionTests[currentIndex];
   examAnswersContainer.innerHTML = '';
@@ -6053,6 +6059,7 @@ function renderExamAnswers() {
         
         createExamTestBoxes();
         
+        // FIXED: Pass true for isExamMode
         updateUserProgress(question.id, idx, answer.correct, true);
         
         onAnswerSelected();
