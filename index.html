@@ -4590,7 +4590,21 @@ function saveUsername() {
   const newUsername = document.getElementById('settingsUsername').value.trim();
   
   if (!newUsername) {
-    showNotification('მომხმარებლის სახელი არ შეიძლება იყოს ცარიელი');
+    showNotification('სახელი და გვარი არ შეიძლება იყოს ცარიელი');
+    return;
+  }
+  
+  // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
+  const nameParts = newUsername.split(/\s+/);
+  if (nameParts.length < 2) {
+    showNotification('გთხოვთ შეიყვანოთ სახელიც და გვარიც (მინიმუმ 2 სიტყვა)');
+    return;
+  }
+  
+  // დავუშვათ მოკლე სახელებიც (თუნდაც 1 ასო), მთავარია იყოს ორი სიტყვა
+  // რეგექსი იძლევა ქართული, ინგლისური ასოების, ციფრების და სფეისების გამოყენების საშუალებას
+  if (/[^a-zA-Z0-9ა-ჰ\s]/.test(newUsername)) {
+    showNotification('სახელი და გვარი უნდა შეიცავდეს მხოლოდ ასოებს, ციფრებს, ქართულ ასოებს და სფეისებს');
     return;
   }
   
@@ -4608,19 +4622,24 @@ function saveUsername() {
       return;
     }
     
-    users[newUsername] = users[currentUser.username];
-    delete users[currentUser.username];
+    // შევინახოთ ძველი სახელი წასაშლელად
+    const oldUsername = currentUser.username;
+    
+    // გადავიტანოთ მომხმარებლის მონაცემები ახალ სახელზე
+    users[newUsername] = users[oldUsername];
+    delete users[oldUsername];
     
     localStorage.setItem('users', JSON.stringify(users));
     
-    const oldUsername = currentUser.username;
+    // განვაახლოთ currentUser
     currentUser.username = newUsername;
     
+    // განვაახლოთ UI
     document.getElementById('usernameDisplay').textContent = newUsername;
     userName = newUsername;
     localStorage.setItem('chatUserName', userName);
     
-    showNotification('მომხმარებლის სახელი წარმატებით შეიცვალა', false);
+    showNotification('სახელი და გვარი წარმატებით შეიცვალა', false);
     
     closeSettingsPage();
     setTimeout(() => showSettingsPage(), 300);
@@ -4853,7 +4872,7 @@ function renderMistakesList() {
   }
   
   if (wrongQuestionIds.length === 0) {
-    return `<div style="text-align:center; padding:20px; color:var(--muted);">მოდულში ${moduleDisplayName} შეცდომები არ არის!</div>`;
+    return `<div style="text-align:center; padding:20px; color:var(--muted);">მოდულში "${moduleDisplayName}" შეცდომები არ არის!</div>`;
   }
   
   let html = `<div style="margin-bottom: 15px; padding: 10px; background: #f1f5f9; border-radius: 6px; text-align: center; font-weight: 600; color: var(--accent);">მოდული: ${moduleDisplayName}</div>`;
