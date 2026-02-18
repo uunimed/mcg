@@ -3026,6 +3026,7 @@ function loadUserProgress() {
       if (users[currentUser.username] && users[currentUser.username].progress) {
         userProgress = users[currentUser.username].progress;
         console.log('Progress loaded for', currentUser.username);
+        console.log('Progress data:', JSON.stringify(userProgress, null, 2));
       }
     } catch (error) {
       console.error('Error loading user progress:', error);
@@ -3428,9 +3429,14 @@ function handleLogin() {
     
     // FIXED: Check for existing progress IMMEDIATELY, before CSV loads
     // We'll store a flag that progress was checked
-    const hasProgress = userProgress.rezidentura && 
-                       (Object.keys(userProgress.rezidentura.normal?.answeredQuestions || {}).length > 0 ||
-                        Object.keys(userProgress.rezidentura.exam?.answeredQuestions || {}).length > 0);
+// FIXED: Check for existing progress IMMEDIATELY, before CSV loads
+const hasProgress = userProgress && Object.keys(userProgress).length > 0 && 
+                   (Object.keys(userProgress.rezidentura?.normal?.answeredQuestions || {}).length > 0 ||
+                    Object.keys(userProgress.rezidentura?.exam?.answeredQuestions || {}).length > 0 ||
+                    Object.keys(userProgress.internalMedicine?.normal?.answeredQuestions || {}).length > 0 ||
+                    Object.keys(userProgress.internalMedicine?.exam?.answeredQuestions || {}).length > 0 ||
+                    Object.keys(userProgress.pathology?.normal?.answeredQuestions || {}).length > 0 ||
+                    Object.keys(userProgress.pathology?.exam?.answeredQuestions || {}).length > 0);
     
     if (hasProgress) {
       // Store progress to show modal after CSV loads
@@ -5734,126 +5740,153 @@ function updateSelectedTopics() {
 
 // ==================== FIXED: START TEST WITH PROGRESS ====================
 function startTest() {
-  window.savedProgress = null;
-  
-  // FIXED: Check if both "Sequential" and "Exam" are selected
+  // FIXED: Save currentTestType before clearing savedProgress
+  if (window.savedProgress && !currentTestType) {
+    const testTypeSelect = document.getElementById('testTypeSelect');
+    if (testTypeSelect && testTypeSelect.value) {
+      currentTestType = testTypeSelect.value;
+    }
+  }
+
+  console.log("startTest called with currentTestType:", currentTestType);
+  console.log("examMode:", examMode);
+
+  // ❗ IMPORTANT: Do NOT clear savedProgress here — we need it below
+  const progressData = window.savedProgress;
+
+  // რეჟიმების კონფლიქტის შემოწმება
   if (modeSequential.checked && modeExam.checked) {
     showNotification('"ტესტების ჩვენება თანმიმდევრობით" და "საგამოცდო რეჟიმი" ერთად შეუძლებელია არსებობდეს! აირჩიეთ მხოლოდ ერთი.');
     return;
   }
-  
-  // This check is still valid for other conflicting modes
+
   if (modeSequential.checked && modeShuffleQuestions.checked) {
     showNotification('ეს რეჟიმები ერთად შეუძლებელია არსებობდეს!');
     return;
   }
-  
+
   const topicsSelect = document.getElementById('topicsSelect');
   if (topicsSelect) {
     const selectedValue = topicsSelect.value;
-    
     if (!selectedValue || selectedValue === '') {
       showNotification('გთხოვთ აირჩიოთ თემა!');
       return;
     }
   }
-  
+
   autoMode = false;
-  isWrongQuestionsMode = false; // გადატვირთეთ რეჟიმი
-  
+  isWrongQuestionsMode = false;
+
   examMode = modeExam.checked;
-  
-  // FIXED: In exam mode, questions are always shuffled, but answers keep original order
+
+  // Exam mode-ში კითხვები ყოველთვის ირევა
   const shuffleQuestions = modeShuffleQuestions.checked || examMode;
-  
-  // FIXED: In exam mode, answers are NOT shuffled - they keep original order from CSV
-  // So we ignore modeShuffleAnswers.checked when in exam mode
+
+  // Exam mode-ში პასუხები არ ირევა
   const shuffleAnswers = examMode ? false : modeShuffleAnswers.checked;
-  
+
   let testsToUse = allTestsWithTopics;
-  
+
   if (selectedTopic && selectedTopic !== 'all') {
     testsToUse = allTestsWithTopics.filter(test => {
       const testTopic = test.topic && test.topic.trim() !== '' ? test.topic.trim() : 'ზოგადი';
       return testTopic === selectedTopic;
     });
-    
+
     if (testsToUse.length === 0) {
       showNotification(`არჩეულ თემას არ გააჩნია ტესტები`);
       return;
     }
   }
-  
-// FIXED: In startTest() function, when creating sessionTests, store original global index
-if (examMode) {
-  const shuffledAll = [...testsToUse];
-  shuffleArray(shuffledAll);
-  sessionTests = shuffledAll.slice(0, Math.min(200, shuffledAll.length)).map((t, idx) => ({ 
-    id: idx.toString(),
-    originalGlobalId: allTestsWithTopics.findIndex(globalTest => globalTest.question === t.question).toString(),
-    question: t.question, 
-    answers: t.answers.map(a => ({...a})),
-    selectedAnswers: [],
-    hasCorrectAnswer: false,
-    isAnswerCorrect: null
-  }));
-} else {
-  sessionTests = testsToUse.map((t, idx) => ({ 
-    id: idx.toString(),
-    originalGlobalId: allTestsWithTopics.findIndex(globalTest => globalTest.question === t.question).toString(),
-    question: t.question, 
-    answers: t.answers.map(a => ({...a})),
-    selectedAnswers: [],
-    hasCorrectAnswer: false,
-    isAnswerCorrect: null
-  }));
-}
-  
-  // Load saved progress if available
-  if (window.savedProgress && currentUser && !currentUser.isGuest) {
-    const progress = window.savedProgress;
-    const mode = examMode ? 'exam' : 'normal';
-    
-    if (progress[mode] && progress[mode].answeredQuestions) {
-      // FIXED: Find the last answered question to continue from next
-      let lastAnsweredIndex = -1;
-      
-      Object.keys(progress[mode].answeredQuestions).forEach(questionId => {
-        const idx = parseInt(questionId);
-        if (idx < sessionTests.length) {
-          const answerData = progress[mode].answeredQuestions[questionId];
-          sessionTests[idx].selectedAnswers = [answerData.selectedAnswer];
-          sessionTests[idx].hasCorrectAnswer = answerData.isCorrect;
-          sessionTests[idx].isAnswerCorrect = answerData.isCorrect;
-          
-          // Track the highest index answered
-          if (idx > lastAnsweredIndex) {
-            lastAnsweredIndex = idx;
-          }
-        }
+
+  // ==================== SESSION CREATION ====================
+  if (examMode) {
+    const shuffledAll = [...testsToUse];
+    shuffleArray(shuffledAll);
+
+    sessionTests = shuffledAll
+      .slice(0, Math.min(200, shuffledAll.length))
+      .map((t) => {
+        const globalIndex = allTestsWithTopics.findIndex(
+          globalTest => globalTest.question === t.question
+        ).toString();
+
+        return {
+          id: globalIndex,
+          originalGlobalId: globalIndex,
+          question: t.question,
+          answers: t.answers.map(a => ({ ...a })),
+          selectedAnswers: [],
+          hasCorrectAnswer: false,
+          isAnswerCorrect: null
+        };
       });
-      
-      // FIXED: Start from the next unanswered question (lastAnsweredIndex + 1)
-      if (lastAnsweredIndex >= 0 && lastAnsweredIndex < sessionTests.length - 1) {
-        currentIndex = lastAnsweredIndex + 1;
-      } else if (lastAnsweredIndex === sessionTests.length - 1) {
-        // If all questions are answered, stay at the last one
-        currentIndex = lastAnsweredIndex;
-      } else {
-        currentIndex = progress[mode].currentIndex || 0;
-      }
-      
-      // FIXED: Load exam time remaining
-      if (examMode && progress.exam && progress.exam.examTimeRemaining) {
-        examTimeRemaining = progress.exam.examTimeRemaining;
-        lastTimerUpdate = Date.now(); // Reset the last update time
-      }
-      
-      showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
-    }
-    window.savedProgress = null;
+  } else {
+    sessionTests = testsToUse.map((t) => {
+      const globalIndex = allTestsWithTopics.findIndex(
+        globalTest => globalTest.question === t.question
+      ).toString();
+
+      return {
+        id: globalIndex,
+        originalGlobalId: globalIndex,
+        question: t.question,
+        answers: t.answers.map(a => ({ ...a })),
+        selectedAnswers: [],
+        hasCorrectAnswer: false,
+        isAnswerCorrect: null
+      };
+    });
   }
-  
+
+// ==================== FIXED: LOAD SAVED PROGRESS ====================
+if (progressData && currentUser && !currentUser.isGuest) {
+  const mode = examMode ? 'exam' : 'normal';
+
+  console.log("Loading progress for mode:", mode);
+  console.log("Progress data:", progressData[mode]);
+
+  if (progressData[mode] && progressData[mode].answeredQuestions) {
+
+    // მონიშნე უკვე პასუხგაცემული კითხვები
+    sessionTests.forEach(test => {
+      const globalId = test.originalGlobalId;
+      if (globalId && progressData[mode].answeredQuestions[globalId]) {
+        const answerData = progressData[mode].answeredQuestions[globalId];
+        test.selectedAnswers = [answerData.selectedAnswer];
+        test.hasCorrectAnswer = answerData.isCorrect;
+        test.isAnswerCorrect = answerData.isCorrect;
+      }
+    });
+
+    // FIXED: გაგრძელების ადგილის განსაზღვრა - ვიპოვოთ პირველი უპასუხო კითხვა
+    const firstUnansweredIndex = sessionTests.findIndex(
+      t => !t.selectedAnswers || t.selectedAnswers.length === 0
+    );
+    
+    if (firstUnansweredIndex !== -1) {
+      // თუ არის უპასუხო კითხვა, დავიწყოთ მისგან
+      currentIndex = firstUnansweredIndex;
+      console.log(`Starting from first unanswered question: ${currentIndex + 1}`);
+    } else {
+      // თუ ყველა უპასუხია, დავრჩეთ ბოლოზე
+      currentIndex = sessionTests.length - 1;
+      console.log(`All questions answered, staying at last: ${currentIndex + 1}`);
+    }
+
+    // Exam timer-ის აღდგენა
+    if (examMode && progressData.exam && progressData.exam.examTimeRemaining) {
+      examTimeRemaining = progressData.exam.examTimeRemaining;
+      lastTimerUpdate = Date.now();
+    }
+
+    showNotification(`პროგრესი წარმატებით ჩაიტვირთა. გაგრძელდება ${currentIndex + 1} კითხვიდან`, false);
+  }
+
+  window.savedProgress = null;
+}
+
+  // ==================== SHUFFLING ====================
   if (shuffleQuestions && !examMode) {
     shuffleArray(sessionTests);
   }
@@ -5861,36 +5894,40 @@ if (examMode) {
   if (shuffleAnswers) {
     sessionTests.forEach(q => shuffleArray(q.answers));
   }
-  
+
+  // ==================== UI ====================
   optionsScreen.style.display = 'none';
   testScreen.classList.add('active');
-  
+
   if (selectedTopic && selectedTopic !== 'all') {
     timerElement.innerHTML = `
-      <span style="font-weight: 600; color: var(--accent);">${currentUser ? currentUser.username : 'სტუმარი'}</span>
+      <span style="font-weight: 600; color: var(--accent);">
+        ${currentUser ? currentUser.username : 'სტუმარი'}
+      </span>
       <span class="timer-separator">|</span>
       <span class="timer-time">${new Date().toLocaleTimeString('ka-GE')}</span>
       <br>
       <span class="timer-topic">თემა: ${selectedTopic}</span>
     `;
   }
-  
+
   if (examMode) {
     startExamMode();
   } else {
     normalModeContainer.classList.remove('hidden');
     examModeContainer.classList.add('hidden');
     examRightPanel.classList.add('hidden');
-    
+
     questionCounter.classList.remove('hidden');
     currentQuestionEl.textContent = currentIndex + 1;
     totalQuestionsEl.textContent = sessionTests.length;
-    
+
     timerElement.classList.remove('hidden');
   }
-  
+
   renderCurrentQuestion();
 }
+
 
 function renderCurrentQuestion() {
   if (!sessionTests.length) return;
@@ -6085,6 +6122,7 @@ function onAnswerSelected() {
   checkAllQuestionsAnswered();
 }
 
+// ==================== FIXED: AUTO SAVE PROGRESS ====================
 function autoSaveProgress() {
   if (!currentUser || currentUser.isGuest || !currentTestType) return;
   
@@ -6102,15 +6140,29 @@ function autoSaveProgress() {
     userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
   }
   
+  // FIXED: შევინახოთ მიმდინარე ინდექსი, არა global ID
+  // ეს საშუალებას მოგვცემს გავაგრძელოთ ზუსტად იმავე ადგილიდან
   userProgress[currentTestType][mode].currentIndex = currentIndex;
   
   if (examMode) {
-    // Save remaining time
     userProgress[currentTestType].exam.examTimeRemaining = examTimeRemaining;
   }
   
   saveUserProgress();
+  
+  console.log(`Progress saved: mode=${mode}, currentIndex=${currentIndex}`);
 }
+
+// ==================== FIND FIRST UNANSWERED QUESTION ====================
+function findFirstUnansweredQuestion(tests) {
+  for (let i = 0; i < tests.length; i++) {
+    if (!tests[i].selectedAnswers || tests[i].selectedAnswers.length === 0) {
+      return i;
+    }
+  }
+  return 0; // თუ ყველა უპასუხია, დავუბრუნდეთ პირველს
+}
+
 
 function updateAutoButton() {
   if (!autoBtn || !nextBtn) return;
@@ -6379,7 +6431,8 @@ function checkExistingProgress() {
 }
 
 
-// ==================== FIXED: SHOW PROGRESS RESUME MODAL WITH MODULE NAME ====================
+
+// ==================== SHOW PROGRESS RESUME MODAL ====================
 function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
   console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
   
@@ -6448,9 +6501,14 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   document.body.appendChild(modalOverlay);
   
-  // Event Listeners
+  // ==================== CONTINUE BUTTON ====================
   continueBtn.addEventListener('click', function() {
     modalOverlay.remove();
+    
+    console.log("Continue clicked. Progress object:", progress);
+    console.log("Selected module:", selectedModule);
+    
+    currentTestType = selectedModule;
     
     // Auto-select the appropriate mode
     const modeExam = document.getElementById('modeExam');
@@ -6458,20 +6516,36 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
     const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
     const modeShuffleAnswers = document.getElementById('modeShuffleAnswers');
     
-    // Determine last mode from progress
-    const lastNormalIndex = progress.normal?.currentIndex || 0;
-    const lastExamIndex = progress.exam?.currentIndex || 0;
+    // Set the test type to the selected module
+    const testTypeSelect = document.getElementById('testTypeSelect');
+    if (testTypeSelect) {
+      testTypeSelect.value = selectedModule;
+      toggleTopicsDropdown();
+    }
     
-    if (lastExamIndex > 0) {
-      // Last used exam mode
+    // Set topics to "all"
+    const topicsSelect = document.getElementById('topicsSelect');
+    if (topicsSelect) {
+      topicsSelect.value = 'all';
+      selectedTopic = null;
+    }
+    
+    // Determine which mode had progress
+    const hasNormalProgress = progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0;
+    const hasExamProgress = progress.exam && Object.keys(progress.exam.answeredQuestions || {}).length > 0;
+    
+    console.log("Has normal progress:", hasNormalProgress, "Has exam progress:", hasExamProgress);
+    
+    if (hasExamProgress && !hasNormalProgress) {
       if (modeExam) modeExam.checked = true;
       if (modeSequential) modeSequential.checked = false;
       if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
-      if (modeShuffleAnswers) modeShuffleAnswers.checked = true;
-    } else if (lastNormalIndex > 0) {
-      // Last used normal mode
+      if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
+      console.log("Selected exam mode");
+    } else {
       if (modeExam) modeExam.checked = false;
       if (modeSequential) modeSequential.checked = true;
+      console.log("Selected normal mode");
     }
     
     // Pass progress to startTest
@@ -6489,27 +6563,92 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
     showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
   });
   
+  // ==================== FIXED: RESTART BUTTON ====================
   restartBtn.addEventListener('click', function() {
     modalOverlay.remove();
     
-    // Clear the progress only for this specific module
-    if (currentUser && currentUser.username && selectedModule) {
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username] && users[currentUser.username].progress) {
-        // Reset only the selected module's progress
-        users[currentUser.username].progress[selectedModule] = {
-          normal: { answeredQuestions: {}, currentIndex: 0 },
-          exam: { answeredQuestions: {}, currentIndex: 0 },
-          wrongQuestions: []
-        };
-        localStorage.setItem('users', JSON.stringify(users));
-        userProgress = users[currentUser.username].progress;
+    console.log("Restart clicked. Clearing progress for module:", selectedModule);
+    
+    // წავშალოთ პროგრესი არჩეული მოდულისთვის
+    if (currentUser && currentUser.username && !currentUser.isGuest) {
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        if (users[currentUser.username] && users[currentUser.username].progress) {
+          if (users[currentUser.username].progress[selectedModule]) {
+            // გავასუფთავოთ მიმდინარე მოდული
+            users[currentUser.username].progress[selectedModule] = {
+              normal: { answeredQuestions: {}, currentIndex: 0 },
+              exam: { answeredQuestions: {}, currentIndex: 0 },
+              wrongQuestions: []
+            };
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            // განვაახლოთ userProgress ცვლადიც
+            userProgress[selectedModule] = {
+              normal: { answeredQuestions: {}, currentIndex: 0 },
+              exam: { answeredQuestions: {}, currentIndex: 0 },
+              wrongQuestions: []
+            };
+            
+            console.log("Progress cleared for module:", selectedModule);
+          }
+        }
+      } catch (error) {
+        console.error('Error clearing progress:', error);
       }
     }
     
-    showNotification('პროგრესი გასუფთავდა. დაიწყეთ თავიდან!', false);
+    // Auto-select the appropriate mode
+    const modeExam = document.getElementById('modeExam');
+    const modeSequential = document.getElementById('modeSequential');
+    const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
+    const modeShuffleAnswers = document.getElementById('modeShuffleAnswers');
+    
+    // Set the test type to the selected module
+    const testTypeSelect = document.getElementById('testTypeSelect');
+    if (testTypeSelect) {
+      testTypeSelect.value = selectedModule;
+      currentTestType = selectedModule;
+      toggleTopicsDropdown();
+    }
+    
+    // Set topics to "all"
+    const topicsSelect = document.getElementById('topicsSelect');
+    if (topicsSelect) {
+      topicsSelect.value = 'all';
+      selectedTopic = null;
+    }
+    
+    // Determine which mode had progress (for UI selection only)
+    const hasNormalProgress = progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0;
+    const hasExamProgress = progress.exam && Object.keys(progress.exam.answeredQuestions || {}).length > 0;
+    
+    if (hasExamProgress && !hasNormalProgress) {
+      if (modeExam) modeExam.checked = true;
+      if (modeSequential) modeSequential.checked = false;
+      if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
+      if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
+    } else {
+      if (modeExam) modeExam.checked = false;
+      if (modeSequential) modeSequential.checked = true;
+    }
+    
+    // FIXED: არ გადავცეთ progress
+    window.savedProgress = null;
+    
+    // Start test without progress
+    setTimeout(() => {
+      if (allTestsWithTopics.length > 0) {
+        startTest();
+      } else {
+        loadCSV();
+      }
+    }, 300);
+    
+    showNotification('პროგრესი გასუფთავდა. ტესტი იწყება პირველი კითხვიდან', false);
   });
   
+  // ==================== CLOSE BUTTON ====================
   closeBtn.addEventListener('click', function() {
     modalOverlay.remove();
   });
@@ -6583,6 +6722,7 @@ startBtn.addEventListener('click', function() {
   
   startTest();
 });
+
 
 // ==================== DOM CONTENT LOADED ====================
 window.addEventListener('DOMContentLoaded', () => {
