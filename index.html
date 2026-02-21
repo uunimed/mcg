@@ -5470,51 +5470,64 @@ function closeSettingsPage() {
   }
 }
 
+// ==================== FIXED: USER MENU EVENTS ====================
 function bindUserMenuEvents() {
   const usernameBtn = document.getElementById('usernameBtn');
   const userDropdown = document.getElementById('userDropdown');
   
   if (usernameBtn) {
-    usernameBtn.addEventListener('click', (e) => {
+    // Remove any existing event listeners to prevent duplicates
+    usernameBtn.replaceWith(usernameBtn.cloneNode(true));
+    const newUsernameBtn = document.getElementById('usernameBtn');
+    
+    newUsernameBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault(); // Prevent any default behavior
       userDropdown.classList.toggle('show');
     });
     
-    document.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
+      if (!newUsernameBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+        userDropdown.classList.remove('show');
+      }
+    });
+  }
+  
+  // Re-attach dropdown item events
+  const wrongQuestionsBtn = document.getElementById('wrongQuestionsBtn');
+  if (wrongQuestionsBtn) {
+    wrongQuestionsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startWrongQuestionsMode();
       userDropdown.classList.remove('show');
     });
   }
   
-  const changePasswordBtn = document.getElementById('changePasswordBtn');
-  if (changePasswordBtn) {
-    changePasswordBtn.addEventListener('click', () => {
-      showPasswordChangeModal();
+  const settingsBtn = document.getElementById('settingsBtn');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showSettingsPage();
       userDropdown.classList.remove('show');
     });
   }
   
-  document.getElementById('wrongQuestionsBtn').addEventListener('click', () => {
-    startWrongQuestionsMode();
-    userDropdown.classList.remove('show');
-  });
-  
-  document.getElementById('settingsBtn').addEventListener('click', () => {
-    showSettingsPage();
-    userDropdown.classList.remove('show');
-  });
-  
-  document.getElementById('signOutBtn').addEventListener('click', () => {
-    if (firebaseInitialized && auth) {
-      auth.signOut().then(() => {
+  const signOutBtn = document.getElementById('signOutBtn');
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (firebaseInitialized && auth) {
+        auth.signOut().then(() => {
+          location.reload();
+        }).catch((error) => {
+          console.error('Sign out error:', error);
+          location.reload();
+        });
+      } else {
         location.reload();
-      }).catch((error) => {
-        console.error('Sign out error:', error);
-        location.reload();
-      });
-    } else {
-      location.reload();
-    }
-  });
+      }
+    });
+  }
 }
 
 function checkAllQuestionsAnswered() {
