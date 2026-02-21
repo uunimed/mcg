@@ -5897,6 +5897,7 @@ if (currentUser && !currentUser.isGuest) {
 // ==================== FIXED: CHECK EXISTING PROGRESS - ONLY ONCE AND NOT IN EXAM MODE ====================
 let progressModalShown = false; // გლობალური ცვლადი, დაამატეთ სკრიპტის დასაწყისში
 
+// ==================== FIXED: CHECK EXISTING PROGRESS - ONLY ONCE AND NOT IN EXAM MODE ====================
 function checkExistingProgress() {
   // არ ვაჩვენოთ მოდალი, თუ უკვე ნაჩვენებია
   if (progressModalShown) {
@@ -6842,61 +6843,6 @@ function bindQuestionCounterEvent() {
     });
   });
 }
-
-// ==================== FIXED: CHECK EXISTING PROGRESS - ONLY IN NORMAL MODE ====================
-function checkExistingProgress() {
-  // არ ვაჩვენოთ მოდალი, თუ გამოცდის რეჟიმი აქტიურია
-  if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
-    console.log("Exam mode is active - skipping progress modal");
-    return;
-  }
-  
-  if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
-  
-  // მიმდინარე არჩეული მოდული
-  const testTypeSelect = document.getElementById('testTypeSelect');
-  if (!testTypeSelect || testTypeSelect.value === '') return;
-  
-  const selectedModule = testTypeSelect.value;
-  console.log("Checking progress for module:", selectedModule);
-  
-  // შევამოწმოთ არჩეული მოდულის პროგრესი
-  const progress = userProgress[selectedModule];
-  if (!progress) return;
-  
-  const hasNormalProgress = progress.normal && 
-                           Object.keys(progress.normal.answeredQuestions || {}).length > 0;
-  const hasExamProgress = progress.exam && 
-                         Object.keys(progress.exam.answeredQuestions || {}).length > 0;
-  
-  if (!hasNormalProgress && !hasExamProgress) return;
-  
-  // გამოვთვალოთ გაკეთებული ტესტების რაოდენობა
-  const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
-  const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
-  const totalAnswered = normalCount + examCount;
-  
-  // მოდულის სახელი ადამიანურად გასაგებად
-  let moduleDisplayName = '';
-  switch(selectedModule) {
-    case 'rezidentura':
-      moduleDisplayName = 'რეზიდენტურა';
-      break;
-    case 'internalMedicine':
-      moduleDisplayName = 'შინაგანი მედიცინა';
-      break;
-    case 'pathology':
-      moduleDisplayName = 'პათოლოგია';
-      break;
-    default:
-      moduleDisplayName = selectedModule;
-  }
-  
-  // გამოვიძახოთ მოდალი შესაბამისი ინფორმაციით
-  showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
-}
-
-
 
 // ==================== SHOW PROGRESS RESUME MODAL ====================
 function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
