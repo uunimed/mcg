@@ -2893,6 +2893,7 @@ body {
 // ==================== FIREBASE INITIALIZATION ====================
 let database = null;
 let firebaseInitialized = false;
+let firebaseSyncEnabled = false;
 
 try {
   const firebaseConfig = {
@@ -2912,10 +2913,72 @@ try {
     }
     database = firebase.database();
     firebaseInitialized = true;
+    firebaseSyncEnabled = true;
     console.log("Firebase initialized successfully");
   }
 } catch (error) {
   console.warn("Firebase initialization failed, chat will work in local mode:", error);
+  firebaseSyncEnabled = false;
+}
+
+// ==================== GLOBAL SYNC FUNCTIONS ====================
+function saveUserToFirebase(username, userData) {
+  if (!firebaseSyncEnabled || !database || !username) return Promise.resolve(false);
+  
+  return database.ref('users/' + username.replace(/[.#$[\]]/g, '_')).set({
+    username: username,
+    password: userData.password,
+    progress: userData.progress || {},
+    lastUpdated: Date.now()
+  }).then(() => {
+    console.log('User data saved to Firebase:', username);
+    return true;
+  }).catch(error => {
+    console.error('Error saving user to Firebase:', error);
+    return false;
+  });
+}
+
+function loadUserFromFirebase(username) {
+  if (!firebaseSyncEnabled || !database || !username) return Promise.resolve(null);
+  
+  return database.ref('users/' + username.replace(/[.#$[\]]/g, '_')).once('value').then(snapshot => {
+    if (snapshot.exists()) {
+      console.log('User data loaded from Firebase:', username);
+      return snapshot.val();
+    }
+    return null;
+  }).catch(error => {
+    console.error('Error loading user from Firebase:', error);
+    return null;
+  });
+}
+
+async function syncUserWithFirebase(username, localUserData) {
+  if (!firebaseSyncEnabled || !database || !username) return localUserData;
+  
+  try {
+    const firebaseUserData = await loadUserFromFirebase(username);
+    
+    if (!firebaseUserData) {
+      await saveUserToFirebase(username, localUserData);
+      return localUserData;
+    }
+    
+    const localLastUpdated = localUserData.lastUpdated || 0;
+    const firebaseLastUpdated = firebaseUserData.lastUpdated || 0;
+    
+    if (firebaseLastUpdated > localLastUpdated) {
+      console.log('Using Firebase data (newer)');
+      return firebaseUserData;
+    } else {
+      await saveUserToFirebase(username, localUserData);
+      return localUserData;
+    }
+  } catch (error) {
+    console.error('Error syncing user with Firebase:', error);
+    return localUserData;
+  }
 }
 
 // ==================== ENHANCED USER MANAGEMENT ====================
@@ -2923,8 +2986,8 @@ let currentUser = null;
 let currentTestType = null;
 let userProgress = {
   rezidentura: {
-    normal: {},
-    exam: {},
+    normal: { answeredQuestions: {}, currentIndex: 0 },
+    exam: { answeredQuestions: {}, currentIndex: 0 },
     wrongQuestions: []
   }
 };
@@ -2943,7 +3006,7 @@ let availableTopics = new Set();
 let selectedTopic = null;
 let lastTimerUpdate = Date.now();
 let isWrongQuestionsMode = false;
-
+let progressModalShown = false;
 
 // ==================== CHAT FUNCTIONS ====================
 let chatMessages = [];
@@ -2957,14 +3020,14 @@ let isChatOpen = false;
 let lastSeenMessageTime = parseInt(localStorage.getItem('lastSeenMessageTime')) || Date.now();
 let allMessagesLoaded = false;
 
-if (!userId) {  userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+if (!userId) {
+  userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   localStorage.setItem('chatUserId', userId);
 }
 
 if (!localStorage.getItem('chatUserName')) {
   localStorage.setItem('chatUserName', userName);
 }
-
 
 // ==================== DOM ELEMENTS ====================
 const optionsScreen = document.getElementById('optionsScreen');
@@ -2982,7 +3045,7 @@ const currentQuestionEl = document.getElementById('currentQuestion');
 const totalQuestionsEl = document.getElementById('totalQuestions');
 const loaderOverlay = document.getElementById('loaderOverlay');
 
-// Chat elements - will be assigned in DOMContentLoaded
+// Chat elements
 let chatButton, chatWindow, closeChat, chatMessagesEl, onlineCount, chatInput, sendBtn;
 
 const modeSequential = document.getElementById('modeSequential');
@@ -2996,22 +3059,25 @@ const examQuestionText = document.getElementById('examQuestionText');
 const examAnswersContainer = document.getElementById('examAnswersContainer');
 const examFeedback = document.getElementById('examFeedback');
 
-// Navigation button declarations
 let prevBtn, nextBtn, autoBtn;
 let examPrevBtn, examNextBtn, examAutoBtn, examFinishBtn;
 let detailedResultsModal = document.getElementById('detailedResultsModal');
 let detailedResultsContent = document.getElementById('detailedResultsContent');
 
-
 // ==================== USER PROGRESS FUNCTIONS ====================
-function saveUserProgress() {
-  if (currentUser && currentUser.username && currentTestType && !currentUser.isGuest) {
+async function saveUserProgress() {
+  if (currentUser && currentUser.username && !currentUser.isGuest) {
     try {
       const users = JSON.parse(localStorage.getItem('users') || '{}');
       if (users[currentUser.username]) {
         users[currentUser.username].progress = userProgress;
+        users[currentUser.username].lastUpdated = Date.now();
         localStorage.setItem('users', JSON.stringify(users));
-        console.log('Progress saved for', currentUser.username);
+        console.log('Progress saved locally for', currentUser.username);
+        
+        if (firebaseSyncEnabled && database) {
+          await saveUserToFirebase(currentUser.username, users[currentUser.username]);
+        }
       }
     } catch (error) {
       console.error('Error saving user progress:', error);
@@ -3019,14 +3085,35 @@ function saveUserProgress() {
   }
 }
 
-function loadUserProgress() {
+async function loadUserProgress() {
   if (currentUser && currentUser.username) {
     try {
       const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username] && users[currentUser.username].progress) {
-        userProgress = users[currentUser.username].progress;
-        console.log('Progress loaded for', currentUser.username);
-        console.log('Progress data:', JSON.stringify(userProgress, null, 2));
+      let localUserData = users[currentUser.username] || null;
+      
+      if (localUserData && localUserData.progress) {
+        userProgress = localUserData.progress;
+        console.log('Progress loaded locally for', currentUser.username);
+      }
+      
+      if (firebaseSyncEnabled && database) {
+        const syncedUserData = await syncUserWithFirebase(currentUser.username, localUserData || { 
+          password: '', 
+          progress: userProgress,
+          lastUpdated: Date.now()
+        });
+        
+        if (syncedUserData && syncedUserData.progress) {
+          userProgress = syncedUserData.progress;
+          
+          if (users[currentUser.username]) {
+            users[currentUser.username].progress = syncedUserData.progress;
+            users[currentUser.username].lastUpdated = syncedUserData.lastUpdated || Date.now();
+            localStorage.setItem('users', JSON.stringify(users));
+          }
+          
+          console.log('Progress synced from Firebase for', currentUser.username);
+        }
       }
     } catch (error) {
       console.error('Error loading user progress:', error);
@@ -3034,13 +3121,12 @@ function loadUserProgress() {
   }
 }
 
-// ==================== FIXED: UPDATE USER PROGRESS - EXAM MODE DOESN'T AFFECT WRONG QUESTIONS ====================
+// ==================== FIXED: UPDATE USER PROGRESS ====================
 function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = false) {
   if (!currentUser || currentUser.isGuest || !currentTestType) return;
   
   const mode = isExamMode ? 'exam' : 'normal';
   
-  // Initialize user progress structure if needed
   if (!userProgress[currentTestType]) {
     userProgress[currentTestType] = {
       normal: { answeredQuestions: {}, currentIndex: 0 },
@@ -3057,18 +3143,13 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     userProgress[currentTestType].wrongQuestions = [];
   }
   
-  // Find the original global question ID
   let globalQuestionId = questionId;
   
-  // If we're in a topic-specific session (sessionTests length < allTestsWithTopics length)
-  // and we have the original question data with source index
   if (sessionTests && sessionTests.length > 0 && sessionTests.length < allTestsWithTopics.length) {
     const currentQuestion = sessionTests[currentIndex];
-    // Check if we have stored the original global index
     if (currentQuestion && currentQuestion.originalGlobalId !== undefined) {
       globalQuestionId = currentQuestion.originalGlobalId;
     } else {
-      // Alternative: try to find the question in allTestsWithTopics by matching content
       const matchingGlobalIndex = allTestsWithTopics.findIndex(
         (test, idx) => test.question === currentQuestion.question
       );
@@ -3080,52 +3161,37 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
   
   console.log(`Updating progress: session question ID ${questionId} -> global ID ${globalQuestionId}, correct: ${isCorrect}, exam mode: ${isExamMode}`);
   
-  // Check if this question has been answered before in this session
   const previousAnswer = userProgress[currentTestType][mode].answeredQuestions[globalQuestionId];
   const hasPreviousAnswer = previousAnswer !== undefined;
   
-  // Save the answer using GLOBAL question ID
   userProgress[currentTestType][mode].answeredQuestions[globalQuestionId] = {
     selectedAnswer: selectedAnswer,
     isCorrect: isCorrect,
     timestamp: Date.now()
   };
   
-  // ========== FIX: EXAM MODE DOESN'T AFFECT WRONG QUESTIONS ==========
-  // Only update wrongQuestions array if we're NOT in exam mode
   if (!isExamMode) {
-    // Manage wrongQuestions array using GLOBAL question ID
     const wrongQuestions = userProgress[currentTestType].wrongQuestions;
     const questionIndex = wrongQuestions.indexOf(globalQuestionId);
     
     if (!isCorrect) {
-      // If answer is incorrect, ALWAYS add to wrongQuestions (regardless of previous answers)
       if (questionIndex === -1) {
         wrongQuestions.push(globalQuestionId);
         console.log(`Question ${globalQuestionId} added to wrong questions (incorrect answer)`);
       }
     } else {
-      // If answer is correct:
-      // IMPORTANT: Only remove from wrongQuestions if this is the FIRST time answering this question
-      // AND the answer is correct. If there was a previous incorrect answer, keep it in wrongQuestions.
       if (!hasPreviousAnswer) {
-        // This is the first attempt and it's correct - remove from wrongQuestions if present
         if (questionIndex !== -1) {
           wrongQuestions.splice(questionIndex, 1);
           console.log(`Question ${globalQuestionId} removed from wrong questions (first attempt correct)`);
         }
       } else {
-        // This is not the first attempt - there was a previous answer
-        // Check if the previous answer was incorrect
         if (previousAnswer && !previousAnswer.isCorrect) {
-          // If previously answered incorrectly, keep in wrongQuestions even if now correct
-          // Only add if not already in the list
           if (questionIndex === -1) {
             wrongQuestions.push(globalQuestionId);
             console.log(`Question ${globalQuestionId} kept in wrong questions (had previous incorrect attempt)`);
           }
         } else if (questionIndex !== -1) {
-          // If previous answer was correct but somehow still in wrongQuestions, remove it
           wrongQuestions.splice(questionIndex, 1);
         }
       }
@@ -3136,7 +3202,6 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
   
   saveUserProgress();
   
-  // Check if we're in wrong questions mode and all wrong questions are gone
   if (isWrongQuestionsMode && !isExamMode) {
     setTimeout(() => {
       if (sessionTests.length > 0 && getWrongQuestions().length === 0) {
@@ -3146,16 +3211,13 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
   }
 }
 
-// ==================== FIXED: CHECK IF WRONG QUESTIONS ARE EXHAUSTED ====================
 function checkWrongQuestionsExhausted() {
   if (!currentUser || currentUser.isGuest || !currentTestType) return false;
   
-  // მხოლოდ მაშინ შევამოწმოთ, თუ რეალურად ვართ შეცდომების რეჟიმში
   if (!isWrongQuestionsMode) return false;
   
   const wrongQuestions = getWrongQuestions();
   
-  // If there are no wrong questions left, show the modal
   if (wrongQuestions.length === 0) {
     showWrongQuestionsExhaustedModal();
     return true;
@@ -3163,46 +3225,38 @@ function checkWrongQuestionsExhausted() {
   
   return false;
 }
-// ==================== SIMPLIFIED: DIRECT RETURN TO MAIN PAGE ====================
+
 function showWrongQuestionsExhaustedModal() {
-  console.log("showWrongQuestionsExhaustedModal called!"); // Debug log
+  console.log("showWrongQuestionsExhaustedModal called!");
   
-  // Show notification
   showNotification('კითხვები ამოიწურა. ბრუნდებით მთავარ გვერდზე!', false);
   
-  // Directly return to main page after a short delay
   setTimeout(() => {
     returnToMainPage();
   }, 1500);
 }
 
 function returnToMainPage() {
-  console.log("Returning to main page..."); // Debug log
+  console.log("Returning to main page...");
   
-  // Reset all test-related variables
   sessionTests = [];
   currentIndex = 0;
   autoMode = false;
   examMode = false;
-  isWrongQuestionsMode = false; // გადატვირთეთ რეჟიმი
+  isWrongQuestionsMode = false;
   
-  // Hide test screen and show options screen
   testScreen.classList.remove('active');
   optionsScreen.style.display = 'block';
   
-  // Hide all mode containers
   normalModeContainer.classList.add('hidden');
   examModeContainer.classList.add('hidden');
   examRightPanel.classList.add('hidden');
   questionCounter.classList.add('hidden');
   
-  // Show timer
   timerElement.classList.remove('hidden');
   
-  // Reset timer display
   updateTimerDisplay();
   
-  // Show notification
   showNotification('აირჩიეთ მოდული', false);
 }
 
@@ -3211,7 +3265,6 @@ function getWrongQuestions() {
   return userProgress[currentTestType]?.wrongQuestions || [];
 }
 
-// ==================== FIXED: WRONG QUESTIONS MODE ====================
 function startWrongQuestionsMode() {
   if (!currentUser || currentUser.isGuest) {
     showNotification('მხოლოდ რეგისტრირებულ მომხმარებლებს შეუძლიათ შეცდომების გაკეთება');
@@ -3233,12 +3286,10 @@ function startWrongQuestionsMode() {
     return;
   }
   
-  // მონიშნეთ, რომ ვართ შეცდომების რეჟიმში
   isWrongQuestionsMode = true;
   
-  // FIXED: Store original IDs to maintain correct tracking
   sessionTests = wrongTests.map((t, idx) => ({ 
-    id: wrongQuestions[idx], // Use the original question ID, not the index
+    id: wrongQuestions[idx],
     originalId: wrongQuestions[idx],
     question: t.question, 
     answers: t.answers.map(a => ({...a})),
@@ -3365,8 +3416,8 @@ function initAuth() {
   });
 }
 
-// ==================== FIXED: HANDLE LOGIN WITH IMMEDIATE PROGRESS CHECK ====================
-function handleLogin() {
+// ==================== FIXED: HANDLE LOGIN ====================
+async function handleLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
   
@@ -3379,7 +3430,6 @@ function handleLogin() {
     return;
   }
   
-  // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
   const nameParts = username.split(/\s+/);
   if (nameParts.length < 2) {
     document.getElementById('loginUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელიც და გვარიც';
@@ -3394,17 +3444,35 @@ function handleLogin() {
   }
   
   try {
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    let users = JSON.parse(localStorage.getItem('users') || '{}');
+    let userFound = false;
     
-    if (!users[username]) {
-      document.getElementById('loginUsernameError').textContent = 'ასეთი მომხმარებელი არ არსებობს';
-      document.getElementById('loginUsernameError').style.display = 'block';
-      return;
+    if (users[username] && users[username].password === password) {
+      userFound = true;
+    } else {
+      if (firebaseSyncEnabled && database) {
+        const firebaseUser = await loadUserFromFirebase(username);
+        if (firebaseUser && firebaseUser.password === password) {
+          users[username] = {
+            password: firebaseUser.password,
+            progress: firebaseUser.progress || {
+              rezidentura: {
+                normal: { answeredQuestions: {}, currentIndex: 0 },
+                exam: { answeredQuestions: {}, currentIndex: 0 },
+                wrongQuestions: []
+              }
+            },
+            lastUpdated: firebaseUser.lastUpdated || Date.now()
+          };
+          localStorage.setItem('users', JSON.stringify(users));
+          userFound = true;
+        }
+      }
     }
     
-    if (users[username].password !== password) {
-      document.getElementById('loginPasswordError').textContent = 'პაროლი არასწორია';
-      document.getElementById('loginPasswordError').style.display = 'block';
+    if (!userFound) {
+      document.getElementById('loginUsernameError').textContent = 'მომხმარებელი ან პაროლი არასწორია';
+      document.getElementById('loginUsernameError').style.display = 'block';
       return;
     }
     
@@ -3413,7 +3481,7 @@ function handleLogin() {
       isGuest: false
     };
     
-    loadUserProgress();
+    await loadUserProgress();
     
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
@@ -3427,32 +3495,25 @@ function handleLogin() {
     
     showNotification('მოგესალმებით!', false);
     
-    // FIXED: Check for existing progress IMMEDIATELY, before CSV loads
-    // We'll store a flag that progress was checked
-// FIXED: Check for existing progress IMMEDIATELY, before CSV loads
-const hasProgress = userProgress && Object.keys(userProgress).length > 0 && 
-                   (Object.keys(userProgress.rezidentura?.normal?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.rezidentura?.exam?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.internalMedicine?.normal?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.internalMedicine?.exam?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.pathology?.normal?.answeredQuestions || {}).length > 0 ||
-                    Object.keys(userProgress.pathology?.exam?.answeredQuestions || {}).length > 0);
+    const hasProgress = userProgress && Object.keys(userProgress).length > 0 && 
+                       (Object.keys(userProgress.rezidentura?.normal?.answeredQuestions || {}).length > 0 ||
+                        Object.keys(userProgress.rezidentura?.exam?.answeredQuestions || {}).length > 0 ||
+                        Object.keys(userProgress.internalMedicine?.normal?.answeredQuestions || {}).length > 0 ||
+                        Object.keys(userProgress.internalMedicine?.exam?.answeredQuestions || {}).length > 0 ||
+                        Object.keys(userProgress.pathology?.normal?.answeredQuestions || {}).length > 0 ||
+                        Object.keys(userProgress.pathology?.exam?.answeredQuestions || {}).length > 0);
     
     if (hasProgress) {
-      // Store progress to show modal after CSV loads
       window.pendingProgressCheck = true;
     }
     if (allTests.length === 0) {
       loadCSV();
     } else {
       startBtn.disabled = false;
-      // Check progress now since CSV is already loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი
       setTimeout(() => {
         const examModeCheckbox = document.getElementById('modeExam');
         if (!examModeCheckbox || !examModeCheckbox.checked) {
           checkExistingProgress();
-        } else {
-          console.log("Exam mode is checked - skipping progress modal on login");
         }
       }, 500);
     }
@@ -3467,7 +3528,7 @@ const hasProgress = userProgress && Object.keys(userProgress).length > 0 &&
   }
 }
 
-function handleSignup() {
+async function handleSignup() {
   const username = document.getElementById('signupUsername').value.trim();
   const password = document.getElementById('signupPassword').value;
   const confirmPassword = document.getElementById('signupConfirmPassword').value;
@@ -3482,7 +3543,6 @@ function handleSignup() {
     return;
   }
   
-  // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
   const nameParts = username.split(/\s+/);
   if (nameParts.length < 2) {
     document.getElementById('signupUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელი და გვარი';
@@ -3490,8 +3550,6 @@ function handleSignup() {
     return;
   }
   
-  // დავუშვათ მოკლე სახელებიც (თუნდაც 1 ასო), მთავარია იყოს ორი სიტყვა
-  // რეგექსი იძლევა ქართული, ინგლისური ასოების, ციფრების და სფეისების გამოყენების საშუალებას
   if (/[^a-zA-Z0-9ა-ჰ\s]/.test(username)) {
     document.getElementById('signupUsernameError').textContent = 'სახელი და გვარი უნდა შეიცავდეს მხოლოდ ასოებს, ციფრებს, ქართულ ასოებს და სფეისებს';
     document.getElementById('signupUsernameError').style.display = 'block';
@@ -3531,6 +3589,15 @@ function handleSignup() {
       return;
     }
     
+    if (firebaseSyncEnabled && database) {
+      const firebaseUser = await loadUserFromFirebase(username);
+      if (firebaseUser) {
+        document.getElementById('signupUsernameError').textContent = 'მსგავსი მომხმარებელი უკვე არსებობს (გლობალურად)';
+        document.getElementById('signupUsernameError').style.display = 'block';
+        return;
+      }
+    }
+    
     users[username] = {
       password: password,
       progress: {
@@ -3539,10 +3606,15 @@ function handleSignup() {
           exam: { answeredQuestions: {}, currentIndex: 0 },
           wrongQuestions: []
         }
-      }
+      },
+      lastUpdated: Date.now()
     };
     
     localStorage.setItem('users', JSON.stringify(users));
+    
+    if (firebaseSyncEnabled && database) {
+      await saveUserToFirebase(username, users[username]);
+    }
     
     document.getElementById('signupUsername').value = '';
     document.getElementById('signupPassword').value = '';
@@ -3569,9 +3641,9 @@ function handleSignup() {
     showNotification('შეცდომა რეგისტრაციის დროს. სცადეთ მოგვიანებით');
   }
 }
-// ==================== FIXED: SHOW PASSWORD MODAL WITH FIELD-SPECIFIC ERRORS ====================
+
+// ==================== SHOW PASSWORD CHANGE MODAL ====================
 function showPasswordChangeModal() {
-  // წავშალოთ არსებული მოდალი თუ არსებობს
   const existingModal = document.querySelector('.modal-overlay');
   if (existingModal) {
     existingModal.remove();
@@ -3585,18 +3657,15 @@ function showPasswordChangeModal() {
   modal.className = 'modal';
   modal.style.cssText = 'background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
   
-  // Modal Header
   const header = document.createElement('div');
   header.className = 'modal-header';
   header.style.cssText = 'font-size: 24px; font-weight: 600; color: #1e293b; margin-bottom: 20px; text-align: center;';
   header.textContent = 'პაროლის შეცვლა';
   
-  // Modal Content
   const content = document.createElement('div');
   content.className = 'modal-content';
   content.style.cssText = 'margin-bottom: 20px;';
   
-  // Current Password Field with its own error
   const currentPassDiv = document.createElement('div');
   currentPassDiv.style.marginBottom = '20px';
   
@@ -3614,7 +3683,6 @@ function showPasswordChangeModal() {
   currentPassDiv.appendChild(currentPassInput);
   currentPassDiv.appendChild(currentPassError);
   
-  // New Password Field with its own error
   const newPassDiv = document.createElement('div');
   newPassDiv.style.marginBottom = '20px';
   
@@ -3632,7 +3700,6 @@ function showPasswordChangeModal() {
   newPassDiv.appendChild(newPassInput);
   newPassDiv.appendChild(newPassError);
   
-  // Confirm Password Field with its own error
   const confirmPassDiv = document.createElement('div');
   confirmPassDiv.style.marginBottom = '20px';
   
@@ -3650,12 +3717,10 @@ function showPasswordChangeModal() {
   confirmPassDiv.appendChild(confirmPassInput);
   confirmPassDiv.appendChild(confirmPassError);
   
-  // Add all fields to content
   content.appendChild(currentPassDiv);
   content.appendChild(newPassDiv);
   content.appendChild(confirmPassDiv);
   
-  // Modal Buttons
   const buttons = document.createElement('div');
   buttons.className = 'modal-buttons';
   buttons.style.cssText = 'display: flex; gap: 15px; justify-content: center;';
@@ -3682,14 +3747,12 @@ function showPasswordChangeModal() {
   
   document.body.appendChild(modalOverlay);
   
-  // Function to hide all errors
   const hideAllErrors = () => {
     currentPassError.style.display = 'none';
     newPassError.style.display = 'none';
     confirmPassError.style.display = 'none';
   };
   
-  // Add event listeners
   saveBtn.addEventListener('click', () => {
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
@@ -3738,7 +3801,6 @@ function showPasswordChangeModal() {
       users[currentUser.username].password = newPassword;
       localStorage.setItem('users', JSON.stringify(users));
       
-      // Close modal and show success
       modalOverlay.remove();
       showNotification('პაროლი წარმატებით შეიცვალა', false);
     } catch (error) {
@@ -3752,7 +3814,6 @@ function showPasswordChangeModal() {
     modalOverlay.remove();
   });
   
-  // Close on overlay click
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) {
       modalOverlay.remove();
@@ -3761,7 +3822,6 @@ function showPasswordChangeModal() {
 }
 
 function showContinueOrRestartModal(progress) {
-  // წავშალოთ არსებული მოდალი თუ არსებობს
   const existingModal = document.querySelector('.modal-overlay[data-type="continue"]');
   if (existingModal) existingModal.remove();
   
@@ -3809,10 +3869,8 @@ function showContinueOrRestartModal(progress) {
   document.body.appendChild(modalContainer.firstChild);
   
   document.getElementById('continueProgressBtn').addEventListener('click', () => {
-    // ავტომატურად ჩავრთოთ შესაბამისი რეჟიმი და გავაგრძელოთ
     modalContainer.remove();
     
-    // თუ ორივე რეჟიმშია პროგრესი, ვკითხოთ რომელი გააგრძელოს
     if (hasNormal && hasExam) {
       chooseModeToContinue(progress);
     } else if (hasNormal) {
@@ -3823,7 +3881,6 @@ function showContinueOrRestartModal(progress) {
   });
   
   document.getElementById('restartProgressBtn').addEventListener('click', () => {
-    // წავშალოთ პროგრესი და დავიწყოთ თავიდან
     if (currentUser && currentUser.username) {
       const users = JSON.parse(localStorage.getItem('users') || '{}');
       if (users[currentUser.username] && users[currentUser.username].progress) {
@@ -3892,7 +3949,6 @@ function chooseModeToContinue(progress) {
 }
 
 function startSavedProgress(mode, progress) {
-  // ჩავრთოთ შესაბამისი ჩეკბოქსები
   const modeExam = document.getElementById('modeExam');
   const modeSequential = document.getElementById('modeSequential');
   const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
@@ -3902,13 +3958,12 @@ function startSavedProgress(mode, progress) {
     if (modeExam) modeExam.checked = true;
     if (modeSequential) modeSequential.checked = false;
     if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
-    if (modeShuffleAnswers) modeShuffleAnswers.checked = true;
+    if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
   } else {
     if (modeExam) modeExam.checked = false;
     if (modeSequential) modeSequential.checked = true;
   }
   
-  // ავირჩიოთ რეზიდენტურის მოდული
   const testTypeSelect = document.getElementById('testTypeSelect');
   if (testTypeSelect) {
     testTypeSelect.value = 'rezidentura';
@@ -3916,17 +3971,14 @@ function startSavedProgress(mode, progress) {
     toggleTopicsDropdown();
   }
   
-  // ავირჩიოთ ყველა თემა
   const topicsSelect = document.getElementById('topicsSelect');
   if (topicsSelect) {
     topicsSelect.value = 'all';
     selectedTopic = null;
   }
   
-  // გადავცეთ პროგრესი
   window.savedProgress = progress;
   
-  // დავიწყოთ ტესტი
   setTimeout(() => {
     if (allTestsWithTopics.length > 0) {
       startTest();
@@ -3953,11 +4005,10 @@ function initChat() {
     localStorage.setItem('chatUserName', userName);
   }
   
-  // აღვადგინოთ unreadMessagesCount 0-ზე, რადგან ახლა ვტვირთავთ გვერდს
   unreadMessagesCount = 0;
   updateChatNotification();
   
-  if (firebaseInitialized && database) {
+  if (firebaseSyncEnabled && database) {
     console.log("Setting up Firebase chat...");
     setupFirebaseListeners();
   } else {
@@ -3978,7 +4029,6 @@ function initChat() {
     chatWindow.classList.toggle('active');
     if (chatWindow.classList.contains('active')) {
       isChatOpen = true;
-      // როცა ჩატს ვხსნით, ყველა წაკითხულად ჩაითვლება
       markAllMessagesAsRead();
       chatInput.focus();
       
@@ -4005,17 +4055,14 @@ function initChat() {
 function markAllMessagesAsRead() {
   unreadMessagesCount = 0;
   updateChatNotification();
-  // შევინახოთ მიმდინარე დრო, როგორც ბოლო ნანახი წერილის დრო
   lastSeenMessageTime = Date.now();
   localStorage.setItem('lastSeenMessageTime', lastSeenMessageTime.toString());
 }
-
 
 function setupFirebaseListeners() {
   try {
     displayedMessageKeys.clear();
     
-    // ჯერ ჩავტვირთოთ ბოლო 50 წერილი
     database.ref('chat/messages').limitToLast(50).once('value').then((snapshot) => {
       if (snapshot.exists()) {
         const messages = [];
@@ -4032,17 +4079,13 @@ function setupFirebaseListeners() {
           displayedMessageKeys.add(msg.key);
           const isMyMessage = msg.userId === userId;
           
-          // დავამატოთ წერილი ჩატში
           addMessageToChat(msg.author, msg.text, isMyMessage, new Date(msg.timestamp));
           
-          // განვაახლოთ unreadMessagesCount - მხოლოდ იმ წერილებისთვის, რომლებიც უფრო გვიანია ვიდრე lastSeenMessageTime
-          // და არ არის ჩემი საკუთარი წერილი
           if (!isMyMessage && msg.timestamp > lastSeenMessageTime) {
             unreadMessagesCount++;
           }
         });
         
-        // განვაახლოთ ნოტიფიკაცია
         updateChatNotification();
         
         setTimeout(() => {
@@ -4058,12 +4101,10 @@ function setupFirebaseListeners() {
       loadLocalMessagesAsFallback();
     });
     
-    // მოვუსმინოთ ახალ წერილებს
     database.ref('chat/messages').orderByKey().limitToLast(1).on('child_added', (snapshot) => {
       const message = snapshot.val();
       const messageKey = snapshot.key;
       
-      // თუ უკვე გვაქვს ეს წერილი, გამოვტოვოთ
       if (displayedMessageKeys.has(messageKey)) {
         return;
       }
@@ -4074,10 +4115,8 @@ function setupFirebaseListeners() {
       if (!isMyMessage) {
         const messageTime = message.timestamp || Date.now();
         
-        // დავამატოთ წერილი ჩატში
         addMessageToChat(message.author, message.text, false, new Date(messageTime));
         
-        // თუ ჩატი არ არის გახსნილი და წერილი ახალია (უფრო გვიანი ვიდრე lastSeenMessageTime)
         if (!isChatOpen && messageTime > lastSeenMessageTime) {
           unreadMessagesCount++;
           updateChatNotification();
@@ -4139,9 +4178,8 @@ function loadLocalMessagesAsFallback() {
   }
 }
 
-
 function setUserOnline() {
-  if (!firebaseInitialized || !database) return;
+  if (!firebaseSyncEnabled || !database) return;
   
   try {
     const userRef = database.ref('chat/onlineUsers/' + userId);
@@ -4173,13 +4211,13 @@ function setUserOnline() {
     isOnline = true;
     
     setInterval(() => {
-      if (isOnline && firebaseInitialized) {
+      if (isOnline && firebaseSyncEnabled) {
         userRef.update({ lastSeen: Date.now() });
       }
     }, 10000);
     
     window.addEventListener('beforeunload', () => {
-      if (firebaseInitialized) {
+      if (firebaseSyncEnabled) {
         userRef.remove();
       }
       isOnline = false;
@@ -4217,7 +4255,7 @@ function sendMessageToFirebase() {
   
   saveMessageToLocalStorage(messageData);
   
-  if (firebaseInitialized && database) {
+  if (firebaseSyncEnabled && database) {
     const newMessageRef = database.ref('chat/messages').push();
     const messageKey = newMessageRef.key;
     
@@ -4270,7 +4308,6 @@ function addMessageToChat(author, message, isSent, timestamp) {
   
   chatMessagesEl.appendChild(messageDiv);
   
-  // განვაახლოთ lastSeenMessageTime, თუ წერილი ჩემია
   if (isSent) {
     lastSeenMessageTime = Math.max(lastSeenMessageTime, timestamp.getTime());
     localStorage.setItem('lastSeenMessageTime', lastSeenMessageTime.toString());
@@ -4301,7 +4338,6 @@ function updateChatNotification() {
   }
 }
 
-
 // ==================== TOPIC FUNCTIONS ====================
 function toggleTopicsDropdown() {
   const testTypeSelect = document.getElementById('testTypeSelect');
@@ -4328,7 +4364,6 @@ function bindTestTypeEvents() {
       if (startBtn) {
         startBtn.disabled = !this.value;
       }
-      // ჩატვირთეთ ახალი ტესტები ტიპის შეცვლისას
       if (this.value && allTests.length > 0) {
         loadCSV();
       }
@@ -4400,7 +4435,6 @@ function updateTimer() {
 function updateExamTimer() {
   if (!examMode) return;
   
-  // Calculate actual elapsed time
   const now = Date.now();
   const elapsed = Math.floor((now - lastTimerUpdate) / 1000);
   
@@ -4454,7 +4488,6 @@ function createExamTestBoxes() {
 function startExamMode() {
   examMode = true;
   
-  // Reset timer when starting new exam
   if (!window.savedProgress || !window.savedProgress.exam?.examTimeRemaining) {
     examTimeRemaining = 3 * 60 * 60;
   }
@@ -4469,23 +4502,20 @@ function startExamMode() {
   
   createExamTestBoxes();
   
-  // Clear any existing interval
   if (examTimerInterval) {
     clearInterval(examTimerInterval);
     examTimerInterval = null;
   }
   
-  // Start new interval
   examTimerInterval = setInterval(updateExamTimer, 1000);
-  updateExamTimer(); // Immediate update
+  updateExamTimer();
   
-  // FIXED: Ensure finish button is visible in exam mode
   if (examFinishBtn) {
     examFinishBtn.style.display = 'flex';
   }
 }
 
-// ==================== FIXED: SETTINGS PAGE - 80% WIDTH, 90% HEIGHT, VECTOR CLOSE ====================
+// ==================== SETTINGS PAGE FUNCTIONS ====================
 function showSettingsPage() {
   if (!currentUser || currentUser.isGuest) {
     showNotification('მხოლოდ რეგისტრირებულ მომხმარებლებს შეუძლიათ პარამეტრების ნახვა');
@@ -4505,7 +4535,6 @@ function showSettingsPage() {
         </div>
         
         <div id="settingsContent">
-          <!-- User Info Section -->
           <div class="settings-section">
             <div class="settings-section-title">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -4514,7 +4543,6 @@ function showSettingsPage() {
               პირადი ინფორმაცია
             </div>
             
-            <!-- Username Field -->
             <div class="settings-field">
               <label class="settings-label">მომხმარებელი</label>
               <div class="settings-input-group">
@@ -4528,7 +4556,6 @@ function showSettingsPage() {
               </div>
             </div>
             
-            <!-- Password Field with Eye Toggle -->
             <div class="settings-field">
               <label class="settings-label">პაროლი</label>
               <div class="settings-input-group">
@@ -4549,7 +4576,6 @@ function showSettingsPage() {
             </div>
           </div>
           
-          <!-- Mistakes Section -->
           <div class="settings-section">
             <div class="settings-section-title">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -4571,7 +4597,6 @@ function showSettingsPage() {
             </button>
           </div>
           
-          <!-- Actions -->
           <div class="settings-actions">
             <button class="settings-back-btn" onclick="closeSettingsPage()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -4592,7 +4617,6 @@ function showSettingsPage() {
 
   document.body.insertAdjacentHTML('beforeend', settingsHTML);
   
-  // FIXED: Vector close button event listener
   document.getElementById('vectorCloseSettings').addEventListener('click', closeSettingsPage);
 }
 
@@ -4623,7 +4647,7 @@ function togglePasswordVisibility(inputId, button) {
   }
 }
 
-function enableUsernameEdit() {
+async function enableUsernameEdit() {
   const usernameInput = document.getElementById('settingsUsername');
   if (usernameInput) {
     usernameInput.disabled = false;
@@ -4646,7 +4670,7 @@ function enableUsernameEdit() {
   }
 }
 
-function saveUsername() {
+async function saveUsername() {
   const newUsername = document.getElementById('settingsUsername').value.trim();
   
   if (!newUsername) {
@@ -4654,15 +4678,12 @@ function saveUsername() {
     return;
   }
   
-  // შევამოწმოთ, რომ შეყვანილია მინიმუმ ორი სიტყვა (სახელი და გვარი)
   const nameParts = newUsername.split(/\s+/);
   if (nameParts.length < 2) {
     showNotification('გთხოვთ შეიყვანოთ სახელი და გვარი');
     return;
   }
   
-  // დავუშვათ მოკლე სახელებიც (თუნდაც 1 ასო), მთავარია იყოს ორი სიტყვა
-  // რეგექსი იძლევა ქართული, ინგლისური ასოების, ციფრების და სფეისების გამოყენების საშუალებას
   if (/[^a-zA-Z0-9ა-ჰ\s]/.test(newUsername)) {
     showNotification('სახელი და გვარი უნდა შეიცავდეს მხოლოდ ასოებს, ციფრებს, ქართულ ასოებს და სფეისებს');
     return;
@@ -4682,19 +4703,32 @@ function saveUsername() {
       return;
     }
     
-    // შევინახოთ ძველი სახელი წასაშლელად
-    const oldUsername = currentUser.username;
+    if (firebaseSyncEnabled && database) {
+      const firebaseUser = await loadUserFromFirebase(newUsername);
+      if (firebaseUser) {
+        showNotification('ეს სახელი უკვე გამოყენებულია (გლობალურად)');
+        return;
+      }
+    }
     
-    // გადავიტანოთ მომხმარებლის მონაცემები ახალ სახელზე
-    users[newUsername] = users[oldUsername];
+    const oldUsername = currentUser.username;
+    const oldUserData = users[oldUsername];
+    
+    if (firebaseSyncEnabled && database) {
+      await database.ref('users/' + oldUsername.replace(/[.#$[\]]/g, '_')).remove();
+    }
+    
+    users[newUsername] = oldUserData;
     delete users[oldUsername];
     
     localStorage.setItem('users', JSON.stringify(users));
     
-    // განვაახლოთ currentUser
+    if (firebaseSyncEnabled && database) {
+      await saveUserToFirebase(newUsername, users[newUsername]);
+    }
+    
     currentUser.username = newUsername;
     
-    // განვაახლოთ UI
     document.getElementById('usernameDisplay').textContent = newUsername;
     userName = newUsername;
     localStorage.setItem('chatUserName', userName);
@@ -4721,7 +4755,6 @@ function cancelUsernameEdit() {
   }
 }
 
-// ==================== FIXED: SHOW PASSWORD MODAL FROM SETTINGS WITH FIELD-SPECIFIC ERRORS ====================
 function showPasswordChangeFromSettings() {
   console.log("Opening password change modal from settings");
   
@@ -4734,18 +4767,15 @@ function showPasswordChangeFromSettings() {
   modal.className = 'modal';
   modal.style.cssText = 'background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
   
-  // Modal Header
   const header = document.createElement('div');
   header.className = 'modal-header';
   header.style.cssText = 'font-size: 24px; font-weight: 600; color: #1e293b; margin-bottom: 20px; text-align: center;';
   header.textContent = 'პაროლის შეცვლა';
   
-  // Modal Content
   const content = document.createElement('div');
   content.className = 'modal-content';
   content.style.cssText = 'margin-bottom: 20px;';
   
-  // Current Password Field with its own error
   const currentPassDiv = document.createElement('div');
   currentPassDiv.style.marginBottom = '20px';
   
@@ -4763,7 +4793,6 @@ function showPasswordChangeFromSettings() {
   currentPassDiv.appendChild(currentPassInput);
   currentPassDiv.appendChild(currentPassError);
   
-  // New Password Field with its own error
   const newPassDiv = document.createElement('div');
   newPassDiv.style.marginBottom = '20px';
   
@@ -4781,7 +4810,6 @@ function showPasswordChangeFromSettings() {
   newPassDiv.appendChild(newPassInput);
   newPassDiv.appendChild(newPassError);
   
-  // Confirm Password Field with its own error
   const confirmPassDiv = document.createElement('div');
   confirmPassDiv.style.marginBottom = '20px';
   
@@ -4799,12 +4827,10 @@ function showPasswordChangeFromSettings() {
   confirmPassDiv.appendChild(confirmPassInput);
   confirmPassDiv.appendChild(confirmPassError);
   
-  // Add all fields to content
   content.appendChild(currentPassDiv);
   content.appendChild(newPassDiv);
   content.appendChild(confirmPassDiv);
   
-  // Modal Buttons
   const buttons = document.createElement('div');
   buttons.className = 'modal-buttons';
   buttons.style.cssText = 'display: flex; gap: 15px; justify-content: center;';
@@ -4831,15 +4857,13 @@ function showPasswordChangeFromSettings() {
   
   document.body.appendChild(modalOverlay);
   
-  // Function to hide all errors
   const hideAllErrors = () => {
     currentPassError.style.display = 'none';
     newPassError.style.display = 'none';
     confirmPassError.style.display = 'none';
   };
   
-  // Add event listeners
-  saveBtn.addEventListener('click', function() {
+  saveBtn.addEventListener('click', async function() {
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmNewPassword').value;
@@ -4885,7 +4909,13 @@ function showPasswordChangeFromSettings() {
       }
       
       users[currentUser.username].password = newPassword;
+      users[currentUser.username].lastUpdated = Date.now();
       localStorage.setItem('users', JSON.stringify(users));
+      
+      if (firebaseSyncEnabled && database) {
+        await saveUserToFirebase(currentUser.username, users[currentUser.username]);
+      }
+      
       showNotification('პაროლი წარმატებით შეიცვალა', false);
       document.getElementById('passwordModalOverlay').remove();
     } catch (error) {
@@ -4899,7 +4929,6 @@ function showPasswordChangeFromSettings() {
     document.getElementById('passwordModalOverlay').remove();
   });
   
-  // Close on overlay click
   modalOverlay.addEventListener('click', function(e) {
     if (e.target === modalOverlay) {
       modalOverlay.remove();
@@ -4907,7 +4936,6 @@ function showPasswordChangeFromSettings() {
   });
 }
 
-// ==================== FIXED: RENDER MISTAKES LIST WITH MODULE NAME ====================
 function renderMistakesList() {
   if (!currentUser || !currentTestType) {
     return '<div style="text-align:center; padding:20px; color:var(--muted);">აირჩიეთ მოდული შეცდომების სანახავად</div>';
@@ -4915,7 +4943,6 @@ function renderMistakesList() {
   
   const wrongQuestionIds = userProgress[currentTestType]?.wrongQuestions || [];
   
-  // მოდულის სახელი ადამიანურად გასაგებად
   let moduleDisplayName = '';
   switch(currentTestType) {
     case 'rezidentura':
@@ -5066,14 +5093,6 @@ function bindUserMenuEvents() {
     });
   }
   
-  const changePasswordBtn = document.getElementById('changePasswordBtn');
-  if (changePasswordBtn) {
-    changePasswordBtn.addEventListener('click', () => {
-      showPasswordChangeModal();
-      userDropdown.classList.remove('show');
-    });
-  }
-  
   document.getElementById('wrongQuestionsBtn').addEventListener('click', () => {
     startWrongQuestionsMode();
     userDropdown.classList.remove('show');
@@ -5104,7 +5123,7 @@ function checkAllQuestionsAnswered() {
     if (allAnswered) {
       examFinishBtn.style.display = 'flex';
     } else {
-      examFinishBtn.style.display = 'flex'; // Keep visible even if not all answered, but can be disabled
+      examFinishBtn.style.display = 'flex';
     }
   }
   
@@ -5268,86 +5287,16 @@ function showDetailedResults() {
   detailedResultsModal.classList.add('active');
 }
 
-// ==================== FIXED: SHOW PASSWORD MODAL WITHOUT CLOSING SETTINGS ====================
-function showPasswordChangeModalWithoutClose() {
-  // Don't close settings page, just show modal on top
-  const modalHTML = `
-    <div class="modal-overlay active" id="passwordModalOverlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;">
-      <div class="modal" style="background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
-        <div class="modal-header" style="font-size: 24px; font-weight: 600; color: #1e293b; margin-bottom: 20px; text-align: center;">პაროლის შეცვლა</div>
-        <div class="modal-content" style="margin-bottom: 30px;">
-          <div style="margin-bottom: 20px;">
-            <input type="password" id="currentPassword" placeholder="მიმდინარე პაროლი" class="auth-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; margin-bottom: 15px;">
-            <input type="password" id="newPassword" placeholder="ახალი პაროლი (მინიმუმ 6 სიმბოლო)" class="auth-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; margin-bottom: 15px;">
-            <input type="password" id="confirmNewPassword" placeholder="გაიმეორეთ ახალი პაროლი" class="auth-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px;">
-          </div>
-        </div>
-        <div class="modal-buttons" style="display: flex; gap: 15px; justify-content: center;">
-          <button id="savePasswordBtn" class="modal-btn confirm" style="padding: 12px 24px; background: var(--success); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">განახლება</button>
-          <button id="cancelPasswordBtn" class="modal-btn cancel" style="padding: 12px 24px; background: var(--danger); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">გაუქმება</button>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  const modalContainer = document.createElement('div');
-  modalContainer.innerHTML = modalHTML;
-  document.body.appendChild(modalContainer.firstChild);
-  
-  document.getElementById('savePasswordBtn').addEventListener('click', () => {
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmNewPassword').value;
-    
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      showNotification('გთხოვთ შეავსოთ ყველა ველი');
-      return;
-    }
-    
-    if (newPassword.length < 6) {
-      showNotification('ახალი პაროლი უნდა იყოს მინიმუმ 6 სიმბოლო');
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      showNotification('ახალი პაროლი არ ემთხვევა');
-      return;
-    }
-    
-    try {
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username]?.password !== currentPassword) {
-        showNotification('მიმდინარე პაროლი არასწორია');
-        return;
-      }
-      
-      users[currentUser.username].password = newPassword;
-      localStorage.setItem('users', JSON.stringify(users));
-      showNotification('პაროლი წარმატებით შეიცვალა', false);
-      document.getElementById('passwordModalOverlay').remove();
-    } catch (error) {
-      console.error('Error changing password:', error);
-      showNotification('შეცდომა პაროლის შეცვლისას');
-    }
-  });
-  
-  document.getElementById('cancelPasswordBtn').addEventListener('click', () => {
-    document.getElementById('passwordModalOverlay').remove();
-  });
-}
-
 // ==================== CSV LOADING FUNCTIONS ====================
 function loadCSV() {
   loaderOverlay.style.display = 'flex';
   resetLoader();
   startBtn.disabled = true;
   
-  // მიმდინარე არჩეული ტესტის ტიპი
   const testType = document.getElementById('testTypeSelect').value;
   
   let csvUrl;
   
-  // სხვადასხვა ტესტის ლინკები
   if (testType === 'rezidentura') {
     csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv";
   } else if (testType === 'internalMedicine') {
@@ -5355,7 +5304,6 @@ function loadCSV() {
   } else if (testType === 'pathology') {
     csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=150316971&single=true&output=csv";
   } else {
-    // default
     csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv";
   }
   
@@ -5387,9 +5335,7 @@ function loadCSV() {
     
     populateTopicsList();
 
-    // თუ მომხმარებელი უკვე შესულია, შევამოწმოთ პროგრესი
     if (currentUser && !currentUser.isGuest) {
-      // Check if we have pending progress to show
       if (window.pendingProgressCheck) {
         setTimeout(() => {
           checkExistingProgress();
@@ -5405,12 +5351,10 @@ function loadCSV() {
 loaderOverlay.style.display = 'none';
 startBtn.disabled = false;
 
-// Check for existing progress AFTER CSV is loaded - მხოლოდ თუ არ არის გამოცდის რეჟიმი მონიშნული
 if (currentUser && !currentUser.isGuest) {
   const examModeCheckbox = document.getElementById('modeExam');
   const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
   
-  // Check if we have pending progress to show and not in exam mode
   if (window.pendingProgressCheck) {
     setTimeout(() => {
       if (!isExamModeChecked) {
@@ -5437,70 +5381,6 @@ if (currentUser && !currentUser.isGuest) {
     loaderOverlay.innerHTML = `<div style="color: var(--danger); font-weight: 600; text-align: center; padding: 20px;">შეცდომა ჩატვირთვისას<br><small>${err.message}</small></div>`;
     startBtn.disabled = false;
   });
-}
-
-// ==================== FIXED: CHECK EXISTING PROGRESS - ONLY ONCE AND NOT IN EXAM MODE ====================
-let progressModalShown = false; // გლობალური ცვლადი, დაამატეთ სკრიპტის დასაწყისში
-
-function checkExistingProgress() {
-  // არ ვაჩვენოთ მოდალი, თუ უკვე ნაჩვენებია
-  if (progressModalShown) {
-    console.log("Progress modal already shown - skipping");
-    return;
-  }
-  
-  // არ ვაჩვენოთ მოდალი, თუ გამოცდის რეჟიმი აქტიურია
-  if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
-    console.log("Exam mode is active - skipping progress modal");
-    return;
-  }
-  
-  if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
-  
-  // მიმდინარე არჩეული მოდული
-  const testTypeSelect = document.getElementById('testTypeSelect');
-  if (!testTypeSelect || testTypeSelect.value === '') return;
-  
-  const selectedModule = testTypeSelect.value;
-  console.log("Checking progress for module:", selectedModule);
-  
-  // შევამოწმოთ არჩეული მოდულის პროგრესი
-  const progress = userProgress[selectedModule];
-  if (!progress) return;
-  
-  const hasNormalProgress = progress.normal && 
-                           Object.keys(progress.normal.answeredQuestions || {}).length > 0;
-  const hasExamProgress = progress.exam && 
-                         Object.keys(progress.exam.answeredQuestions || {}).length > 0;
-  
-  if (!hasNormalProgress && !hasExamProgress) return;
-  
-  // მოვნიშნოთ, რომ მოდალი უკვე ნაჩვენებია
-  progressModalShown = true;
-  
-  // გამოვთვალოთ გაკეთებული ტესტების რაოდენობა
-  const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
-  const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
-  const totalAnswered = normalCount + examCount;
-  
-  // მოდულის სახელი ადამიანურად გასაგებად
-  let moduleDisplayName = '';
-  switch(selectedModule) {
-    case 'rezidentura':
-      moduleDisplayName = 'რეზიდენტურა';
-      break;
-    case 'internalMedicine':
-      moduleDisplayName = 'შინაგანი მედიცინა';
-      break;
-    case 'pathology':
-      moduleDisplayName = 'პათოლოგია';
-      break;
-    default:
-      moduleDisplayName = selectedModule;
-  }
-  
-  // გამოვიძახოთ მოდალი შესაბამისი ინფორმაციით
-  showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
 }
 
 function parseCSVTwoColumns(csvText){
@@ -5731,7 +5611,6 @@ function updateSelectedTopics() {
     selectedTopic = selectedValue;
   }
   
-  // დაიმახსოვრეთ მიმდინარე ტესტის ტიპი
   const testTypeSelect = document.getElementById('testTypeSelect');
   if (testTypeSelect) {
     currentTestType = testTypeSelect.value;
@@ -5739,13 +5618,11 @@ function updateSelectedTopics() {
 }
 
 function startTest() {
-  // FIXED: Check if either sequential OR exam mode is selected
   if (!modeSequential.checked && !modeExam.checked) {
     showNotification('გთხოვთ აირჩიოთ რეჟიმი: "ტესტების ჩვენება თანმიმდევრობით" ან "საგამოცდო რეჟიმი"');
     return;
   }
 
-  // FIXED: Save currentTestType before clearing savedProgress
   if (window.savedProgress && !currentTestType) {
     const testTypeSelect = document.getElementById('testTypeSelect');
     if (testTypeSelect && testTypeSelect.value) {
@@ -5756,10 +5633,8 @@ function startTest() {
   console.log("startTest called with currentTestType:", currentTestType);
   console.log("examMode:", examMode);
 
-  // ❗ IMPORTANT: Do NOT clear savedProgress here — we need it below
   const progressData = window.savedProgress;
 
-  // რეჟიმების კონფლიქტის შემოწმება
   if (modeSequential.checked && modeExam.checked) {
     showNotification('"ტესტების ჩვენება თანმიმდევრობით" და "საგამოცდო რეჟიმი" ერთად შეუძლებელია არსებობდეს! აირჩიეთ მხოლოდ ერთი.');
     return;
@@ -5784,10 +5659,7 @@ function startTest() {
 
   examMode = modeExam.checked;
 
-  // Exam mode-ში კითხვები ყოველთვის ირევა
   const shuffleQuestions = modeShuffleQuestions.checked || examMode;
-
-  // Exam mode-ში პასუხები არ ირევა
   const shuffleAnswers = examMode ? false : modeShuffleAnswers.checked;
 
   let testsToUse = allTestsWithTopics;
@@ -5804,7 +5676,6 @@ function startTest() {
     }
   }
 
-  // ==================== SESSION CREATION ====================
   if (examMode) {
     const shuffledAll = [...testsToUse];
     shuffleArray(shuffledAll);
@@ -5844,7 +5715,6 @@ function startTest() {
     });
   }
 
-  // ==================== LOAD SAVED PROGRESS ====================
   if (progressData && currentUser && !currentUser.isGuest) {
     const mode = examMode ? 'exam' : 'normal';
 
@@ -5853,7 +5723,6 @@ function startTest() {
 
     if (progressData[mode] && progressData[mode].answeredQuestions) {
 
-      // მონიშნე უკვე პასუხგაცემული კითხვები
       sessionTests.forEach(test => {
         const globalId = test.originalGlobalId;
         if (globalId && progressData[mode].answeredQuestions[globalId]) {
@@ -5864,22 +5733,18 @@ function startTest() {
         }
       });
 
-      // FIXED: გაგრძელების ადგილის განსაზღვრა - ვიპოვოთ პირველი უპასუხო კითხვა
       const firstUnansweredIndex = sessionTests.findIndex(
         t => !t.selectedAnswers || t.selectedAnswers.length === 0
       );
       
       if (firstUnansweredIndex !== -1) {
-        // თუ არის უპასუხო კითხვა, დავიწყოთ მისგან
         currentIndex = firstUnansweredIndex;
         console.log(`Starting from first unanswered question: ${currentIndex + 1}`);
       } else {
-        // თუ ყველა უპასუხია, დავრჩეთ ბოლოზე
         currentIndex = sessionTests.length - 1;
         console.log(`All questions answered, staying at last: ${currentIndex + 1}`);
       }
 
-      // Exam timer-ის აღდგენა
       if (examMode && progressData.exam && progressData.exam.examTimeRemaining) {
         examTimeRemaining = progressData.exam.examTimeRemaining;
         lastTimerUpdate = Date.now();
@@ -5891,7 +5756,6 @@ function startTest() {
     window.savedProgress = null;
   }
 
-  // ==================== SHUFFLING ====================
   if (shuffleQuestions && !examMode) {
     shuffleArray(sessionTests);
   }
@@ -5900,7 +5764,6 @@ function startTest() {
     sessionTests.forEach(q => shuffleArray(q.answers));
   }
 
-  // ==================== UI ====================
   optionsScreen.style.display = 'none';
   testScreen.classList.add('active');
 
@@ -5933,7 +5796,6 @@ function startTest() {
   renderCurrentQuestion();
 }
 
-
 function renderCurrentQuestion() {
   if (!sessionTests.length) return;
   
@@ -5962,7 +5824,6 @@ function renderCurrentQuestion() {
   }
 }
 
-// ==================== FIXED: RENDER NORMAL ANSWERS ====================
 function renderNormalAnswers() {
   const question = sessionTests[currentIndex];
   answersContainer.innerHTML = '';
@@ -6007,7 +5868,6 @@ function renderNormalAnswers() {
           }
           feedback.innerHTML = `<div style="color:var(--success); font-size:16px; font-weight:600;">✓ სწორი პასუხი!</div>`;
           
-          // FIXED: Pass false for isExamMode (normal mode)
           updateUserProgress(question.id, idx, true, false);
           
           if (autoMode && currentIndex < sessionTests.length - 1) {
@@ -6022,7 +5882,6 @@ function renderNormalAnswers() {
           answerEl.classList.add('incorrect');
           feedback.innerHTML = `<div style="color:var(--danger); font-size:16px; font-weight:600;">✗ არასწორი პასუხი</div>`;
           
-          // FIXED: Pass false for isExamMode (normal mode)
           updateUserProgress(question.id, idx, false, false);
         }
         
@@ -6044,15 +5903,10 @@ function renderNormalAnswers() {
   updateAutoButton();
 }
 
-// ==================== FIXED: HANDLE WRONG QUESTIONS MODE COMPLETION ====================
 function handleWrongQuestionsCompletion() {
-  // Check if we're in wrong questions mode
   const wrongQuestions = getWrongQuestions();
   
-  // If there are no wrong questions and we're currently in a session that matches the previous wrong questions count
   if (wrongQuestions.length === 0 && sessionTests.length > 0) {
-    // Check if this session was likely the wrong questions session
-    // We can check by seeing if all questions in sessionTests have been answered correctly
     const allCorrectInSession = sessionTests.every(q => 
       q.hasCorrectAnswer === true
     );
@@ -6063,7 +5917,6 @@ function handleWrongQuestionsCompletion() {
   }
 }
 
-// ==================== FIXED: RENDER EXAM ANSWERS ====================
 function renderExamAnswers() {
   const question = sessionTests[currentIndex];
   examAnswersContainer.innerHTML = '';
@@ -6101,7 +5954,6 @@ function renderExamAnswers() {
         
         createExamTestBoxes();
         
-        // FIXED: Pass true for isExamMode
         updateUserProgress(question.id, idx, answer.correct, true);
         
         onAnswerSelected();
@@ -6127,7 +5979,6 @@ function onAnswerSelected() {
   checkAllQuestionsAnswered();
 }
 
-// ==================== FIXED: AUTO SAVE PROGRESS ====================
 function autoSaveProgress() {
   if (!currentUser || currentUser.isGuest || !currentTestType) return;
   
@@ -6145,8 +5996,6 @@ function autoSaveProgress() {
     userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
   }
   
-  // FIXED: შევინახოთ მიმდინარე ინდექსი, არა global ID
-  // ეს საშუალებას მოგვცემს გავაგრძელოთ ზუსტად იმავე ადგილიდან
   userProgress[currentTestType][mode].currentIndex = currentIndex;
   
   if (examMode) {
@@ -6158,16 +6007,14 @@ function autoSaveProgress() {
   console.log(`Progress saved: mode=${mode}, currentIndex=${currentIndex}`);
 }
 
-// ==================== FIND FIRST UNANSWERED QUESTION ====================
 function findFirstUnansweredQuestion(tests) {
   for (let i = 0; i < tests.length; i++) {
     if (!tests[i].selectedAnswers || tests[i].selectedAnswers.length === 0) {
       return i;
     }
   }
-  return 0; // თუ ყველა უპასუხია, დავუბრუნდეთ პირველს
+  return 0;
 }
-
 
 function updateAutoButton() {
   if (!autoBtn || !nextBtn) return;
@@ -6382,9 +6229,7 @@ function bindQuestionCounterEvent() {
   });
 }
 
-// ==================== FIXED: CHECK EXISTING PROGRESS - ONLY IN NORMAL MODE ====================
 function checkExistingProgress() {
-  // არ ვაჩვენოთ მოდალი, თუ გამოცდის რეჟიმი აქტიურია
   if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
     console.log("Exam mode is active - skipping progress modal");
     return;
@@ -6392,14 +6237,12 @@ function checkExistingProgress() {
   
   if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
   
-  // მიმდინარე არჩეული მოდული
   const testTypeSelect = document.getElementById('testTypeSelect');
   if (!testTypeSelect || testTypeSelect.value === '') return;
   
   const selectedModule = testTypeSelect.value;
   console.log("Checking progress for module:", selectedModule);
   
-  // შევამოწმოთ არჩეული მოდულის პროგრესი
   const progress = userProgress[selectedModule];
   if (!progress) return;
   
@@ -6410,12 +6253,10 @@ function checkExistingProgress() {
   
   if (!hasNormalProgress && !hasExamProgress) return;
   
-  // გამოვთვალოთ გაკეთებული ტესტების რაოდენობა
   const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
   const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
   const totalAnswered = normalCount + examCount;
   
-  // მოდულის სახელი ადამიანურად გასაგებად
   let moduleDisplayName = '';
   switch(selectedModule) {
     case 'rezidentura':
@@ -6431,17 +6272,12 @@ function checkExistingProgress() {
       moduleDisplayName = selectedModule;
   }
   
-  // გამოვიძახოთ მოდალი შესაბამისი ინფორმაციით
   showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
 }
 
-
-
-// ==================== SHOW PROGRESS RESUME MODAL ====================
 function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
   console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
   
-  // წავშალოთ არსებული მოდალი თუ არსებობს
   const existingModal = document.querySelector('.modal-overlay[data-type="progress-resume"]');
   if (existingModal) existingModal.remove();
   
@@ -6454,13 +6290,11 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   modal.className = 'modal';
   modal.style.cssText = 'background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
   
-  // Modal Header
   const header = document.createElement('div');
   header.className = 'modal-header';
   header.style.cssText = 'font-size: 24px; font-weight: 600; color: #1e293b; margin-bottom: 20px; text-align: center;';
   header.textContent = 'გსურთ გაგრძელება?';
   
-  // Modal Content
   const content = document.createElement('div');
   content.className = 'modal-content';
   content.style.cssText = 'margin-bottom: 30px; text-align: center;';
@@ -6476,7 +6310,6 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   content.appendChild(p1);
   content.appendChild(p2);
   
-  // Modal Buttons
   const buttons = document.createElement('div');
   buttons.style.cssText = 'display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;';
   
@@ -6506,7 +6339,6 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   document.body.appendChild(modalOverlay);
   
-  // ==================== CONTINUE BUTTON ====================
   continueBtn.addEventListener('click', function() {
     modalOverlay.remove();
     
@@ -6515,27 +6347,23 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
     
     currentTestType = selectedModule;
     
-    // Auto-select the appropriate mode
     const modeExam = document.getElementById('modeExam');
     const modeSequential = document.getElementById('modeSequential');
     const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
     const modeShuffleAnswers = document.getElementById('modeShuffleAnswers');
     
-    // Set the test type to the selected module
     const testTypeSelect = document.getElementById('testTypeSelect');
     if (testTypeSelect) {
       testTypeSelect.value = selectedModule;
       toggleTopicsDropdown();
     }
     
-    // Set topics to "all"
     const topicsSelect = document.getElementById('topicsSelect');
     if (topicsSelect) {
       topicsSelect.value = 'all';
       selectedTopic = null;
     }
     
-    // Determine which mode had progress
     const hasNormalProgress = progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0;
     const hasExamProgress = progress.exam && Object.keys(progress.exam.answeredQuestions || {}).length > 0;
     
@@ -6553,10 +6381,8 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       console.log("Selected normal mode");
     }
     
-    // Pass progress to startTest
     window.savedProgress = progress;
     
-    // Start test with loaded progress
     setTimeout(() => {
       if (allTestsWithTopics.length > 0) {
         startTest();
@@ -6568,27 +6394,28 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
     showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
   });
   
-  // ==================== FIXED: RESTART BUTTON ====================
-  restartBtn.addEventListener('click', function() {
+  restartBtn.addEventListener('click', async function() {
     modalOverlay.remove();
     
     console.log("Restart clicked. Clearing progress for module:", selectedModule);
     
-    // წავშალოთ პროგრესი არჩეული მოდულისთვის
     if (currentUser && currentUser.username && !currentUser.isGuest) {
       try {
         const users = JSON.parse(localStorage.getItem('users') || '{}');
         if (users[currentUser.username] && users[currentUser.username].progress) {
           if (users[currentUser.username].progress[selectedModule]) {
-            // გავასუფთავოთ მიმდინარე მოდული
             users[currentUser.username].progress[selectedModule] = {
               normal: { answeredQuestions: {}, currentIndex: 0 },
               exam: { answeredQuestions: {}, currentIndex: 0 },
               wrongQuestions: []
             };
+            users[currentUser.username].lastUpdated = Date.now();
             localStorage.setItem('users', JSON.stringify(users));
             
-            // განვაახლოთ userProgress ცვლადიც
+            if (firebaseSyncEnabled && database) {
+              await saveUserToFirebase(currentUser.username, users[currentUser.username]);
+            }
+            
             userProgress[selectedModule] = {
               normal: { answeredQuestions: {}, currentIndex: 0 },
               exam: { answeredQuestions: {}, currentIndex: 0 },
@@ -6603,13 +6430,11 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       }
     }
     
-    // Auto-select the appropriate mode
     const modeExam = document.getElementById('modeExam');
     const modeSequential = document.getElementById('modeSequential');
     const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
     const modeShuffleAnswers = document.getElementById('modeShuffleAnswers');
     
-    // Set the test type to the selected module
     const testTypeSelect = document.getElementById('testTypeSelect');
     if (testTypeSelect) {
       testTypeSelect.value = selectedModule;
@@ -6617,14 +6442,12 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       toggleTopicsDropdown();
     }
     
-    // Set topics to "all"
     const topicsSelect = document.getElementById('topicsSelect');
     if (topicsSelect) {
       topicsSelect.value = 'all';
       selectedTopic = null;
     }
     
-    // Determine which mode had progress (for UI selection only)
     const hasNormalProgress = progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0;
     const hasExamProgress = progress.exam && Object.keys(progress.exam.answeredQuestions || {}).length > 0;
     
@@ -6638,10 +6461,8 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       if (modeSequential) modeSequential.checked = true;
     }
     
-    // FIXED: არ გადავცეთ progress
     window.savedProgress = null;
     
-    // Start test without progress
     setTimeout(() => {
       if (allTestsWithTopics.length > 0) {
         startTest();
@@ -6653,12 +6474,10 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
     showNotification('პროგრესი გასუფთავდა. ტესტი იწყება პირველი კითხვიდან', false);
   });
   
-  // ==================== CLOSE BUTTON ====================
   closeBtn.addEventListener('click', function() {
     modalOverlay.remove();
   });
   
-  // Close on overlay click
   modalOverlay.addEventListener('click', function(e) {
     if (e.target === modalOverlay) {
       modalOverlay.remove();
@@ -6699,7 +6518,6 @@ function showCompletionScreen() {
   });
 }
 
-// ==================== START BUTTON EVENT LISTENER ====================
 startBtn.addEventListener('click', function() {
   console.log("Start button clicked");
   
@@ -6728,12 +6546,9 @@ startBtn.addEventListener('click', function() {
   startTest();
 });
 
-
-// ==================== DOM CONTENT LOADED ====================
 window.addEventListener('DOMContentLoaded', () => {
   console.log("DOM loaded, initializing app...");
   
-  // Initialize chat elements
   chatButton = document.getElementById('chatButton');
   chatWindow = document.getElementById('chatWindow');
   closeChat = document.querySelector('.close-chat');
@@ -6742,7 +6557,6 @@ window.addEventListener('DOMContentLoaded', () => {
   chatInput = document.getElementById('chatInput');
   sendBtn = document.getElementById('sendBtn');
   
-  // Initialize navigation buttons
   prevBtn = document.getElementById('prevBtn');
   nextBtn = document.getElementById('nextBtn');
   autoBtn = document.getElementById('autoBtn');
@@ -6755,15 +6569,12 @@ window.addEventListener('DOMContentLoaded', () => {
   detailedResultsModal = document.getElementById('detailedResultsModal');
   detailedResultsContent = document.getElementById('detailedResultsContent');
   
-  // Initialize auth
   initAuth();
   
-  // Bind events
   bindNavigationEvents();
   bindQuestionCounterEvent();
   bindTestTypeEvents();
   
-  // Add test type change listener
   const testTypeSelect = document.getElementById('testTypeSelect');
   if (testTypeSelect) {
     testTypeSelect.addEventListener('change', function() {
@@ -6793,9 +6604,6 @@ if (modeSequential) {
     if (modeSequential.checked && modeExam.checked) {
       modeExam.checked = false;
     }
-    
-    // If both are unchecked, but user unchecks sequential without exam, 
-    // we don't auto-check anything - user must choose
   });
 }
   
@@ -6811,17 +6619,10 @@ if (modeSequential) {
 if (modeExam) {
   modeExam.addEventListener('change', () => {
     if (modeExam.checked) {
-      // FIXED: When exam mode is checked, automatically:
-      // 1. Uncheck "sequential" mode
       if (modeSequential) modeSequential.checked = false;
-      
-      // 2. Check "shuffle questions" (questions should be random)
       if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
-      
-      // 3. UNCHECK "shuffle answers" (answers should keep original order)
       if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
     } else {
-      // FIXED: When exam mode is unchecked, if no mode is selected, enable sequential mode by default
       if (!modeSequential.checked) {
         modeSequential.checked = true;
       }
@@ -6833,7 +6634,6 @@ if (modeExam) {
     toggleTopicsDropdown();
   }, 100);
   
-  // Expose functions to global scope for onclick handlers
   window.closeSettingsPage = closeSettingsPage;
   window.enableUsernameEdit = enableUsernameEdit;
   window.togglePasswordVisibility = togglePasswordVisibility;
