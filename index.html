@@ -3085,40 +3085,358 @@ async function saveUserProgress() {
   }
 }
 
+// ==================== FIXED: LOAD USER PROGRESS WITH DELETION CHECK ====================
 async function loadUserProgress() {
-  if (currentUser && currentUser.username) {
-    try {
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      let localUserData = users[currentUser.username] || null;
-      
-      if (localUserData && localUserData.progress) {
-        userProgress = localUserData.progress;
-        console.log('Progress loaded locally for', currentUser.username);
-      }
-      
-      if (firebaseSyncEnabled && database) {
-        const syncedUserData = await syncUserWithFirebase(currentUser.username, localUserData || { 
-          password: '', 
-          progress: userProgress,
-          lastUpdated: Date.now()
-        });
-        
-        if (syncedUserData && syncedUserData.progress) {
-          userProgress = syncedUserData.progress;
-          
-          if (users[currentUser.username]) {
-            users[currentUser.username].progress = syncedUserData.progress;
-            users[currentUser.username].lastUpdated = syncedUserData.lastUpdated || Date.now();
-            localStorage.setItem('users', JSON.stringify(users));
-          }
-          
-          console.log('Progress synced from Firebase for', currentUser.username);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading user progress:', error);
+    if (!currentUser || !currentUser.username) {
+        console.log("No current user, skipping progress load");
+        return;
     }
-  }
+
+    console.log("Loading progress for user:", currentUser.username);
+
+    try {
+        // პირველ რიგში შეამოწმე Firebase-ში არსებობს თუ არა მომხმარებელი
+        if (firebaseSyncEnabled && database) {
+            const firebaseUserData = await loadUserFromFirebase(currentUser.username);
+            
+            // თუ Firebase-ში მომხმარებელი არ არსებობს - ანგარიში წაშლილია
+            if (!firebaseUserData) {
+                console.warn("User not found in Firebase - account was deleted");
+                
+                // წავშალოთ localStorage-დან
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                if (users[currentUser.username]) {
+                    delete users[currentUser.username];
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+                
+                // წავშალოთ ჩატის მონაცემები
+                localStorage.removeItem('chatUserName');
+                localStorage.removeItem('chatUserId');
+                
+                // გამოვაჩინოთ შეტყობინება
+                showNotification('⚠️ თქვენი ანგარიში წაიშალა ადმინისტრატორის მიერ. გთხოვთ დარეგისტრირდეთ თავიდან.', true);
+                
+                // გავასუფთაოთ currentUser
+                currentUser = null;
+                
+                // დავმალოთ იუზერის ინფო
+                document.getElementById('userInfo').style.display = 'none';
+                
+                // გამოვაჩინოთ ავტორიზაციის მოდალი
+                setTimeout(() => {
+                    document.getElementById('authModal').style.display = 'flex';
+                }, 2000);
+                
+                return;
+            }
+            
+            // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
+            if (firebaseUserData.deleted === true) {
+                console.warn("User account is marked as deleted");
+                
+                showNotification('⛔ ეს ანგარიში დაბლოკილია ადმინისტრატორის მიერ', true);
+                
+                currentUser = null;
+                document.getElementById('userInfo').style.display = 'none';
+                
+                setTimeout(() => {
+                    document.getElementById('authModal').style.display = 'flex';
+                }, 2000);
+                
+                return;
+            }
+        }
+
+        // თუ Firebase-ში არსებობს, განვაგრძოთ პროგრესის ჩატვირთვა
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        let localUserData = users[currentUser.username] || null;
+        
+        if (localUserData && localUserData.progress) {
+            userProgress = localUserData.progress;
+            console.log('Progress loaded locally for', currentUser.username);
+        }
+        
+        if (firebaseSyncEnabled && database) {
+            const syncedUserData = await syncUserWithFirebase(currentUser.username, localUserData || { 
+                password: '', 
+                progress: userProgress,
+                lastUpdated: Date.now()
+            });
+            
+            if (syncedUserData && syncedUserData.progress) {
+                userProgress = syncedUserData.progress;
+                
+                if (users[currentUser.username]) {
+                    users[currentUser.username].progress = syncedUserData.progress;
+                    users[currentUser.username].lastUpdated = syncedUserData.lastUpdated || Date.now();
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+                
+                console.log('Progress synced from Firebase for', currentUser.username);
+            }
+        }
+        
+        // დააყენე რეალურ დროში მონიტორინგი
+        setupUserDeletionListener();
+        
+    } catch (error) {
+        console.error('Error loading user progress:', error);
+        showNotification('შეცდომა პროგრესის ჩატვირთვისას', true);
+    }
+}
+
+// ==================== REAL-TIME DELETION LISTENER ====================
+function setupUserDeletionListener() {
+    if (!firebaseSyncEnabled || !database || !currentUser || !currentUser.username) return;
+    
+    console.log("Setting up real-time deletion listener for:", currentUser.username);
+    
+    const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
+    const userRef = database.ref('users/' + safeUsername);
+    
+    // მოვუსმინოთ ცვლილებებს Firebase-ში
+    userRef.on('value', (snapshot) => {
+        const userData = snapshot.val();
+        
+        // თუ მომხმარებელი წაშლილია Firebase-დან
+        if (!userData) {
+            console.warn("User deleted from Firebase - forcing logout");
+            handleAccountDeletion("წაშლილია ადმინისტრატორის მიერ");
+        }
+        // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
+        else if (userData.deleted === true) {
+            console.warn("User account is deleted - forcing logout");
+            handleAccountDeletion("დაბლოკილია ადმინისტრატორის მიერ");
+        }
+    }, (error) => {
+        console.error("Error in user listener:", error);
+    });
+    
+    // ასევე მოვუსმინოთ სისტემურ შეტყობინებებს
+    const forceLogoutRef = database.ref('system/forceLogout');
+    forceLogoutRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
+        if (data.userId === currentUser.username || data.userId === safeUsername) {
+            console.warn("Force logout message received");
+            handleAccountDeletion(data.reason || 'ადმინისტრატორის მიერ');
+        }
+    });
+}
+
+// ==================== HANDLE ACCOUNT DELETION ====================
+function handleAccountDeletion(reason = "ადმინისტრატორის მიერ") {
+    // გავასუფთაოთ localStorage მთლიანად
+    localStorage.removeItem('users');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('chatUserName');
+    localStorage.removeItem('chatUserId');
+    localStorage.removeItem('lastSeenMessageTime');
+    
+    // გავასუფთაოთ sessionStorage
+    sessionStorage.clear();
+    
+    // გავაუქმოთ currentUser
+    currentUser = null;
+    
+    // დავმალოთ იუზერის ინფო
+    const userInfo = document.getElementById('userInfo');
+    if (userInfo) userInfo.style.display = 'none';
+    
+    // დავმალოთ ტაიმერი
+    const timer = document.getElementById('timer');
+    if (timer) timer.classList.add('hidden');
+    
+    // წავშალოთ ჩატის ფანჯარა
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow) chatWindow.classList.remove('active');
+    
+    // გამოვაჩინოთ შეტყობინება
+    showNotification(`⛔ თქვენი ანგარიში ${reason}. გთხოვთ დარეგისტრირდეთ თავიდან.`, true);
+    
+    // გადავიყვანოთ მთავარ გვერდზე
+    if (testScreen && testScreen.classList.contains('active')) {
+        testScreen.classList.remove('active');
+        optionsScreen.style.display = 'block';
+    }
+    
+    // გამოვაჩინოთ ავტორიზაციის მოდალი
+    setTimeout(() => {
+        const authModal = document.getElementById('authModal');
+        if (authModal) {
+            authModal.style.display = 'flex';
+            
+            // გადავრთოთ სტუმრის ტაბზე
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-tab-content').forEach(c => c.classList.remove('active'));
+            
+            const guestTab = document.querySelector('[data-tab="guest"]');
+            if (guestTab) {
+                guestTab.classList.add('active');
+                document.getElementById('guestTab').classList.add('active');
+            }
+        }
+    }, 2000);
+}
+
+// ==================== FIXED: HANDLE LOGIN WITH DELETION CHECK ====================
+async function handleLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    document.getElementById('loginUsernameError').style.display = 'none';
+    document.getElementById('loginPasswordError').style.display = 'none';
+    
+    if (!username) {
+        document.getElementById('loginUsernameError').textContent = 'სახელი და გვარი აუცილებელია';
+        document.getElementById('loginUsernameError').style.display = 'block';
+        return;
+    }
+    
+    const nameParts = username.split(/\s+/);
+    if (nameParts.length < 2) {
+        document.getElementById('loginUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელიც და გვარიც';
+        document.getElementById('loginUsernameError').style.display = 'block';
+        return;
+    }
+    
+    if (!password) {
+        document.getElementById('loginPasswordError').textContent = 'პაროლი აუცილებელია';
+        document.getElementById('loginPasswordError').style.display = 'block';
+        return;
+    }
+    
+    try {
+        // პირველ რიგში შეამოწმე Firebase
+        if (firebaseSyncEnabled && database) {
+            const firebaseUser = await loadUserFromFirebase(username);
+            
+            // თუ Firebase-ში მომხმარებელი არ არსებობს
+            if (!firebaseUser) {
+                document.getElementById('loginUsernameError').textContent = 'მომხმარებელი არ არსებობს ან წაშლილია';
+                document.getElementById('loginUsernameError').style.display = 'block';
+                return;
+            }
+            
+            // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
+            if (firebaseUser.deleted === true) {
+                document.getElementById('loginUsernameError').textContent = 'ეს ანგარიში დაბლოკილია ადმინისტრატორის მიერ';
+                document.getElementById('loginUsernameError').style.display = 'block';
+                return;
+            }
+            
+            // შეამოწმე პაროლი Firebase-ში
+            if (firebaseUser.password !== password) {
+                document.getElementById('loginPasswordError').textContent = 'პაროლი არასწორია';
+                document.getElementById('loginPasswordError').style.display = 'block';
+                return;
+            }
+        }
+        
+        // შეამოწმე localStorage-შიც
+        let users = JSON.parse(localStorage.getItem('users') || '{}');
+        let userFound = false;
+        
+        if (users[username] && users[username].password === password) {
+            userFound = true;
+        }
+        
+        if (!userFound && firebaseSyncEnabled && database) {
+            // თუ Firebase-ში არსებობს მაგრამ localStorage-ში არა, შევქმნათ
+            const firebaseUser = await loadUserFromFirebase(username);
+            if (firebaseUser && firebaseUser.password === password && !firebaseUser.deleted) {
+                users[username] = {
+                    password: firebaseUser.password,
+                    progress: firebaseUser.progress || {
+                        rezidentura: {
+                            normal: { answeredQuestions: {}, currentIndex: 0 },
+                            exam: { answeredQuestions: {}, currentIndex: 0 },
+                            wrongQuestions: []
+                        }
+                    },
+                    lastUpdated: firebaseUser.lastUpdated || Date.now()
+                };
+                localStorage.setItem('users', JSON.stringify(users));
+                userFound = true;
+            }
+        }
+        
+        if (!userFound) {
+            document.getElementById('loginUsernameError').textContent = 'მომხმარებელი ან პაროლი არასწორია';
+            document.getElementById('loginUsernameError').style.display = 'block';
+            return;
+        }
+        
+        // წარმატებული შესვლა
+        currentUser = { 
+            username: username, 
+            isGuest: false
+        };
+        
+        await loadUserProgress();
+        
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
+        
+        document.getElementById('authModal').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'flex';
+        document.getElementById('usernameDisplay').textContent = currentUser.username;
+        
+        userName = currentUser.username;
+        localStorage.setItem('chatUserName', userName);
+        
+        showNotification('მოგესალმებით!', false);
+        
+        // გაუშვი მონიტორინგი
+        setupUserDeletionListener();
+        
+        initChat();
+        bindUserMenuEvents();
+        updateTimerDisplay();
+        
+        if (allTests.length === 0) {
+            loadCSV();
+        } else {
+            startBtn.disabled = false;
+            setTimeout(() => {
+                const examModeCheckbox = document.getElementById('modeExam');
+                if (!examModeCheckbox || !examModeCheckbox.checked) {
+                    checkExistingProgress();
+                }
+            }, 500);
+        }
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
+    }
+}
+
+// ==================== FIXED: LOAD USER FROM FIREBASE WITH DELETION CHECK ====================
+function loadUserFromFirebase(username) {
+    if (!firebaseSyncEnabled || !database || !username) return Promise.resolve(null);
+    
+    return database.ref('users/' + username.replace(/[.#$[\]]/g, '_')).once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            
+            // თუ მომხმარებელი მონიშნულია როგორც წაშლილი, არ დავაბრუნოთ
+            if (userData.deleted === true) {
+                console.log("User is marked as deleted in Firebase");
+                return null;
+            }
+            
+            console.log('User data loaded from Firebase:', username);
+            return userData;
+        }
+        return null;
+    }).catch(error => {
+        console.error('Error loading user from Firebase:', error);
+        return null;
+    });
 }
 
 // ==================== FIXED: UPDATE USER PROGRESS ====================
@@ -6278,6 +6596,34 @@ function checkExistingProgress() {
   }
   
   showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
+}
+
+// დააკვირდი სისტემურ შეტყობინებებს
+function setupForceLogoutListener() {
+    if (!firebaseSyncEnabled || !database) return;
+    
+    database.ref('system/forceLogout').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
+        if (data.userId === currentUser?.username || 
+            data.userId === localStorage.getItem('chatUserId')) {
+            
+            // გაასუფთავე localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('users');
+            sessionStorage.clear();
+            
+            // გამოაჩინე შეტყობინება
+            showNotification('თქვენი ანგარიში წაიშალა ადმინისტრატორის მიერ', true);
+            
+            // გადატვირთე გვერდი
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    });
 }
 
 function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
