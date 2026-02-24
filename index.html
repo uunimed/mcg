@@ -3124,9 +3124,10 @@ async function loadUserProgress() {
 // ==================== FIXED: UPDATE USER PROGRESS ====================
 function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = false) {
   if (!currentUser || currentUser.isGuest || !currentTestType) return;
-  
+
   const mode = isExamMode ? 'exam' : 'normal';
   
+  // 1. ვამოწმებთ, რომ მოდულის ობიექტი არსებობს
   if (!userProgress[currentTestType]) {
     userProgress[currentTestType] = {
       normal: { answeredQuestions: {}, currentIndex: 0 },
@@ -3135,12 +3136,23 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     };
   }
   
+  // 2. ვამოწმებთ, რომ რეჟიმის (normal/exam) ობიექტი არსებობს
   if (!userProgress[currentTestType][mode]) {
     userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
   }
+
+  // 🔴 მთავარი შესწორება #1: Firebase-მა შეიძლება წაშალოს answeredQuestions ობიექტი, თუ ის ცარიელი იყო!
+  if (!userProgress[currentTestType][mode].answeredQuestions) {
+    userProgress[currentTestType][mode].answeredQuestions = {};
+  }
   
-  if (!userProgress[currentTestType].wrongQuestions) {
-    userProgress[currentTestType].wrongQuestions = [];
+  // 🔴 მთავარი შესწორება #2: Firebase-მა შეიძლება მასივი გადააქციოს ობიექტად ან წაშალოს
+  if (!Array.isArray(userProgress[currentTestType].wrongQuestions)) {
+    if (userProgress[currentTestType].wrongQuestions) {
+      userProgress[currentTestType].wrongQuestions = Object.values(userProgress[currentTestType].wrongQuestions);
+    } else {
+      userProgress[currentTestType].wrongQuestions = [];
+    }
   }
   
   let globalQuestionId = questionId;
@@ -3159,45 +3171,40 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     }
   }
   
-  console.log(`Updating progress: session question ID ${questionId} -> global ID ${globalQuestionId}, correct: ${isCorrect}, exam mode: ${isExamMode}`);
-  
   const previousAnswer = userProgress[currentTestType][mode].answeredQuestions[globalQuestionId];
   const hasPreviousAnswer = previousAnswer !== undefined;
-  
+
+  // ახლა უკვე უსაფრთხოა პასუხის ჩაწერა
   userProgress[currentTestType][mode].answeredQuestions[globalQuestionId] = {
     selectedAnswer: selectedAnswer,
     isCorrect: isCorrect,
     timestamp: Date.now()
   };
-  
+
   if (!isExamMode) {
     const wrongQuestions = userProgress[currentTestType].wrongQuestions;
     const questionIndex = wrongQuestions.indexOf(globalQuestionId);
-    
+
     if (!isCorrect) {
       if (questionIndex === -1) {
         wrongQuestions.push(globalQuestionId);
-        console.log(`Question ${globalQuestionId} added to wrong questions (incorrect answer)`);
+        console.log(`Question ${globalQuestionId} added to wrong questions`);
       }
     } else {
       if (!hasPreviousAnswer) {
         if (questionIndex !== -1) {
           wrongQuestions.splice(questionIndex, 1);
-          console.log(`Question ${globalQuestionId} removed from wrong questions (first attempt correct)`);
         }
       } else {
         if (previousAnswer && !previousAnswer.isCorrect) {
           if (questionIndex === -1) {
             wrongQuestions.push(globalQuestionId);
-            console.log(`Question ${globalQuestionId} kept in wrong questions (had previous incorrect attempt)`);
           }
         } else if (questionIndex !== -1) {
           wrongQuestions.splice(questionIndex, 1);
         }
       }
     }
-  } else {
-    console.log(`Exam mode: Question ${globalQuestionId} NOT added to wrong questions`);
   }
   
   saveUserProgress();
@@ -5866,8 +5873,7 @@ function renderNormalAnswers() {
           if (!question.hasCorrectAnswer) {
             question.hasCorrectAnswer = true;
           }
-          feedback.innerHTML = `<div style="color:var(--success); font-size:16px; font-weight:600;">✓ სწორი პასუხი!</div>`;
-          
+
           updateUserProgress(question.id, idx, true, false);
           
           if (autoMode && currentIndex < sessionTests.length - 1) {
@@ -5880,8 +5886,7 @@ function renderNormalAnswers() {
           
         } else {
           answerEl.classList.add('incorrect');
-          feedback.innerHTML = `<div style="color:var(--danger); font-size:16px; font-weight:600;">✗ არასწორი პასუხი</div>`;
-          
+
           updateUserProgress(question.id, idx, false, false);
         }
         
