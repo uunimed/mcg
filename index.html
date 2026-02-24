@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=yes" />
-<title>საგამოცდო ტესტები</title>
+<title>UniMed ტესტები</title>
 <style>
 :root{
   --bg:#f6f8fb; --muted:#6b7280; --accent:#0ea5a4;
@@ -3599,7 +3599,7 @@ async function handleSignup() {
     if (firebaseSyncEnabled && database) {
       const firebaseUser = await loadUserFromFirebase(username);
       if (firebaseUser) {
-        document.getElementById('signupUsernameError').textContent = 'მსგავსი მომხმარებელი უკვე არსებობს (გლობალურად)';
+        document.getElementById('signupUsernameError').textContent = 'მსგავსი მომხმარებელი უკვე არსებობს';
         document.getElementById('signupUsernameError').style.display = 'block';
         return;
       }
@@ -4966,7 +4966,7 @@ function renderMistakesList() {
   }
   
   if (wrongQuestionIds.length === 0) {
-    return `<div style="text-align:center; padding:20px; color:var(--muted);">მოდულში "${moduleDisplayName}" შეცდომები არ არის!</div>`;
+    return `<div style="text-align:center; padding:20px; color:var(--muted);">მოდულში "${moduleDisplayName}" შეცდომები ჯერ არ არის!</div>`;
   }
   
   let html = `<div style="margin-bottom: 15px; padding: 10px; background: #f1f5f9; border-radius: 6px; text-align: center; font-weight: 600; color: var(--accent);">მოდული: ${moduleDisplayName}</div>`;
@@ -5626,7 +5626,7 @@ function updateSelectedTopics() {
 
 function startTest() {
   if (!modeSequential.checked && !modeExam.checked) {
-    showNotification('გთხოვთ აირჩიოთ რეჟიმი: "ტესტების ჩვენება თანმიმდევრობით" ან "საგამოცდო რეჟიმი"');
+    showNotification('გთხოვთ აირჩიოთ ერთი რეჟიმი მაინც');
     return;
   }
 
@@ -5643,7 +5643,7 @@ function startTest() {
   const progressData = window.savedProgress;
 
   if (modeSequential.checked && modeExam.checked) {
-    showNotification('"ტესტების ჩვენება თანმიმდევრობით" და "საგამოცდო რეჟიმი" ერთად შეუძლებელია არსებობდეს! აირჩიეთ მხოლოდ ერთი.');
+    showNotification('ეს რეჟიმები ერთად შეუძლებელია არსებობდეს!');
     return;
   }
 
@@ -5757,7 +5757,7 @@ function startTest() {
         lastTimerUpdate = Date.now();
       }
 
-      showNotification(`პროგრესი წარმატებით ჩაიტვირთა. გაგრძელდება ${currentIndex + 1} კითხვიდან`, false);
+      showNotification(`წარმატებით ჩაიტვირთა, გრძელდება N.:${currentIndex + 1} კითხვიდან`, false);
     }
 
     window.savedProgress = null;
@@ -6306,7 +6306,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const p1 = document.createElement('p');
   p1.style.cssText = 'margin-bottom: 15px; font-size: 16px;';
-  p1.innerHTML = `თქვენ უკვე გაქვთ <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> დაწერილი მოდულში: <strong style="color: var(--accent);">${moduleName}</strong>`;
+  p1.innerHTML = `თქვენ უკვე დაწერეთ <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> მოდულში: <strong style="color: var(--accent);">${moduleName}</strong>`;
   
   const p2 = document.createElement('p');
   p2.style.cssText = 'margin-bottom: 20px; color: #64748b;';
