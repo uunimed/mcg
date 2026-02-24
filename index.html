@@ -3115,7 +3115,7 @@ async function loadUserProgress() {
                 localStorage.removeItem('chatUserId');
                 
                 // გამოვაჩინოთ შეტყობინება
-                showNotification('⚠️ თქვენი ანგარიში წაიშალა ადმინისტრატორის მიერ. გთხოვთ დარეგისტრირდეთ თავიდან.', true);
+                showNotification('თქვენი ანგარიში წაიშალა. გთხოვთ დარეგისტრირდეთ თავიდან.', true);
                 
                 // გავასუფთაოთ currentUser
                 currentUser = null;
@@ -3135,7 +3135,7 @@ async function loadUserProgress() {
             if (firebaseUserData.deleted === true) {
                 console.warn("User account is marked as deleted");
                 
-                showNotification('⛔ ეს ანგარიში დაბლოკილია ადმინისტრატორის მიერ', true);
+                showNotification('ეს ანგარიში გაუქმებულია!', true);
                 
                 currentUser = null;
                 document.getElementById('userInfo').style.display = 'none';
@@ -3739,118 +3739,6 @@ function initAuth() {
       document.getElementById('loginTab').classList.add('active');
     }
   });
-}
-
-// ==================== FIXED: HANDLE LOGIN ====================
-async function handleLogin() {
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  
-  document.getElementById('loginUsernameError').style.display = 'none';
-  document.getElementById('loginPasswordError').style.display = 'none';
-  
-  if (!username) {
-    document.getElementById('loginUsernameError').textContent = 'სახელი და გვარი აუცილებელია';
-    document.getElementById('loginUsernameError').style.display = 'block';
-    return;
-  }
-  
-  const nameParts = username.split(/\s+/);
-  if (nameParts.length < 2) {
-    document.getElementById('loginUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელიც და გვარიც';
-    document.getElementById('loginUsernameError').style.display = 'block';
-    return;
-  }
-  
-  if (!password) {
-    document.getElementById('loginPasswordError').textContent = 'პაროლი აუცილებელია';
-    document.getElementById('loginPasswordError').style.display = 'block';
-    return;
-  }
-  
-  try {
-    let users = JSON.parse(localStorage.getItem('users') || '{}');
-    let userFound = false;
-    
-    if (users[username] && users[username].password === password) {
-      userFound = true;
-    } else {
-      if (firebaseSyncEnabled && database) {
-        const firebaseUser = await loadUserFromFirebase(username);
-        if (firebaseUser && firebaseUser.password === password) {
-          users[username] = {
-            password: firebaseUser.password,
-            progress: firebaseUser.progress || {
-              rezidentura: {
-                normal: { answeredQuestions: {}, currentIndex: 0 },
-                exam: { answeredQuestions: {}, currentIndex: 0 },
-                wrongQuestions: []
-              }
-            },
-            lastUpdated: firebaseUser.lastUpdated || Date.now()
-          };
-          localStorage.setItem('users', JSON.stringify(users));
-          userFound = true;
-        }
-      }
-    }
-    
-    if (!userFound) {
-      document.getElementById('loginUsernameError').textContent = 'მომხმარებელი ან პაროლი არასწორია';
-      document.getElementById('loginUsernameError').style.display = 'block';
-      return;
-    }
-    
-    currentUser = { 
-      username: username, 
-      isGuest: false
-    };
-    
-    await loadUserProgress();
-    
-    document.getElementById('loginUsername').value = '';
-    document.getElementById('loginPassword').value = '';
-    
-    document.getElementById('authModal').style.display = 'none';
-    document.getElementById('userInfo').style.display = 'flex';
-    document.getElementById('usernameDisplay').textContent = currentUser.username;
-    
-    userName = currentUser.username;
-    localStorage.setItem('chatUserName', userName);
-    
-    showNotification('მოგესალმებით!', false);
-    
-    const hasProgress = userProgress && Object.keys(userProgress).length > 0 && 
-                       (Object.keys(userProgress.rezidentura?.normal?.answeredQuestions || {}).length > 0 ||
-                        Object.keys(userProgress.rezidentura?.exam?.answeredQuestions || {}).length > 0 ||
-                        Object.keys(userProgress.internalMedicine?.normal?.answeredQuestions || {}).length > 0 ||
-                        Object.keys(userProgress.internalMedicine?.exam?.answeredQuestions || {}).length > 0 ||
-                        Object.keys(userProgress.pathology?.normal?.answeredQuestions || {}).length > 0 ||
-                        Object.keys(userProgress.pathology?.exam?.answeredQuestions || {}).length > 0);
-    
-    if (hasProgress) {
-      window.pendingProgressCheck = true;
-    }
-    if (allTests.length === 0) {
-      loadCSV();
-    } else {
-      startBtn.disabled = false;
-      setTimeout(() => {
-        const examModeCheckbox = document.getElementById('modeExam');
-        if (!examModeCheckbox || !examModeCheckbox.checked) {
-          checkExistingProgress();
-        }
-      }, 500);
-    }
-
-    initChat();
-    bindUserMenuEvents();
-    updateTimerDisplay();
-    
-  } catch (error) {
-    console.error('Login error:', error);
-    showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
-  }
 }
 
 async function handleSignup() {
@@ -6616,7 +6504,7 @@ function setupForceLogoutListener() {
             sessionStorage.clear();
             
             // გამოაჩინე შეტყობინება
-            showNotification('თქვენი ანგარიში წაიშალა ადმინისტრატორის მიერ', true);
+            showNotification('თქვენი ანგარიში წაიშალა', true);
             
             // გადატვირთე გვერდი
             setTimeout(() => {
