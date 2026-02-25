@@ -3211,7 +3211,7 @@ body {
                 წინა
               </button>
               <button id="examFinishBtn" class="nav-btn" style="background: var(--danger);">
-                დასრულება
+                გამოცდის დასრულება
               </button>
               <button id="examNextBtn" class="nav-btn">
                 შემდეგი
@@ -3484,6 +3484,7 @@ async function saveUserProgress() {
   }
 }
 
+// ==================== FIXED: LOAD USER PROGRESS WITH DELETION CHECK ====================
 async function loadUserProgress() {
     if (!currentUser || !currentUser.username) {
         console.log("No current user, skipping progress load");
@@ -3493,26 +3494,35 @@ async function loadUserProgress() {
     console.log("Loading progress for user:", currentUser.username);
 
     try {
-        // Firebase-ის შემოწმება...
+        // პირველ რიგში შეამოწმე Firebase-ში არსებობს თუ არა მომხმარებელი
         if (firebaseSyncEnabled && database) {
             const firebaseUserData = await loadUserFromFirebase(currentUser.username);
             
+            // თუ Firebase-ში მომხმარებელი არ არსებობს - ანგარიში წაშლილია
             if (!firebaseUserData) {
                 console.warn("User not found in Firebase - account was deleted");
+                
+                // წავშალოთ localStorage-დან
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
                 if (users[currentUser.username]) {
                     delete users[currentUser.username];
                     localStorage.setItem('users', JSON.stringify(users));
                 }
                 
+                // წავშალოთ ჩატის მონაცემები
                 localStorage.removeItem('chatUserName');
                 localStorage.removeItem('chatUserId');
                 
-                showNotification('თქვენი ანგარიში წაიშალა. გთხოვთ დარეგისტრირდეთ თავიდან', true);
+                // გამოვაჩინოთ შეტყობინება
+                showNotification('თქვენი ანგარიში წაიშალა. გთხოვთ დარეგისტრირდეთ თავიდან.', true);
                 
+                // გავასუფთაოთ currentUser
                 currentUser = null;
+                
+                // დავმალოთ იუზერის ინფო
                 document.getElementById('userInfo').style.display = 'none';
                 
+                // გამოვაჩინოთ ავტორიზაციის მოდალი
                 setTimeout(() => {
                     document.getElementById('authModal').style.display = 'flex';
                 }, 2000);
@@ -3520,9 +3530,12 @@ async function loadUserProgress() {
                 return;
             }
             
+            // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
             if (firebaseUserData.deleted === true) {
                 console.warn("User account is marked as deleted");
+                
                 showNotification('ეს ანგარიში გაუქმებულია!', true);
+                
                 currentUser = null;
                 document.getElementById('userInfo').style.display = 'none';
                 
@@ -3534,7 +3547,7 @@ async function loadUserProgress() {
             }
         }
 
-        // პროგრესის ჩატვირთვა...
+        // თუ Firebase-ში არსებობს, განვაგრძოთ პროგრესის ჩატვირთვა
         const users = JSON.parse(localStorage.getItem('users') || '{}');
         let localUserData = users[currentUser.username] || null;
         
@@ -3562,84 +3575,6 @@ async function loadUserProgress() {
                 console.log('Progress synced from Firebase for', currentUser.username);
             }
         }
-
-        // ⭐ ავტომატურად აირჩიე ბოლო მოდული
-// ⭐ ავტომატურად აირჩიე ბოლო მოდული
-setTimeout(() => {
-    const lastModule = getLastSelectedModule();
-    if (lastModule) {
-        console.log("Auto-selecting last module:", lastModule);
-        const testTypeSelect = document.getElementById('testTypeSelect');
-        if (testTypeSelect && testTypeSelect.querySelector(`option[value="${lastModule}"]`)) {
-            testTypeSelect.value = lastModule;
-            currentTestType = lastModule;
-            
-            // ⭐ აჩვენე შეტყობინება მომხმარებელს
-            const moduleNames = {
-                'samkurnaloo': 'სამკურნალო',
-                'stomatologia': 'სტომატოლოგია',
-                'alergologia': 'ალერგოლოგია',
-                'angiokirurgia': 'ანგიოქირურგია',
-                'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
-                'bavshvta_gadaudebeli': 'ბავშვთა გადაუდებელი',
-                'bavshvta_kardiorevmatologia': 'ბავშვთა კარდიორევმატოლოგია',
-                'bavshvta_nevrologia': 'ბავშვთა ნევროლოგია',
-                'bavshvta_nevrologia2': 'ბავშვთა ნეფროლოგია',
-                'gadaudebeli_medicina': 'გადაუდებელი მედიცინა',
-                'gastroenterologia': 'გასტროენტეროლოგია',
-                'ginekologia': 'გინეკოლოგია',
-                'dermatologia': 'დერმატოლოგია',
-                'endokrinologia': 'ენდოკრინოლოგია',
-                'zogadi_kirurgia': 'ზოგადი ქირურგია',
-                'terapiuli_stomatologia': 'თერაპიული სტომატოლოგია',
-                'infekciuri': 'ინფექციური',
-                'kardiologia': 'კარდიოლოგია',
-                'kardiokirurgia': 'კარდიოქირურგია',
-                'laboratoriuli_medicina': 'ლაბორატორიული მედიცინა',
-                'narkologia': 'ნარკოლოგია',
-                'nevrologia': 'ნევროლოგია',
-                'neonatologia': 'ნეონატოლოგია',
-                'nefrologia': 'ნეფროლოგია',
-                'onkologia': 'ონკოლოგია',
-                'ortodontia': 'ორთოდონტია',
-                'ortopedia_travmatologia': 'ორთოპედია ტრავმატოლოგია',
-                'ortopediuli_stomatologia': 'ორთოპედიული სტომატოლოგია',
-                'otorinolaringologia': 'ოტორინოლარინგოლოგია',
-                'oftalmologia': 'ოფთალმოლოგია',
-                'patologia': 'პათოლოგია',
-                'pediatria': 'პედიატრია',
-                'plastikuri_kirurgia': 'პლასტიკური და რეკონსტრუქციული ქირურგია',
-                'radiologia': 'რადიოლოგია',
-                'radiacioni_onkologia': 'რადიაციული ონკოლოგია',
-                'reproduqtologia': 'რეპროდუქტოლოგია',
-                'revmatologia': 'რევმატოლოგია',
-                'saokjao_medicina': 'საოჯახო მედიცინა',
-                'sportuli_medicina': 'სპორტული მედიცინა',
-                'toksikologia': 'ტოქსიკოლოგია',
-                'urologia': 'უროლოგია',
-                'ftiziatria_pulmonologia': 'ფთიზიატრია, პულმონოლოგია',
-                'psikiatria': 'ფსიქიატრია',
-                'qba_saxis_kirurgia': 'ყბა-სახის ქირურგია',
-                'shinagani_medicina': 'შინაგანი მედიცინა',
-                'hematologia': 'ჰემატოლოგია'
-            };
-            
-            const moduleDisplayName = moduleNames[lastModule] || lastModule;
-            showNotification(`ავტომატურად ჩაიტვირთა ბოლოს ნანახი მოდული: ${moduleDisplayName}`, false);
-            
-            // განაახლე თემების ჩამოსაშლელი
-            toggleTopicsDropdown();
-            
-            // თუ მონაცემები უკვე ჩატვირთულია, შეამოწმე პროგრესი
-            if (allTestsWithTopics.length > 0) {
-                const examModeCheckbox = document.getElementById('modeExam');
-                if (!examModeCheckbox || !examModeCheckbox.checked) {
-                    checkExistingProgress();
-                }
-            }
-        }
-    }
-}, 500); // პატარა დაყოვნება, რომ ყველაფერი ჩაიტვირთოს
         
         // დააყენე რეალურ დროში მონიტორინგი
         setupUserDeletionListener();
@@ -4275,36 +4210,15 @@ async function handleSignup() {
       }
     }
     
-    // ⭐ შევქმნათ ყველა მოდულის პროგრესი
-    const initialProgress = {};
-    
-    // ყველა მოდულის ID
-    const allModuleIds = [
-      'samkurnaloo', 'stomatologia',
-      'alergologia', 'angiokirurgia', 'anesteziologia', 'bavshvta_gadaudebeli',
-      'bavshvta_kardiorevmatologia', 'bavshvta_nevrologia', 'bavshvta_nevrologia2',
-      'gadaudebeli_medicina', 'gastroenterologia', 'ginekologia', 'dermatologia',
-      'endokrinologia', 'zogadi_kirurgia', 'terapiuli_stomatologia', 'infekciuri',
-      'kardiologia', 'kardiokirurgia', 'laboratoriuli_medicina', 'narkologia',
-      'nevrologia', 'neonatologia', 'nefrologia', 'onkologia', 'ortodontia',
-      'ortopedia_travmatologia', 'ortopediuli_stomatologia', 'otorinolaringologia',
-      'oftalmologia', 'patologia', 'pediatria', 'plastikuri_kirurgia', 'radiologia',
-      'radiacioni_onkologia', 'reproduqtologia', 'revmatologia', 'saokjao_medicina',
-      'sportuli_medicina', 'toksikologia', 'urologia', 'ftiziatria_pulmonologia',
-      'psikiatria', 'qba_saxis_kirurgia', 'shinagani_medicina', 'hematologia'
-    ];
-    
-    allModuleIds.forEach(moduleId => {
-      initialProgress[moduleId] = {
-        normal: { answeredQuestions: {}, currentIndex: 0 },
-        exam: { answeredQuestions: {}, currentIndex: 0 },
-        wrongQuestions: []
-      };
-    });
-    
     users[username] = {
       password: password,
-      progress: initialProgress,
+      progress: {
+        rezidentura: {
+          normal: { answeredQuestions: {}, currentIndex: 0 },
+          exam: { answeredQuestions: {}, currentIndex: 0 },
+          wrongQuestions: []
+        }
+      },
       lastUpdated: Date.now()
     };
     
@@ -5043,10 +4957,7 @@ function toggleTopicsDropdown() {
   
   if (!testTypeSelect || !topicsContainer) return;
   
-  // ⭐ შევამოწმოთ არის თუ არა მოდული რეზიდენტურის ჯგუფში
-  const residentModules = ['samkurnaloo', 'stomatologia'];
-  
-  if (residentModules.includes(testTypeSelect.value)) {
+  if (testTypeSelect.value === 'rezidentura') {
     topicsContainer.style.display = 'flex';
   } else {
     topicsContainer.style.display = 'none';
@@ -5067,12 +4978,6 @@ function bindTestTypeEvents() {
       }
       if (this.value && allTests.length > 0) {
         loadCSV();
-      }
-      
-      // ⭐ შეინახე ბოლო მოდული როცა იცვლება
-      if (currentUser && !currentUser.isGuest) {
-        saveLastSelectedModule(this.value);
-        console.log("Module saved on change:", this.value);
       }
     });
   }
@@ -5650,10 +5555,7 @@ function renderMistakesList() {
   
   const wrongQuestionIds = userProgress[currentTestType]?.wrongQuestions || [];
   
-  // ⭐ მოდულის ქართული სახელის განსაზღვრა
-  let moduleDisplayName = '';
-  
-  // მოდულის სახელების განსაზღვრა
+  // მოდულების ქართული სახელები
   const moduleNames = {
     // რეზიდენტურა
     'samkurnaloo': 'სამკურნალო',
@@ -5706,7 +5608,7 @@ function renderMistakesList() {
     'hematologia': 'ჰემატოლოგია'
   };
   
-  moduleDisplayName = moduleNames[currentTestType] || currentTestType;
+  const moduleDisplayName = moduleNames[currentTestType] || currentTestType;
   
   if (wrongQuestionIds.length === 0) {
     return `<div style="text-align:center; padding:20px; color:var(--muted);">მოდულში "${moduleDisplayName}" შეცდომები ჯერ არ არის!</div>`;
@@ -5759,11 +5661,57 @@ function printMistakes() {
     return;
   }
   
-  // ⭐ მოდულის ქართული სახელი
+  // მოდულების ქართული სახელები
   const moduleNames = {
+    // რეზიდენტურა
     'samkurnaloo': 'სამკურნალო',
     'stomatologia': 'სტომატოლოგია',
-    // ... დაამატეთ ყველა სხვა მოდული იგივე სიიდან
+    
+    // სალიცენზიო
+    'alergologia': 'ალერგოლოგია',
+    'angiokirurgia': 'ანგიოქირურგია',
+    'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
+    'bavshvta_gadaudebeli': 'ბავშვთა გადაუდებელი',
+    'bavshvta_kardiorevmatologia': 'ბავშვთა კარდიორევმატოლოგია',
+    'bavshvta_nevrologia': 'ბავშვთა ნევროლოგია',
+    'bavshvta_nevrologia2': 'ბავშვთა ნეფროლოგია',
+    'gadaudebeli_medicina': 'გადაუდებელი მედიცინა',
+    'gastroenterologia': 'გასტროენტეროლოგია',
+    'ginekologia': 'გინეკოლოგია',
+    'dermatologia': 'დერმატოლოგია',
+    'endokrinologia': 'ენდოკრინოლოგია',
+    'zogadi_kirurgia': 'ზოგადი ქირურგია',
+    'terapiuli_stomatologia': 'თერაპიული სტომატოლოგია',
+    'infekciuri': 'ინფექციური',
+    'kardiologia': 'კარდიოლოგია',
+    'kardiokirurgia': 'კარდიოქირურგია',
+    'laboratoriuli_medicina': 'ლაბორატორიული მედიცინა',
+    'narkologia': 'ნარკოლოგია',
+    'nevrologia': 'ნევროლოგია',
+    'neonatologia': 'ნეონატოლოგია',
+    'nefrologia': 'ნეფროლოგია',
+    'onkologia': 'ონკოლოგია',
+    'ortodontia': 'ორთოდონტია',
+    'ortopedia_travmatologia': 'ორთოპედია ტრავმატოლოგია',
+    'ortopediuli_stomatologia': 'ორთოპედიული სტომატოლოგია',
+    'otorinolaringologia': 'ოტორინოლარინგოლოგია',
+    'oftalmologia': 'ოფთალმოლოგია',
+    'patologia': 'პათოლოგია',
+    'pediatria': 'პედიატრია',
+    'plastikuri_kirurgia': 'პლასტიკური და რეკონსტრუქციული ქირურგია',
+    'radiologia': 'რადიოლოგია',
+    'radiacioni_onkologia': 'რადიაციული ონკოლოგია',
+    'reproduqtologia': 'რეპროდუქტოლოგია',
+    'revmatologia': 'რევმატოლოგია',
+    'saokjao_medicina': 'საოჯახო მედიცინა',
+    'sportuli_medicina': 'სპორტული მედიცინა',
+    'toksikologia': 'ტოქსიკოლოგია',
+    'urologia': 'უროლოგია',
+    'ftiziatria_pulmonologia': 'ფთიზიატრია, პულმონოლოგია',
+    'psikiatria': 'ფსიქიატრია',
+    'qba_saxis_kirurgia': 'ყბა-სახის ქირურგია',
+    'shinagani_medicina': 'შინაგანი მედიცინა',
+    'hematologia': 'ჰემატოლოგია'
   };
   
   const moduleDisplayName = moduleNames[currentTestType] || currentTestType;
@@ -5775,6 +5723,7 @@ function printMistakes() {
       <style>
         body { font-family: Arial, sans-serif; margin: 1cm; }
         h1 { color: #0ea5a4; text-align: left; }
+        .module-name { color: #0891b2; font-size: 18px; margin: 10px 0; }
         .mistake { 
           margin-bottom: 30px; 
           padding: 20px; 
@@ -5792,8 +5741,8 @@ function printMistakes() {
     <body>
       <h1>შეცდომების ისტორია</h1>
       <p style="text-align: left; color: #64748b;">მომხმარებელი: ${escapeHtml(currentUser.username)}</p>
-      <p style="text-align: left; color: #64748b;">მოდული: ${escapeHtml(moduleDisplayName)}</p>
       <p style="text-align: left; color: #64748b;">თარიღი: ${new Date().toLocaleDateString('ka-GE')}</p>
+      <div class="module-name">მოდული: ${moduleDisplayName}</div>
       <hr>
   `;
   
@@ -7063,10 +7012,62 @@ function checkExistingProgress() {
   const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
   const totalAnswered = normalCount + examCount;
   
-  // ⭐ მოდულის ქართული სახელი
+  let moduleDisplayName = '';
+  switch(selectedModule) {
+    case 'rezidentura':
+      moduleDisplayName = 'რეზიდენტურა';
+      break;
+    case 'internalMedicine':
+      moduleDisplayName = 'შინაგანი მედიცინა';
+      break;
+    case 'pathology':
+      moduleDisplayName = 'პათოლოგია';
+      break;
+    default:
+      moduleDisplayName = selectedModule;
+  }
+  
+  showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
+}
+
+// დააკვირდი სისტემურ შეტყობინებებს
+function setupForceLogoutListener() {
+    if (!firebaseSyncEnabled || !database) return;
+    
+    database.ref('system/forceLogout').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
+        if (data.userId === currentUser?.username || 
+            data.userId === localStorage.getItem('chatUserId')) {
+            
+            // გაასუფთავე localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('users');
+            sessionStorage.clear();
+            
+            // გამოაჩინე შეტყობინება
+            showNotification('თქვენი ანგარიში წაიშალა', true);
+            
+            // გადატვირთე გვერდი
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    });
+}
+
+function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
+  console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
+  
+  // მოდულების ქართული სახელები
   const moduleNames = {
+    // რეზიდენტურა
     'samkurnaloo': 'სამკურნალო',
     'stomatologia': 'სტომატოლოგია',
+    
+    // სალიცენზიო
     'alergologia': 'ალერგოლოგია',
     'angiokirurgia': 'ანგიოქირურგია',
     'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
@@ -7113,41 +7114,7 @@ function checkExistingProgress() {
     'hematologia': 'ჰემატოლოგია'
   };
   
-  let moduleDisplayName = moduleNames[selectedModule] || selectedModule;
-  
-  showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
-}
-
-// დააკვირდი სისტემურ შეტყობინებებს
-function setupForceLogoutListener() {
-    if (!firebaseSyncEnabled || !database) return;
-    
-    database.ref('system/forceLogout').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-        
-        // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
-        if (data.userId === currentUser?.username || 
-            data.userId === localStorage.getItem('chatUserId')) {
-            
-            // გაასუფთავე localStorage
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('users');
-            sessionStorage.clear();
-            
-            // გამოაჩინე შეტყობინება
-            showNotification('თქვენი ანგარიში წაიშალა', true);
-            
-            // გადატვირთე გვერდი
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
-        }
-    });
-}
-
-function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
-  console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
+  const moduleDisplayName = moduleNames[selectedModule] || selectedModule;
   
   const existingModal = document.querySelector('.modal-overlay[data-type="progress-resume"]');
   if (existingModal) existingModal.remove();
@@ -7172,11 +7139,11 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const p1 = document.createElement('p');
   p1.style.cssText = 'margin-bottom: 15px; font-size: 16px;';
-  p1.innerHTML = `თქვენ უკვე დაწერეთ <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> მოდულში: <strong style="color: var(--accent);">${moduleName}</strong>`;
+  p1.innerHTML = `თქვენ უკვე დაწერეთ <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> მოდულში: <strong style="color: var(--accent);">${moduleDisplayName}</strong>`;
   
   const p2 = document.createElement('p');
   p2.style.cssText = 'margin-bottom: 20px; color: #64748b;';
-  p2.textContent = 'გსურთ გააგრძელოთ ბოლო ტესტიდან თუ დავიწყოთ თავიდან?';
+  p2.textContent = 'გსურთ გააგრძელოთ ბოლო ტესტიდან თუ თავიდან დაიწყოთ?';
   
   content.appendChild(p1);
   content.appendChild(p2);
@@ -7356,33 +7323,6 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   });
 }
 
-
-// ==================== LAST MODULE FUNCTIONS ====================
-function saveLastSelectedModule(moduleId) {
-  if (!currentUser || currentUser.isGuest) return;
-  
-  try {
-    const lastModules = JSON.parse(localStorage.getItem('lastSelectedModules') || '{}');
-    lastModules[currentUser.username] = moduleId;
-    localStorage.setItem('lastSelectedModules', JSON.stringify(lastModules));
-    console.log('Last module saved:', moduleId, 'for user:', currentUser.username);
-  } catch (error) {
-    console.error('Error saving last module:', error);
-  }
-}
-
-function getLastSelectedModule() {
-  if (!currentUser || currentUser.isGuest) return null;
-  
-  try {
-    const lastModules = JSON.parse(localStorage.getItem('lastSelectedModules') || '{}');
-    return lastModules[currentUser.username] || null;
-  } catch (error) {
-    console.error('Error getting last module:', error);
-    return null;
-  }
-}
-
 function showCompletionScreen() {
   const totalQuestions = sessionTests.length;
   const correctCount = sessionTests.filter(q => q.hasCorrectAnswer).length;
@@ -7432,11 +7372,6 @@ startBtn.addEventListener('click', function() {
   
   currentTestType = testTypeSelect.value;
   console.log("Test type set to:", currentTestType);
-  
-  // ⭐ შეინახე ბოლო მოდული (დამატებითი უსაფრთხოებისთვის)
-  if (currentUser && !currentUser.isGuest) {
-    saveLastSelectedModule(currentTestType);
-  }
   
   if (currentTestType === 'rezidentura') {
     const topicsSelect = document.getElementById('topicsSelect');
