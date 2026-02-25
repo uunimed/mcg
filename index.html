@@ -3068,13 +3068,60 @@ body {
           <label style="font-size: 14px; color: #64748b; margin-bottom: 5px;">მოდული:</label>
 <select id="testTypeSelect" class="topic-select">
   <option value="" selected disabled hidden>აირჩიეთ</option>
-  <option value="rezidentura">რეზიდენტურა</option>
   
-  <!-- DIVIDER -->
-  <option disabled style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center;">სალიცენზიო გამოცდები</option>
+  <!-- რეზიდენტურა DIVIDER -->
+  <option disabled style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center;">რეზიდენტურა</option>
   
-  <option value="internalMedicine">შინაგანი მედიცინა</option>
-  <option value="pathology">პათოლოგია</option>
+  <option value="samkurnaloo">სამკურნალო</option>
+  <option value="stomatologia">სტომატოლოგია</option>
+  
+  <!-- სალიცენზიო DIVIDER -->
+  <option disabled style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center;">სალიცენზიო</option>
+  
+  <option value="alergologia">ალერგოლოგია</option>
+  <option value="angiokirurgia">ანგიოქირურგია</option>
+  <option value="anesteziologia">ანესთეზიოლოგია, რეანიმატოლოგია</option>
+  <option value="bavshvta_gadaudebeli">ბავშვთა გადაუდებელი</option>
+  <option value="bavshvta_kardiorevmatologia">ბავშვთა კარდიორევმატოლოგია</option>
+  <option value="bavshvta_nevrologia">ბავშვთა ნევროლოგია</option>
+  <option value="bavshvta_nevrologia2">ბავშვთა ნეფროლოგია</option>
+  <option value="gadaudebeli_medicina">გადაუდებელი მედიცინა</option>
+  <option value="gastroenterologia">გასტროენტეროლოგია</option>
+  <option value="ginekologia">გინეკოლოგია</option>
+  <option value="dermatologia">დერმატოლოგია</option>
+  <option value="endokrinologia">ენდოკრინოლოგია</option>
+  <option value="zogadi_kirurgia">ზოგადი ქირურგია</option>
+  <option value="terapiuli_stomatologia">თერაპიული სტომატოლოგია</option>
+  <option value="infekciuri">ინფექციური</option>
+  <option value="kardiologia">კარდიოლოგია</option>
+  <option value="kardiokirurgia">კარდიოქირურგია</option>
+  <option value="laboratoriuli_medicina">ლაბორატორიული მედიცინა</option>
+  <option value="narkologia">ნარკოლოგია</option>
+  <option value="nevrologia">ნევროლოგია</option>
+  <option value="neonatologia">ნეონატოლოგია</option>
+  <option value="nefrologia">ნეფროლოგია</option>
+  <option value="onkologia">ონკოლოგია</option>
+  <option value="ortodontia">ორთოდონტია</option>
+  <option value="ortopedia_travmatologia">ორთოპედია ტრავმატოლოგია</option>
+  <option value="ortopediuli_stomatologia">ორთოპედიული სტომატოლოგია</option>
+  <option value="otorinolaringologia">ოტორინოლარინგოლოგია</option>
+  <option value="oftalmologia">ოფთალმოლოგია</option>
+  <option value="patologia">პათოლოგია</option>
+  <option value="pediatria">პედიატრია</option>
+  <option value="plastikuri_kirurgia">პლასტიკური და რეკონსტრუქციული ქირურგია</option>
+  <option value="radiologia">რადიოლოგია</option>
+  <option value="radiacioni_onkologia">რადიაციული ონკოლოგია</option>
+  <option value="reproduqtologia">რეპროდუქტოლოგია</option>
+  <option value="revmatologia">რევმატოლოგია</option>
+  <option value="saokjao_medicina">საოჯახო მედიცინა</option>
+  <option value="sportuli_medicina">სპორტული მედიცინა</option>
+  <option value="toksikologia">ტოქსიკოლოგია</option>
+  <option value="urologia">უროლოგია</option>
+  <option value="ftiziatria_pulmonologia">ფთიზიატრია, პულმონოლოგია</option>
+  <option value="psikiatria">ფსიქიატრია</option>
+  <option value="qba_saxis_kirurgia">ყბა-სახის ქირურგია</option>
+  <option value="shinagani_medicina">შინაგანი მედიცინა</option>
+  <option value="hematologia">ჰემატოლოგია</option>
 </select>
         </div>
       </div>
@@ -3282,11 +3329,66 @@ async function syncUserWithFirebase(username, localUserData) {
 let currentUser = null;
 let currentTestType = null;
 let userProgress = {
-  rezidentura: {
+  // რეზიდენტურა
+  samkurnaloo: {
     normal: { answeredQuestions: {}, currentIndex: 0 },
     exam: { answeredQuestions: {}, currentIndex: 0 },
     wrongQuestions: []
-  }
+  },
+  stomatologia: {
+    normal: { answeredQuestions: {}, currentIndex: 0 },
+    exam: { answeredQuestions: {}, currentIndex: 0 },
+    wrongQuestions: []
+  },
+  // სალიცენზიო - დაამატეთ ყველა მოდული
+  alergologia: {
+    normal: { answeredQuestions: {}, currentIndex: 0 },
+    exam: { answeredQuestions: {}, currentIndex: 0 },
+    wrongQuestions: []
+  },
+  angiokirurgia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  anesteziologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  bavshvta_gadaudebeli: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  bavshvta_kardiorevmatologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  bavshvta_nevrologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  bavshvta_nevrologia2: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  gadaudebeli_medicina: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  gastroenterologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  ginekologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  dermatologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  endokrinologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  zogadi_kirurgia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  terapiuli_stomatologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  infekciuri: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  kardiologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  kardiokirurgia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  laboratoriuli_medicina: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  narkologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  nevrologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  neonatologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  nefrologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  onkologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  ortodontia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  ortopedia_travmatologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  ortopediuli_stomatologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  otorinolaringologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  oftalmologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  patologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  pediatria: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  plastikuri_kirurgia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  radiologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  radiacioni_onkologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  reproduqtologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  revmatologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  saokjao_medicina: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  sportuli_medicina: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  toksikologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  urologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  ftiziatria_pulmonologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  psikiatria: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  qba_saxis_kirurgia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  shinagani_medicina: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
+  hematologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] }
 };
 
 // ==================== GLOBAL VARIABLES ====================
@@ -5797,7 +5899,6 @@ function showDetailedResults() {
   detailedResultsModal.classList.add('active');
 }
 
-// ==================== CSV LOADING FUNCTIONS ====================
 function loadCSV() {
   loaderOverlay.style.display = 'flex';
   resetLoader();
@@ -5805,16 +5906,65 @@ function loadCSV() {
   
   const testType = document.getElementById('testTypeSelect').value;
   
-  let csvUrl;
+  // CSV URLs ყველა მოდულისთვის
+  const csvUrls = {
+    // რეზიდენტურა
+    'samkurnaloo': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv",
+    'stomatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=924975691&single=true&output=csv",
+    
+    // სალიცენზიო
+    'alergologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1370781418&single=true&output=csv",
+    'angiokirurgia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1996746758&single=true&output=csv",
+    'anesteziologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=861241916&single=true&output=csv",
+    'bavshvta_gadaudebeli': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=108478359&single=true&output=csv",
+    'bavshvta_kardiorevmatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=2015525913&single=true&output=csv",
+    'bavshvta_nevrologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=108478359&single=true&output=csv",
+    'bavshvta_nevrologia2': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=669175344&single=true&output=csv",
+    'gadaudebeli_medicina': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1907712211&single=true&output=csv",
+    'gastroenterologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1983098788&single=true&output=csv",
+    'ginekologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1009171808&single=true&output=csv",
+    'dermatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1641023942&single=true&output=csv",
+    'endokrinologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1076965777&single=true&output=csv",
+    'zogadi_kirurgia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=765535552&single=true&output=csv",
+    'terapiuli_stomatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=421914421&single=true&output=csv",
+    'infekciuri': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1837962766&single=true&output=csv",
+    'kardiologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1823056502&single=true&output=csv",
+    'kardiokirurgia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1835998784&single=true&output=csv",
+    'laboratoriuli_medicina': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1614838160&single=true&output=csv",
+    'narkologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1085000299&single=true&output=csv",
+    'nevrologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=521902978&single=true&output=csv",
+    'neonatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=768579763&single=true&output=csv",
+    'nefrologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=18090167&single=true&output=csv",
+    'onkologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=879954523&single=true&output=csv",
+    'ortodontia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1764512833&single=true&output=csv",
+    'ortopedia_travmatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=576676097&single=true&output=csv",
+    'ortopediuli_stomatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=154460441&single=true&output=csv",
+    'otorinolaringologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1286843055&single=true&output=csv",
+    'oftalmologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=374722105&single=true&output=csv",
+    'patologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=150316971&single=true&output=csv",
+    'pediatria': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1241882727&single=true&output=csv",
+    'plastikuri_kirurgia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=958598668&single=true&output=csv",
+    'radiologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1015478615&single=true&output=csv",
+    'radiacioni_onkologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1716708597&single=true&output=csv",
+    'reproduqtologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=2085134460&single=true&output=csv",
+    'revmatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1067720088&single=true&output=csv",
+    'saokjao_medicina': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=2120691036&single=true&output=csv",
+    'sportuli_medicina': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=576506020&single=true&output=csv",
+    'toksikologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=515001960&single=true&output=csv",
+    'urologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=954557732&single=true&output=csv",
+    'ftiziatria_pulmonologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1877716705&single=true&output=csv",
+    'psikiatria': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=301196875&single=true&output=csv",
+    'qba_saxis_kirurgia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=300768210&single=true&output=csv",
+    'shinagani_medicina': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=779421848&single=true&output=csv",
+    'hematologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=66052853&single=true&output=csv"
+  };
   
-  if (testType === 'rezidentura') {
-    csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv";
-  } else if (testType === 'internalMedicine') {
-    csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=779421848&single=true&output=csv";
-  } else if (testType === 'pathology') {
-    csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=150316971&single=true&output=csv";
-  } else {
-    csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv";
+  let csvUrl = csvUrls[testType];
+  
+  // თუ მოდული ვერ მოიძებნა, გამოიყენე სამკურნალო როგორც default
+  if (!csvUrl) {
+    console.warn("Unknown test type:", testType, "using samkurnaloo as default");
+    csvUrl = csvUrls['samkurnaloo'];
   }
   
   fetch(csvUrl).then(r => {
@@ -5858,32 +6008,32 @@ function loadCSV() {
       }
     }
 
-loaderOverlay.style.display = 'none';
-startBtn.disabled = false;
+    loaderOverlay.style.display = 'none';
+    startBtn.disabled = false;
 
-if (currentUser && !currentUser.isGuest) {
-  const examModeCheckbox = document.getElementById('modeExam');
-  const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
-  
-  if (window.pendingProgressCheck) {
-    setTimeout(() => {
-      if (!isExamModeChecked) {
-        checkExistingProgress();
+    if (currentUser && !currentUser.isGuest) {
+      const examModeCheckbox = document.getElementById('modeExam');
+      const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
+      
+      if (window.pendingProgressCheck) {
+        setTimeout(() => {
+          if (!isExamModeChecked) {
+            checkExistingProgress();
+          } else {
+            console.log("Exam mode is checked - skipping progress modal");
+          }
+          window.pendingProgressCheck = false;
+        }, 500);
       } else {
-        console.log("Exam mode is checked - skipping progress modal");
+        setTimeout(() => {
+          if (!isExamModeChecked) {
+            checkExistingProgress();
+          } else {
+            console.log("Exam mode is checked - skipping progress modal");
+          }
+        }, 500);
       }
-      window.pendingProgressCheck = false;
-    }, 500);
-  } else {
-    setTimeout(() => {
-      if (!isExamModeChecked) {
-        checkExistingProgress();
-      } else {
-        console.log("Exam mode is checked - skipping progress modal");
-      }
-    }, 500);
-  }
-}
+    }
     
   }).catch(err => {
     console.error("Fetch error:", err);
