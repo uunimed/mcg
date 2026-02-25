@@ -1254,20 +1254,34 @@ body {
     font-size: 13px !important;
   }
   
-  /* Settings page - stretched */
+  /* SETTINGS PAGE - FIXED: 99% WIDTH WITH 0.1CM MARGINS */
   .settings-page {
-    width: 100vw !important;
-    height: 100vh !important;
-    padding: 0 !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: fixed !important;
+    top: 0.1cm !important;
+    left: 0.1cm !important;
+    right: 0.1cm !important;
+    bottom: 0.1cm !important;
+    width: auto !important;
+    height: auto !important;
     transform: none !important;
+    z-index: 10000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    animation: fadeIn 0.3s ease !important;
   }
   
   .settings-container {
-    border-radius: 0 !important;
+    max-width: none !important;
     width: 100% !important;
     height: 100% !important;
+    background: white !important;
+    border-radius: 24px !important;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
   
   .settings-header {
@@ -1280,6 +1294,7 @@ body {
   
   #settingsContent {
     padding: 15px !important;
+    overflow-y: auto !important;
   }
   
   .settings-field {
@@ -1310,14 +1325,16 @@ body {
   }
   
   /* Progress resume modal - buttons in one line */
-  .modal[style*="max-width: 500px"] .modal-buttons {
+  .modal[style*="max-width: 500px"] .modal-buttons,
+  .modal-overlay[data-type="progress-resume"] .modal-buttons {
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 8px !important;
     justify-content: center !important;
   }
   
-  .modal[style*="max-width: 500px"] .modal-buttons button {
+  .modal[style*="max-width: 500px"] .modal-buttons button,
+  .modal-overlay[data-type="progress-resume"] .modal-buttons button {
     flex: 1 1 auto !important;
     min-width: 100px !important;
     padding: 10px 12px !important;
@@ -1330,47 +1347,32 @@ body {
   
   /* ----- NORMAL MODE MOBILE - COMPLETE RESTRUCTURE ----- */
   .normal-mode-container {
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    padding-bottom: 100px !important;
   }
   
   .question-text {
-    font-size: 18px !important;
-    padding: 0 5px !important;
-    text-align: left !important;
-    margin-bottom: 15px !important;
+    font-size: 17px !important;
+    margin-top: 0 !important;
   }
   
-  .answers-container {
-    padding: 0 5px !important;
+  .answers-container{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    margin-bottom: 25px;
     flex: 1;
-    overflow-y: auto;
-    margin-bottom: 10px;
   }
   
   .answer-item {
-    padding: 12px 14px !important;
+    padding: 8px 12px !important;
     font-size: 15px !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 0px !important;
   }
   
-  /* Navigation panels for normal mode */
-  .normal-mode-container .navigation {
-    position: fixed !important;
-    bottom: 80px !important;
-    left: 10px !important;
-    right: 10px !important;
-    width: auto !important;
-    padding: 8px 10px !important;
-    background: rgba(255,255,255,0.9) !important;
-    backdrop-filter: blur(8px) !important;
-    border-radius: 40px !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
-    border: 1px solid rgba(255,255,255,0.3) !important;
-    z-index: 1000 !important;
-  }
   
   .normal-mode-container .nav-center {
     display: flex !important;
@@ -1386,6 +1388,21 @@ body {
     min-width: 0 !important;
     height: 40px !important;
   }
+  
+  /* Hide finish button in normal mode */
+  .normal-mode-container #examFinishBtn,
+  .normal-mode-container .exam-finish-btn,
+  .normal-mode-container [id*="Finish"],
+  .normal-mode-container .nav-btn:contains("დასრულება") {
+    display: none !important;
+  }
+  
+/* Add this CSS rule to your styles */
+.normal-mode-container .exam-countdown,
+.normal-mode-container #examCountdown,
+#examCountdown {
+    display: none !important;
+}
   
   /* Bottom panel with chat, counter, online */
   .bottom-left-container {
@@ -1433,9 +1450,15 @@ body {
     box-shadow: 0 4px 12px rgba(14, 165, 164, 0.4) !important;
   }
   
+  /* Hide question counter by default (before test starts) */
   .question-counter {
-    position: static !important;
+    display: none !important;
+  }
+  
+  /* Show only when test is active */
+  .test-screen.active .question-counter:not(.hidden) {
     display: flex !important;
+    position: static !important;
     align-items: center !important;
     gap: 2px !important;
     font-size: 16px !important;
@@ -1448,10 +1471,20 @@ body {
     justify-content: center !important;
   }
   
-  .question-counter .current-question,
-  .question-counter .counter-separator,
-  .question-counter .total-questions {
-    font-size: 16px !important;
+  .test-screen.active .question-counter .current-question,
+  .test-screen.active .question-counter .counter-separator,
+  .test-screen.active .question-counter .total-questions {
+    font-size: 16px !important;  /* SAME SIZE FOR BOTH NUMBERS */
+    font-weight: 600 !important;
+  }
+  
+  .test-screen.active .question-counter .current-question {
+    color: var(--accent) !important;
+  }
+  
+  .test-screen.active .question-counter .counter-separator,
+  .test-screen.active .question-counter .total-questions {
+    color: #64748b !important;
   }
   
   .online-status {
@@ -1565,14 +1598,6 @@ body {
     height: 36px !important;
   }
   
-  /* HIDE FINISH BUTTON IN NORMAL MODE */
-  .normal-mode-container #examFinishBtn,
-  .normal-mode-container .exam-finish-btn,
-  .normal-mode-container [id*="Finish"],
-  .normal-mode-container button:contains("გამოცდის") {
-    display: none !important;
-  }
-  
   /* ----- EXAM MODE MOBILE - COMPLETE RESTRUCTURE ----- */
   .exam-mode-container {
     display: flex !important;
@@ -1651,8 +1676,8 @@ body {
     border-radius: 4px !important;
   }
   
-  /* First navigation panel for exam mode - წინა დასრულება შემდეგი Auto */
-  .exam-mode-container .exam-navigation-container {
+/* Exam mode navigation - წინა დასრულება შემდეგი Auto */
+.exam-mode-container .exam-navigation-container {
     position: fixed !important;
     bottom: 80px !important;
     left: 10px !important;
@@ -1665,8 +1690,38 @@ body {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
     border: 1px solid rgba(255,255,255,0.3) !important;
     z-index: 1000 !important;
-    order: 3 !important;
-  }
+}
+
+/* Normal mode navigation - მხოლოდ წინა შემდეგი Auto */
+.normal-mode-container .navigation {
+    position: fixed !important;
+    bottom: 80px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    padding: 8px 10px !important;
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: blur(8px) !important;
+    border-radius: 40px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    z-index: 1000 !important;
+}
+
+.nav-center {
+    display: flex !important;
+    gap: 6px !important;
+    width: 100% !important;
+}
+
+.nav-btn {
+    flex: 1 !important;
+    padding: 10px 8px !important;
+    font-size: 14px !important;
+    border-radius: 30px !important;
+    min-width: 0 !important;
+    height: 40px !important;
+}
   
   .exam-mode-container .nav-center {
     display: flex !important;
@@ -1696,13 +1751,8 @@ body {
   }
   
   /* FORCE SHOW FINISH BUTTON IN EXAM MODE */
-  #examFinishBtn {
+  .exam-mode-container #examFinishBtn {
     display: flex !important;
-  }
-  
-  /* Ensure normal mode never shows finish button */
-  .normal-mode-container #examFinishBtn {
-    display: none !important;
   }
   
   /* Bottom panel for exam mode - second panel */
@@ -1756,9 +1806,9 @@ body {
     font-size: 12px !important;
   }
   
-  .question-counter .current-question,
-  .question-counter .counter-separator,
-  .question-counter .total-questions {
+  .test-screen.active .question-counter .current-question,
+  .test-screen.active .question-counter .counter-separator,
+  .test-screen.active .question-counter .total-questions {
     font-size: 14px !important;
   }
 }
@@ -2847,9 +2897,6 @@ body {
 .hidden{
   display: none;
 }
-
-
-
 </style>
 </head>
 <body>
@@ -6536,13 +6583,20 @@ function startTest() {
     `;
   }
 
+  // Get the examCountdown element
+  const examCountdown = document.getElementById('examCountdown');
+
   if (examMode) {
     startExamMode();
+    if (examCountdown) examCountdown.style.display = 'block'; // Show in exam mode
   } else {
     normalModeContainer.classList.remove('hidden');
     examModeContainer.classList.add('hidden');
     examRightPanel.classList.add('hidden');
-
+    
+    // 🔴 FORCE HIDE COUNTDOWN IN NORMAL MODE
+    if (examCountdown) examCountdown.style.display = 'none';
+    
     questionCounter.classList.remove('hidden');
     currentQuestionEl.textContent = currentIndex + 1;
     totalQuestionsEl.textContent = sessionTests.length;
@@ -6560,17 +6614,17 @@ function renderCurrentQuestion() {
   
   if (examMode) {
     examQuestionText.textContent = question.question;
-    
     createExamTestBoxes();
-    
     renderExamAnswers();
-    
     checkAllQuestionsAnswered();
+    if (examCountdown) examCountdown.style.display = 'block'; // Show in exam mode
   } else {
     questionText.textContent = question.question;
-    
     currentQuestionEl.textContent = currentIndex + 1;
     totalQuestionsEl.textContent = sessionTests.length;
+    
+    // 🔴 FORCE HIDE COUNTDOWN IN NORMAL MODE
+    if (examCountdown) examCountdown.style.display = 'none';
     
     if (isEditingQuestionNumber) {
       currentQuestionEl.classList.remove('editing');
