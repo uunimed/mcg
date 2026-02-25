@@ -3211,7 +3211,7 @@ body {
                 წინა
               </button>
               <button id="examFinishBtn" class="nav-btn" style="background: var(--danger);">
-                გამოცდის დასრულება
+                დასრულება
               </button>
               <button id="examNextBtn" class="nav-btn">
                 შემდეგი
@@ -3625,7 +3625,7 @@ setTimeout(() => {
             };
             
             const moduleDisplayName = moduleNames[lastModule] || lastModule;
-            showNotification(`სისტემამ ავტომატურად აირჩია: ${moduleDisplayName}`, false);
+            showNotification(`ავტომატურად ჩაიტვირთა ბოლოს ნანახი მოდული: ${moduleDisplayName}`, false);
             
             // განაახლე თემების ჩამოსაშლელი
             toggleTopicsDropdown();
@@ -7176,7 +7176,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const p2 = document.createElement('p');
   p2.style.cssText = 'margin-bottom: 20px; color: #64748b;';
-  p2.textContent = 'გსურთ გააგრძელოთ ბოლო ტესტიდან თუ თავიდან დაიწყოთ?';
+  p2.textContent = 'გსურთ გააგრძელოთ ბოლო ტესტიდან თუ დავიწყოთ თავიდან?';
   
   content.appendChild(p1);
   content.appendChild(p2);
