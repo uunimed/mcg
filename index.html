@@ -5982,7 +5982,7 @@ function loadCSV() {
     allTests = allTestsWithTopics;
     
     if (!allTests.length){
-      showNotification('ვერ მოიძებნა ტესტები. შეამოწმეთ ფაილი.');
+      showNotification('ტესტები ვერ მოიძებნა');
       loaderOverlay.innerHTML = '<div style="color: var(--danger); font-weight: 600; text-align: center; padding: 20px;">ტესტები ვერ მოიძებნა<br><small>გთხოვთ განაახლოთ გვერდი</small></div>';
       startBtn.disabled = false;
       return;
