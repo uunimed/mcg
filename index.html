@@ -1756,7 +1756,8 @@ body {
   }
   
   /* Bottom panel for exam mode - second panel */
-  .exam-mode-container .bottom-left-container {
+  .exam-mode-container .bottom-left-container,
+  .normal-mode-container .bottom-left-container {
     position: fixed !important;
     bottom: 20px !important;
     left: 10px !important;
@@ -1768,12 +1769,64 @@ body {
     justify-content: space-between !important;
     background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(12px) !important;
-    padding: 8px 12px !important;
+    padding: 8px 16px !important;
     border-radius: 40px !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
     width: calc(100% - 20px) !important;
     margin: 0 auto !important;
+  }
+  
+    /* Chat button on left */
+  .bottom-left-container .chat-button {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    min-width: 70px !important;
+  }
+  
+  /* Question counter in the middle */
+  .bottom-left-container .question-counter {
+    display: flex !important;
+    position: static !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: var(--accent) !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: 1 1 auto !important;
+    text-align: center !important;
+  }
+  
+  /* Online status on right */
+  .bottom-left-container .online-status {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin: 0 !important;
+  }
+  
+    /* Counter numbers styling */
+  .bottom-left-container .question-counter .current-question {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: var(--accent) !important;
+    min-width: 30px !important;
+    text-align: center !important;
+  }
+  
+  .bottom-left-container .question-counter .counter-separator,
+  .bottom-left-container .question-counter .total-questions {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+  }
+    .question-counter:not(.in-panel) {
+    display: none !important;
   }
   
   /* Hide question counter in exam mode since it's in the navigation */
