@@ -4356,15 +4356,17 @@ function handleModuleCheckboxClick(clickedCheckbox) {
     
     // შენახვა და ჩატვირთვა
     const moduleValue = clickedCheckbox.value;
-    saveSelectedModule(moduleValue); // ეს უკვე უნდა გქონდეს
+    saveSelectedModule(moduleValue);
+    
+    // 🔥 მნიშვნელოვანი: ჯერ განაახლე თემების ხილვადობა
+    updateTopicsVisibility();
+    
+    // შემდეგ გამოიძახე onModuleSelected (რომელიც თავის მხრივ იძახებს loadCSV-ს)
     onModuleSelected(moduleValue);
     
     // მნიშვნელოვანი: განაახლე currentTestType
     currentTestType = moduleValue;
     console.log("Module selected:", moduleValue);
-    
-    // ჩატვირთე CSV
-    loadCSV();
     
     // 🔥 დაიხუროს დროპდაუნი არჩევის შემდეგ
     if (container) {
@@ -4376,9 +4378,8 @@ function handleModuleCheckboxClick(clickedCheckbox) {
     saveSelectedModule(null);
     updateDropdownText(null);
     
-    // დამალე topics dropdown
-    const topicsContainer = document.getElementById('topicsDropdownContainer');
-    if (topicsContainer) topicsContainer.style.display = 'none';
+    // 🔥 დამალე topics dropdown
+    updateTopicsVisibility();
     
     // გაასუფთავე ტესტები
     allTestsWithTopics = [];
@@ -4454,17 +4455,26 @@ function updateDropdownText(moduleValue) {
   }
 }
 
-// Topics dropdown-ის ხილვადობის მართვა
 function updateTopicsVisibility() {
+  // ახალი ვერსია: ვიღებთ მონიშნულ მოდულს checkbox-ებიდან
   const selectedModule = getSelectedModule();
   const topicsContainer = document.getElementById('topicsDropdownContainer');
+  const topicsSelect = document.getElementById('topicsSelect');
   
-  if (selectedModule === 'samkurnaloo' && topicsContainer) {
+  if (!topicsContainer || !topicsSelect) return;
+  
+  // მხოლოდ სამკურნალოსთვის ვაჩვენოთ თემების dropdown
+  if (selectedModule === 'samkurnaloo') {
     topicsContainer.style.display = 'flex';
-  } else if (topicsContainer) {
+    
+    // თუ უკვე ჩატვირთულია ტესტები, განვაახლოთ თემების სია
+    if (allTestsWithTopics && allTestsWithTopics.length > 0) {
+      extractTopics();
+      populateTopicsList();
+    }
+  } else {
     topicsContainer.style.display = 'none';
-    const topicsSelect = document.getElementById('topicsSelect');
-    if (topicsSelect) topicsSelect.value = 'all';
+    topicsSelect.value = 'all';
     selectedTopic = null;
   }
 }
@@ -4596,7 +4606,6 @@ function loadSelectedModuleFromLocal() {
   }
 }
 
-// ცალკე ფუნქცია მოდულის გამოსაყენებლად
 function applySelectedModule(savedModule, fromFirebase = false) {
   console.log(`Applying module: ${savedModule} (fromFirebase: ${fromFirebase})`);
   
@@ -4609,6 +4618,8 @@ function applySelectedModule(savedModule, fromFirebase = false) {
     targetCheckbox.checked = true;
     updateDropdownText(savedModule);
     currentTestType = savedModule;
+    
+    // 🔥 განაახლე თემების ხილვადობა
     updateTopicsVisibility();
     
     // 🔥 დახურე მოდულების სია
@@ -4629,6 +4640,10 @@ function applySelectedModule(savedModule, fromFirebase = false) {
       // თუ უკვე ჩატვირთულია, მაინც განაახლე start ღილაკი
       startBtn.disabled = false;
       
+      // 🔥 განაახლე თემების სია
+      extractTopics();
+      populateTopicsList();
+      updateTopicsVisibility(); 
       // თუ Firebase-დან მოვიდა და მომხმარებელი რეგისტრირებულია, შეამოწმე პროგრესი
       if (fromFirebase && currentUser && !currentUser.isGuest) {
         setTimeout(() => {
@@ -6823,16 +6838,16 @@ function loadCSV() {
   resetLoader();
   startBtn.disabled = true;
   
-// გამოიყენე არჩეული მოდული checkbox-ებიდან
-const testType = getSelectedModule();
-console.log("Loading CSV for module:", testType);
+  // გამოიყენე არჩეული მოდული checkbox-ებიდან
+  const testType = getSelectedModule();
+  console.log("Loading CSV for module:", testType);
 
-if (!testType) {
+  if (!testType) {
     console.error("No module selected");
     loaderOverlay.style.display = 'none';
-    // showNotification აღარ გვინდა
     return;
-}
+  }
+  
   // CSV URLs ყველა მოდულისთვის
   const csvUrls = {
     // რეზიდენტურა
@@ -6886,9 +6901,8 @@ if (!testType) {
     'hematologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=66052853&single=true&output=csv"
   };
   
-  let csvUrl = csvUrls[testType];
+ let csvUrl = csvUrls[testType];
   
-  // თუ მოდული ვერ მოიძებნა, გამოიყენე სამკურნალო როგორც default
   if (!csvUrl) {
     console.warn("Unknown test type:", testType, "using samkurnaloo as default");
     csvUrl = csvUrls['samkurnaloo'];
@@ -6922,26 +6936,30 @@ if (!testType) {
     
     populateTopicsList();
 
-if (currentUser && !currentUser.isGuest) {
-  // გამოიყენე ფლაგი, რომ მხოლოდ ერთხელ გამოძახდეს
-  if (!window._progressCheckExecuted) {
-    window._progressCheckExecuted = true;
-    
-    // პატარა დაყოვნება, რომ მონაცემები დასტაბილურდეს
-    setTimeout(() => {
-      // შეამოწმე მხოლოდ იმ შემთხვევაში თუ Exam Mode არ არის ჩართული
-      const examModeCheckbox = document.getElementById('modeExam');
-      const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
-      
-      if (!isExamModeChecked) {
-        console.log("Calling checkExistingProgress from loadCSV");
-        checkExistingProgress();
-      } else {
-        console.log("Exam mode is checked - skipping progress modal");
+    // 🔥 დაამატე ეს ხაზები აქ - loaderOverlay.style.display = 'none'-მდე
+    if (getSelectedModule() === 'samkurnaloo') {
+      extractTopics();
+      populateTopicsList();
+      document.getElementById('topicsDropdownContainer').style.display = 'flex';
+    }
+
+    if (currentUser && !currentUser.isGuest) {
+      if (!window._progressCheckExecuted) {
+        window._progressCheckExecuted = true;
+        
+        setTimeout(() => {
+          const examModeCheckbox = document.getElementById('modeExam');
+          const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
+          
+          if (!isExamModeChecked) {
+            console.log("Calling checkExistingProgress from loadCSV");
+            checkExistingProgress();
+          } else {
+            console.log("Exam mode is checked - skipping progress modal");
+          }
+        }, 1000);
       }
-    }, 1000); // გაზარდე დაყოვნება 800ms → 1000ms
-  }
-}
+    }
 
     loaderOverlay.style.display = 'none';
     startBtn.disabled = false;
@@ -7046,6 +7064,7 @@ function buildTestsFromCSV(rawRows){
     const normalizedA = normalizeLine(columnA);
     const topic = normalizeLine(columnB);
     
+    // 🔥 მნიშვნელოვანი: B სვეტში თუ არის რამე, ეს არის თემა
     if (topic && topic !== '') {
       currentTopic = topic;
     }
@@ -7086,8 +7105,10 @@ function buildTestsFromCSV(rawRows){
   
   console.log(`Built ${tests.length} tests from CSV`);
   
+  // გავფილტროთ მხოლოდ ის ტესტები რომლებსაც პასუხები აქვთ
   const filteredTests = tests.filter(t => Array.isArray(t.answers) && t.answers.length > 0);
   
+  // თემების განაწილების ლოგი
   const topicCounts = {};
   filteredTests.forEach(test => {
     const topic = test.topic || 'ზოგადი';
@@ -8241,16 +8262,8 @@ function onModuleSelected(moduleValue) {
   // განაახლე currentTestType
   currentTestType = moduleValue;
   
-  // თემების dropdown-ის ჩვენება/დამალვა
-  const topicsContainer = document.getElementById('topicsDropdownContainer');
-  if (moduleValue === 'samkurnaloo') {
-    topicsContainer.style.display = 'flex';
-  } else {
-    topicsContainer.style.display = 'none';
-    const topicsSelect = document.getElementById('topicsSelect');
-    if (topicsSelect) topicsSelect.value = 'all';
-    selectedTopic = null;
-  }
+  // 🔥 მნიშვნელოვანი: განაახლე თემების ხილვადობა
+  updateTopicsVisibility();
   
   // 🔥 დაიხუროს მოდულების სია
   const container = document.getElementById('modulesContainer');
@@ -8472,6 +8485,11 @@ document.getElementById('signupBtn').addEventListener('click', function() {
 
   // ========== აქ მთავრდება ახალი კოდი ==========
 
+  // 🔥 დაამატეთ ეს ხაზი - თემების საწყისი მდგომარეობის დასაყენებლად
+  setTimeout(() => {
+    updateTopicsVisibility();
+  }, 100);
+  
 });
 </script>
 </body>
