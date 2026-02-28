@@ -5085,7 +5085,7 @@ function toggleTopicsDropdown() {
   
   if (!testTypeSelect || !topicsContainer) return;
   
-  if (testTypeSelect.value === 'rezidentura') {
+if (testTypeSelect.value === 'samkurnaloo') {
     topicsContainer.style.display = 'flex';
   } else {
     topicsContainer.style.display = 'none';
@@ -7508,7 +7508,7 @@ startBtn.addEventListener('click', function() {
   currentTestType = testTypeSelect.value;
   console.log("Test type set to:", currentTestType);
   
-  if (currentTestType === 'rezidentura') {
+if (currentTestType === 'samkurnaloo') {
     const topicsSelect = document.getElementById('topicsSelect');
     if (topicsSelect && (!topicsSelect.value || topicsSelect.value === '')) {
       showNotification('გთხოვთ აირჩიოთ თემა!');
