@@ -1245,6 +1245,8 @@ body {
   .option-row {
     flex-direction: column;
     gap: 12px;
+    margin-bottom: 4px !important;
+
   }
   
   .option-item-half {
@@ -1254,7 +1256,7 @@ body {
   .option-item {
     padding: 12px 16px !important;
     min-height: 44px !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 4px !important;
   }
   
   .start-btn {
@@ -1285,6 +1287,25 @@ body {
     font-size: 13px !important;
   }
   
+  .notification {
+  left: 10px !important;
+  right: 10px !important;
+  width: auto !important;
+  max-width: none !important;
+  transform: none !important;
+  padding: 14px 16px !important;
+  font-size: 15px !important;
+  box-sizing: border-box !important;
+  display: table !important;          /* block → table */
+  white-space: normal !important;
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  min-width: fit-content !important;  /* დაამატე ეს */
+  max-width: 100% !important;         /* დაამატე ეს */
+}
+
+
   /* SETTINGS PAGE - FIXED: 99% WIDTH WITH 0.1CM MARGINS */
   .settings-page {
     position: fixed !important;
@@ -3387,18 +3408,17 @@ body {
   </div>
 </div>
       
-      <!-- Two-column layout for sequential and topic filter -->
 <div class="option-row">
-  <label class="option-item option-item-half">
-<input type="checkbox" id="modeSequential" checked>
-<span>ტესტების ჩვენება თანმიმდევრობით</span>
-  </label>
-  
   <div id="topicsDropdownContainer" class="option-item-half" style="display: flex; flex-direction: column;">
     <select id="topicsSelect" class="topic-select">
       <option value="all" selected>ტესტები თემების მიხედვით</option>
     </select>
   </div>
+  
+  <label class="option-item option-item-half">
+    <input type="checkbox" id="modeSequential" checked>
+    <span>ტესტების ჩვენება თანმიმდევრობით</span>
+  </label>
 </div>
       
       <label class="option-item">
