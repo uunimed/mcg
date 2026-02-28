@@ -4036,6 +4036,7 @@ async function handleLogin() {
         }
         
 // წარმატებული შესვლა
+// წარმატებული შესვლა
 currentUser = { 
     username: username, 
     isGuest: false
@@ -4058,14 +4059,14 @@ showNotification('მოგესალმებით!', false);
 // გაუშვი მონიტორინგი
 setupUserDeletionListener();
 
-// დაამატე ეს ხაზი - მოდულის Firebase listener
+// მოდულის Firebase listener
 setupModuleListener();
 
 initChat();
 bindUserMenuEvents();
 updateTimerDisplay();
 
-// ჩატვირთე მოდული Firebase-დან
+// ჩატვირთე მოდული Firebase-დან - ეს უნდა იყოს ბოლოს
 loadSelectedModule();
 
 if (allTests.length === 0) {
@@ -4503,13 +4504,19 @@ function saveSelectedModule(moduleValue) {
 }
 
 function loadSelectedModule() {
-  if (!currentUser || currentUser.isGuest) return;
+  if (!currentUser || currentUser.isGuest) {
+    console.log("User is guest or not logged in, skipping module load");
+    return;
+  }
   
   console.log("Loading selected module for user:", currentUser.username);
   
   // პირველ რიგში შევამოწმოთ Firebase
   if (firebaseSyncEnabled && database) {
-    database.ref('users/' + currentUser.username.replace(/[.#$[\]]/g, '_')).once('value')
+    const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
+    console.log("Checking Firebase for module at path: users/" + safeUsername);
+    
+    database.ref('users/' + safeUsername).once('value')
       .then(snapshot => {
         if (snapshot.exists()) {
           const firebaseData = snapshot.val();
@@ -4532,13 +4539,15 @@ function loadSelectedModule() {
             }
             
             // გამოვიყენოთ Firebase-დან წამოღებული მოდული
-            applySelectedModule(savedModule);
+            applySelectedModule(savedModule, true); // მეორე პარამეტრი მიუთითებს რომ Firebase-დან მოდის
             
           } else {
+            console.log("No selectedModule in Firebase, checking localStorage");
             // Firebase-ში არ არის, ვცადოთ localStorage
             loadSelectedModuleFromLocal();
           }
         } else {
+          console.log("User not found in Firebase, checking localStorage");
           // Firebase-ში მომხმარებელი არ არის, ვცადოთ localStorage
           loadSelectedModuleFromLocal();
         }
@@ -4548,6 +4557,7 @@ function loadSelectedModule() {
         loadSelectedModuleFromLocal();
       });
   } else {
+    console.log("Firebase not available, checking localStorage");
     // Firebase არ არის ხელმისაწვდომი, ვცადოთ localStorage
     loadSelectedModuleFromLocal();
   }
@@ -4561,9 +4571,11 @@ function loadSelectedModuleFromLocal() {
     
     if (savedModule) {
       console.log("Loading saved module from localStorage:", savedModule);
-      applySelectedModule(savedModule);
+      applySelectedModule(savedModule, false);
     } else {
       console.log("No saved module found in localStorage");
+      // თუ არც Firebase-ში და არც localStorage-ში არ არის მოდული, მაშინ პირველი შესვლაა
+      // არაფერს ვაკეთებთ, მომხმარებელმა თავად უნდა აირჩიოს
     }
   } catch (error) {
     console.error('Error loading selected module from localStorage:', error);
@@ -4571,8 +4583,8 @@ function loadSelectedModuleFromLocal() {
 }
 
 // ცალკე ფუნქცია მოდულის გამოსაყენებლად
-function applySelectedModule(savedModule) {
-  console.log("Applying module:", savedModule);
+function applySelectedModule(savedModule, fromFirebase = false) {
+  console.log(`Applying module: ${savedModule} (fromFirebase: ${fromFirebase})`);
   
   // ყველა checkbox-ის მოხსნა
   document.querySelectorAll('.module-checkbox').forEach(cb => cb.checked = false);
@@ -4594,10 +4606,35 @@ function applySelectedModule(savedModule) {
     // გაასუფთავე ფლაგი, რომ ახალი ჩატვირთვისას იმუშაოს
     window._progressCheckExecuted = false;
     
-    // ჩატვირთე მონაცემები
-    loadCSV();
+    // თუ ტესტები ჯერ არ არის ჩატვირთული, ჩატვირთე
+    if (allTestsWithTopics.length === 0) {
+      console.log("Tests not loaded yet, loading CSV...");
+      loadCSV();
+    } else {
+      console.log("Tests already loaded, skipping CSV load");
+      // თუ უკვე ჩატვირთულია, მაინც განაახლე start ღილაკი
+      startBtn.disabled = false;
+      
+      // თუ Firebase-დან მოვიდა და მომხმარებელი რეგისტრირებულია, შეამოწმე პროგრესი
+      if (fromFirebase && currentUser && !currentUser.isGuest) {
+        setTimeout(() => {
+          const examModeCheckbox = document.getElementById('modeExam');
+          if (!examModeCheckbox || !examModeCheckbox.checked) {
+            console.log("Checking existing progress after module load from Firebase");
+            checkExistingProgress();
+          }
+        }, 500);
+      }
+    }
     
     console.log("Module applied successfully:", savedModule);
+    
+    // აჩვენე შეტყობინება მხოლოდ თუ Firebase-დან მოდის და არ არის პირველი ჩატვირთვა
+    if (fromFirebase && document.getElementById('authModal').style.display === 'none') {
+      const moduleGeoName = moduleNames[savedModule] || savedModule;
+      showNotification(`მოდული: ${moduleGeoName}`, false);
+    }
+    
   } else {
     console.log("Target checkbox not found for module:", savedModule);
   }
