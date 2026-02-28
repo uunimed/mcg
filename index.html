@@ -1728,37 +1728,7 @@ body {
     border-radius: 4px !important;
   }
   
-/* Exam mode navigation - წინა დასრულება შემდეგი Auto */
-.exam-mode-container .exam-navigation-container {
-    position: fixed !important;
-    bottom: 20px !important;  /* შეცვლილია 80px → 20px */
-    left: 10px !important;
-    right: 10px !important;
-    width: auto !important;
-    padding: 8px 10px !important;
-    background: rgba(255,255,255,0.9) !important;
-    backdrop-filter: blur(8px) !important;
-    border-radius: 40px !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
-    border: 1px solid rgba(255,255,255,0.3) !important;
-    z-index: 1000 !important;
-}
 
-/* Normal mode navigation - მხოლოდ წინა შემდეგი Auto */
-.normal-mode-container .navigation {
-    position: fixed !important;
-    bottom: 20px !important;  /* შეცვლილია 80px → 20px */
-    left: 10px !important;
-    right: 10px !important;
-    width: auto !important;
-    padding: 8px 10px !important;
-    background: rgba(255,255,255,0.9) !important;
-    backdrop-filter: blur(8px) !important;
-    border-radius: 40px !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
-    border: 1px solid rgba(255,255,255,0.3) !important;
-    z-index: 1000 !important;
-}
 
 .nav-center {
     display: flex !important;
@@ -1918,6 +1888,72 @@ body {
   }
 }
 
+/* ==================== MOBILE NAVIGATION FIX ==================== */
+@media (max-width: 768px) {
+  /* დამალე გამოცდის რეჟიმის ნავიგაცია ნორმალურ რეჟიმში */
+  .normal-mode-container.active ~ .exam-mode-container .exam-navigation-container,
+  .normal-mode-container:not(.hidden) + .exam-mode-container .exam-navigation-container,
+  .normal-mode-container .exam-navigation-container {
+    display: none !important;
+  }
+  
+  /* დამალე ნორმალური რეჟიმის ნავიგაცია გამოცდის რეჟიმში */
+  .exam-mode-container.active ~ .normal-mode-container .navigation,
+  .exam-mode-container:not(.hidden) + .normal-mode-container .navigation,
+  .exam-mode-container .navigation {
+    display: none !important;
+  }
+  
+  /* აჩვენე მხოლოდ შესაბამისი ნავიგაცია */
+  .normal-mode-container:not(.hidden) .navigation {
+    display: flex !important;
+  }
+  
+  .exam-mode-container:not(.hidden) .exam-navigation-container {
+    display: flex !important;
+  }
+  
+/* Exam mode navigation - წინა დასრულება შემდეგი Auto */
+.exam-mode-container .exam-navigation-container {
+    position: fixed !important;
+    bottom: 90px !important;  /* გაზარდეთ 20px-დან 90px-მდე */
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    padding: 8px 10px !important;
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: blur(8px) !important;
+    border-radius: 40px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    z-index: 1000 !important;
+}
+
+/* Normal mode navigation - მხოლოდ წინა შემდეგი Auto */
+.normal-mode-container .navigation {
+    position: fixed !important;
+    bottom: 90px !important;  /* გაზარდეთ 20px-დან 90px-მდე */
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    padding: 8px 10px !important;
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: blur(8px) !important;
+    border-radius: 40px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    z-index: 1000 !important;
+}
+  
+  .exam-mode-container:not(.hidden) .exam-navigation-container {
+    display: flex !important;
+  }
+
+  
+  .normal-mode-container:not(.hidden) .navigation {
+    display: flex !important;
+  }
+}
 /* ==================== PRINT STYLES - FIXED: 1cm MARGINS ==================== */
 @media print {
   body {
