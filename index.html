@@ -1221,6 +1221,9 @@ body {
   flex: 1;
   min-width: 0;
   margin-bottom: 0 !important;
+  
+  /* 🔥 ახალი სტილი */
+  position: relative;
 }
 
 /* ==================== MOBILE VERSION - FULLY FIXED ==================== */
@@ -2964,6 +2967,27 @@ body {
   animation: modalAppear 0.3s ease;
 }
 
+#modulesContainer {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  
+  /* 🔥 ახალი სტილები - არ ჩაწევს დაბლა */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  margin-top: 4px;
+}
+
 @keyframes modalAppear {
   from {
     opacity: 0;
@@ -3190,69 +3214,178 @@ body {
     <div id="optionsScreen" class="options-screen">
       <div class="mode-label">აირჩიეთ რეჟიმი:</div>
       
-      <!-- Test Type Selection -->
-      <div class="option-row">
-        <div class="option-item-half" style="display: flex; flex-direction: column;">
-          <label style="font-size: 14px; color: #64748b; margin-bottom: 5px;">მოდული:</label>
-<select id="testTypeSelect" class="topic-select">
-  <option value="" selected disabled hidden>აირჩიეთ</option>
-  
-  <!-- რეზიდენტურა DIVIDER -->
-  <option disabled style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center;">რეზიდენტურა</option>
-  
-  <option value="samkurnaloo">სამკურნალო</option>
-  <option value="stomatologia">სტომატოლოგია</option>
-  
-  <!-- სალიცენზიო DIVIDER -->
-  <option disabled style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center;">სალიცენზიო</option>
-  
-  <option value="alergologia">ალერგოლოგია</option>
-  <option value="angiokirurgia">ანგიოქირურგია</option>
-  <option value="anesteziologia">ანესთეზიოლოგია, რეანიმატოლოგია</option>
-  <option value="bavshvta_gadaudebeli">ბავშვთა გადაუდებელი</option>
-  <option value="bavshvta_kardiorevmatologia">ბავშვთა კარდიორევმატოლოგია</option>
-  <option value="bavshvta_nevrologia">ბავშვთა ნევროლოგია</option>
-  <option value="bavshvta_nevrologia2">ბავშვთა ნეფროლოგია</option>
-  <option value="gadaudebeli_medicina">გადაუდებელი მედიცინა</option>
-  <option value="gastroenterologia">გასტროენტეროლოგია</option>
-  <option value="ginekologia">გინეკოლოგია</option>
-  <option value="dermatologia">დერმატოლოგია</option>
-  <option value="endokrinologia">ენდოკრინოლოგია</option>
-  <option value="zogadi_kirurgia">ზოგადი ქირურგია</option>
-  <option value="terapiuli_stomatologia">თერაპიული სტომატოლოგია</option>
-  <option value="infekciuri">ინფექციური</option>
-  <option value="kardiologia">კარდიოლოგია</option>
-  <option value="kardiokirurgia">კარდიოქირურგია</option>
-  <option value="laboratoriuli_medicina">ლაბორატორიული მედიცინა</option>
-  <option value="narkologia">ნარკოლოგია</option>
-  <option value="nevrologia">ნევროლოგია</option>
-  <option value="neonatologia">ნეონატოლოგია</option>
-  <option value="nefrologia">ნეფროლოგია</option>
-  <option value="onkologia">ონკოლოგია</option>
-  <option value="ortodontia">ორთოდონტია</option>
-  <option value="ortopedia_travmatologia">ორთოპედია ტრავმატოლოგია</option>
-  <option value="ortopediuli_stomatologia">ორთოპედიული სტომატოლოგია</option>
-  <option value="otorinolaringologia">ოტორინოლარინგოლოგია</option>
-  <option value="oftalmologia">ოფთალმოლოგია</option>
-  <option value="patologia">პათოლოგია</option>
-  <option value="pediatria">პედიატრია</option>
-  <option value="plastikuri_kirurgia">პლასტიკური და რეკონსტრუქციული ქირურგია</option>
-  <option value="radiologia">რადიოლოგია</option>
-  <option value="radiacioni_onkologia">რადიაციული ონკოლოგია</option>
-  <option value="reproduqtologia">რეპროდუქტოლოგია</option>
-  <option value="revmatologia">რევმატოლოგია</option>
-  <option value="saokjao_medicina">საოჯახო მედიცინა</option>
-  <option value="sportuli_medicina">სპორტული მედიცინა</option>
-  <option value="toksikologia">ტოქსიკოლოგია</option>
-  <option value="urologia">უროლოგია</option>
-  <option value="ftiziatria_pulmonologia">ფთიზიატრია, პულმონოლოგია</option>
-  <option value="psikiatria">ფსიქიატრია</option>
-  <option value="qba_saxis_kirurgia">ყბა-სახის ქირურგია</option>
-  <option value="shinagani_medicina">შინაგანი მედიცინა</option>
-  <option value="hematologia">ჰემატოლოგია</option>
-</select>
-        </div>
+<div class="option-row">
+  <div class="option-item-half" style="display: flex; flex-direction: column; position: relative;">
+
+    <label style="font-size: 14px; color: #64748b; margin-bottom: 5px;">
+      მოდული:
+    </label>
+
+    <!-- Dropdown button -->
+    <div id="testTypeSelect"
+         onclick="toggleModules()"
+         style="cursor: pointer; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
+      აირჩიეთ
+    </div>
+
+    <!-- Modules list (hidden by default) -->
+    <div id="modulesContainer"
+         style="display: none; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; margin-top: 6px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
+
+      <!-- რეზიდენტურა -->
+      <div style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center; padding: 4px;">
+        რეზიდენტურა
       </div>
+
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="samkurnaloo"> სამკურნალო
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="stomatologia"> სტომატოლოგია
+      </label>
+
+      <!-- სალიცენზიო -->
+      <div style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center; padding: 4px; margin-top: 6px;">
+        სალიცენზიო
+      </div>
+
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="alergologia"> ალერგოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="angiokirurgia"> ანგიოქირურგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="anesteziologia"> ანესთეზიოლოგია, რეანიმატოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="bavshvta_gadaudebeli"> ბავშვთა გადაუდებელი
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="bavshvta_kardiorevmatologia"> ბავშვთა კარდიორევმატოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="bavshvta_nevrologia"> ბავშვთა ნევროლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="bavshvta_nevrologia2"> ბავშვთა ნეფროლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="gadaudebeli_medicina"> გადაუდებელი მედიცინა
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="gastroenterologia"> გასტროენტეროლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="ginekologia"> გინეკოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="dermatologia"> დერმატოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="endokrinologia"> ენდოკრინოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="zogadi_kirurgia"> ზოგადი ქირურგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="terapiuli_stomatologia"> თერაპიული სტომატოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="infekciuri"> ინფექციური
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="kardiologia"> კარდიოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="kardiokirurgia"> კარდიოქირურგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="laboratoriuli_medicina"> ლაბორატორიული მედიცინა
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="narkologia"> ნარკოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="nevrologia"> ნევროლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="neonatologia"> ნეონატოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="nefrologia"> ნეფროლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="onkologia"> ონკოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="ortodontia"> ორთოდონტია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="ortopedia_travmatologia"> ორთოპედია ტრავმატოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="ortopediuli_stomatologia"> ორთოპედიული სტომატოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="otorinolaringologia"> ოტორინოლარინგოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="oftalmologia"> ოფთალმოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="patologia"> პათოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="pediatria"> პედიატრია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="plastikuri_kirurgia"> პლასტიკური და რეკონსტრუქციული ქირურგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="radiologia"> რადიოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="radiacioni_onkologia"> რადიაციული ონკოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="reproduqtologia"> რეპროდუქტოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="revmatologia"> რევმატოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="saokjao_medicina"> საოჯახო მედიცინა
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="sportuli_medicina"> სპორტული მედიცინა
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="toksikologia"> ტოქსიკოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="urologia"> უროლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="ftiziatria_pulmonologia"> ფთიზიატრია, პულმონოლოგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="psikiatria"> ფსიქიატრია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="qba_saxis_kirurgia"> ყბა-სახის ქირურგია
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="shinagani_medicina"> შინაგანი მედიცინა
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" class="module-checkbox" value="hematologia"> ჰემატოლოგია
+      </label>
+
+    </div>
+
+  </div>
+</div>
       
       <!-- Two-column layout for sequential and topic filter -->
 <div class="option-row">
@@ -3534,6 +3667,11 @@ let selectedTopic = null;
 let lastTimerUpdate = Date.now();
 let isWrongQuestionsMode = false;
 let progressModalShown = false;
+
+// ==================== PROGRESS MODAL CONTROL ====================
+let progressCheckTimeout = null;
+let isProgressModalShowing = false;
+let lastProgressCheckTime = 0;
 
 // ==================== CHAT FUNCTIONS ====================
 let chatMessages = [];
@@ -4170,6 +4308,221 @@ function startWrongQuestionsMode() {
   renderCurrentQuestion();
 }
 
+// ==================== MODULE SELECTION FUNCTIONS ====================
+function toggleModules() {
+  const container = document.getElementById('modulesContainer');
+  if (container) {
+    // თუ ღიაა - დახურე, თუ დახურულია - გახსენი
+    if (container.style.display === 'flex') {
+      container.style.display = 'none';
+    } else {
+      container.style.display = 'flex';
+    }
+  }
+}
+
+function handleModuleCheckboxClick(clickedCheckbox) {
+  const allCheckboxes = document.querySelectorAll('.module-checkbox');
+  const container = document.getElementById('modulesContainer');
+  
+  if (clickedCheckbox.checked) {
+    // ყველა სხვა მოხსენი
+    allCheckboxes.forEach(cb => {
+      if (cb !== clickedCheckbox) {
+        cb.checked = false;
+      }
+    });
+    
+    // შენახვა და ჩატვირთვა
+    const moduleValue = clickedCheckbox.value;
+    saveSelectedModule(moduleValue);
+    onModuleSelected(moduleValue);
+    
+    // მნიშვნელოვანი: განაახლე currentTestType
+    currentTestType = moduleValue;
+    console.log("Module selected:", moduleValue);
+    
+    // ჩატვირთე CSV
+    loadCSV();
+    
+    // 🔥 დაიხუროს დროპდაუნი არჩევის შემდეგ
+    if (container) {
+      container.style.display = 'none';
+    }
+    
+  } else {
+    // თუ მონიშვნა მოიხსნა
+    saveSelectedModule(null);
+    updateDropdownText(null);
+    
+    // დამალე topics dropdown
+    const topicsContainer = document.getElementById('topicsDropdownContainer');
+    if (topicsContainer) topicsContainer.style.display = 'none';
+    
+    // გაასუფთავე ტესტები
+    allTestsWithTopics = [];
+    allTests = [];
+    totalQuestionsEl.textContent = '0';
+    
+    // გაასუფთავე currentTestType
+    currentTestType = null;
+    
+    // 🔥 დროპდაუნი მაინც დაიხუროს
+    if (container) {
+      container.style.display = 'none';
+    }
+  }
+}
+
+// Dropdown ტექსტის განახლება
+function updateDropdownText(moduleValue) {
+  const dropdown = document.getElementById('testTypeSelect');
+  const moduleNames = {
+    'samkurnaloo': 'სამკურნალო',
+    'stomatologia': 'სტომატოლოგია',
+    'alergologia': 'ალერგოლოგია',
+    'angiokirurgia': 'ანგიოქირურგია',
+    'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
+    'bavshvta_gadaudebeli': 'ბავშვთა გადაუდებელი',
+    'bavshvta_kardiorevmatologia': 'ბავშვთა კარდიორევმატოლოგია',
+    'bavshvta_nevrologia': 'ბავშვთა ნევროლოგია',
+    'bavshvta_nevrologia2': 'ბავშვთა ნეფროლოგია',
+    'gadaudebeli_medicina': 'გადაუდებელი მედიცინა',
+    'gastroenterologia': 'გასტროენტეროლოგია',
+    'ginekologia': 'გინეკოლოგია',
+    'dermatologia': 'დერმატოლოგია',
+    'endokrinologia': 'ენდოკრინოლოგია',
+    'zogadi_kirurgia': 'ზოგადი ქირურგია',
+    'terapiuli_stomatologia': 'თერაპიული სტომატოლოგია',
+    'infekciuri': 'ინფექციური',
+    'kardiologia': 'კარდიოლოგია',
+    'kardiokirurgia': 'კარდიოქირურგია',
+    'laboratoriuli_medicina': 'ლაბორატორიული მედიცინა',
+    'narkologia': 'ნარკოლოგია',
+    'nevrologia': 'ნევროლოგია',
+    'neonatologia': 'ნეონატოლოგია',
+    'nefrologia': 'ნეფროლოგია',
+    'onkologia': 'ონკოლოგია',
+    'ortodontia': 'ორთოდონტია',
+    'ortopedia_travmatologia': 'ორთოპედია ტრავმატოლოგია',
+    'ortopediuli_stomatologia': 'ორთოპედიული სტომატოლოგია',
+    'otorinolaringologia': 'ოტორინოლარინგოლოგია',
+    'oftalmologia': 'ოფთალმოლოგია',
+    'patologia': 'პათოლოგია',
+    'pediatria': 'პედიატრია',
+    'plastikuri_kirurgia': 'პლასტიკური და რეკონსტრუქციული ქირურგია',
+    'radiologia': 'რადიოლოგია',
+    'radiacioni_onkologia': 'რადიაციული ონკოლოგია',
+    'reproduqtologia': 'რეპროდუქტოლოგია',
+    'revmatologia': 'რევმატოლოგია',
+    'saokjao_medicina': 'საოჯახო მედიცინა',
+    'sportuli_medicina': 'სპორტული მედიცინა',
+    'toksikologia': 'ტოქსიკოლოგია',
+    'urologia': 'უროლოგია',
+    'ftiziatria_pulmonologia': 'ფთიზიატრია, პულმონოლოგია',
+    'psikiatria': 'ფსიქიატრია',
+    'qba_saxis_kirurgia': 'ყბა-სახის ქირურგია',
+    'shinagani_medicina': 'შინაგანი მედიცინა',
+    'hematologia': 'ჰემატოლოგია'
+  };
+  
+  if (moduleValue && moduleNames[moduleValue]) {
+    dropdown.textContent = moduleNames[moduleValue];
+  } else {
+    dropdown.textContent = 'აირჩიეთ';
+  }
+}
+
+// Topics dropdown-ის ხილვადობის მართვა
+function updateTopicsVisibility() {
+  const selectedModule = getSelectedModule();
+  const topicsContainer = document.getElementById('topicsDropdownContainer');
+  
+  if (selectedModule === 'samkurnaloo' && topicsContainer) {
+    topicsContainer.style.display = 'flex';
+  } else if (topicsContainer) {
+    topicsContainer.style.display = 'none';
+    const topicsSelect = document.getElementById('topicsSelect');
+    if (topicsSelect) topicsSelect.value = 'all';
+    selectedTopic = null;
+  }
+}
+
+function getSelectedModule() {
+  const checkedBox = document.querySelector('.module-checkbox:checked');
+  return checkedBox ? checkedBox.value : null;
+}
+// არჩეული მოდულის შენახვა localStorage-სა და Firebase-ში
+function saveSelectedModule(moduleValue) {
+  if (!currentUser || currentUser.isGuest) return;
+  
+  try {
+    // შენახვა localStorage-ში
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    if (users[currentUser.username]) {
+      if (!users[currentUser.username].selectedModules) {
+        users[currentUser.username].selectedModules = {};
+      }
+      users[currentUser.username].selectedModules.selected = moduleValue;
+      users[currentUser.username].lastUpdated = Date.now();
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+    
+    // Firebase-ში შენახვა (თუ შესაძლებელია)
+    if (firebaseSyncEnabled && database) {
+      const userRef = database.ref('users/' + currentUser.username.replace(/[.#$[\]]/g, '_'));
+      userRef.update({
+        selectedModule: moduleValue,
+        lastUpdated: Date.now()
+      }).catch(err => console.log('Firebase save error:', err));
+    }
+    
+    // currentTestType-ის განახლება
+    currentTestType = moduleValue;
+    
+  } catch (error) {
+    console.error('Error saving selected module:', error);
+  }
+}
+
+function loadSelectedModule() {
+  if (!currentUser || currentUser.isGuest) return;
+  
+  try {
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    const savedModule = users[currentUser.username]?.selectedModules?.selected;
+    
+    if (savedModule) {
+      console.log("Loading saved module:", savedModule);
+      
+      // ყველა checkbox-ის მოხსნა
+      document.querySelectorAll('.module-checkbox').forEach(cb => cb.checked = false);
+      
+      // შენახულის მონიშვნა
+      const targetCheckbox = document.querySelector(`.module-checkbox[value="${savedModule}"]`);
+      if (targetCheckbox) {
+        targetCheckbox.checked = true;
+        updateDropdownText(savedModule);
+        currentTestType = savedModule;
+        updateTopicsVisibility();
+        
+        // 🔥 დახურე მოდულების სია
+        const container = document.getElementById('modulesContainer');
+        if (container) {
+          container.style.display = 'none';
+        }
+        
+        // გაასუფთავე ფლაგი, რომ ახალი ჩატვირთვისას იმუშაოს
+        window._progressCheckExecuted = false;
+        
+        // ჩატვირთე მონაცემები
+        loadCSV();
+      }
+    }
+  } catch (error) {
+    console.error('Error loading selected module:', error);
+  }
+}
 // ==================== AUTH FUNCTIONS ====================
 function initAuth() {
   document.getElementById('authModal').style.display = 'flex';
@@ -6129,8 +6482,16 @@ function loadCSV() {
   resetLoader();
   startBtn.disabled = true;
   
-  const testType = document.getElementById('testTypeSelect').value;
-  
+// გამოიყენე არჩეული მოდული checkbox-ებიდან
+const testType = getSelectedModule();
+console.log("Loading CSV for module:", testType);
+
+if (!testType) {
+    console.error("No module selected");
+    loaderOverlay.style.display = 'none';
+    showNotification('მოგესალმებით, გთხოვთ აირჩიოთ მოდული');
+    return;
+}  
   // CSV URLs ყველა მოდულისთვის
   const csvUrls = {
     // რეზიდენტურა
@@ -6220,18 +6581,26 @@ function loadCSV() {
     
     populateTopicsList();
 
-    if (currentUser && !currentUser.isGuest) {
-      if (window.pendingProgressCheck) {
-        setTimeout(() => {
-          checkExistingProgress();
-          window.pendingProgressCheck = false;
-        }, 500);
+if (currentUser && !currentUser.isGuest) {
+  // გამოიყენე ფლაგი, რომ მხოლოდ ერთხელ გამოძახდეს
+  if (!window._progressCheckExecuted) {
+    window._progressCheckExecuted = true;
+    
+    // პატარა დაყოვნება, რომ მონაცემები დასტაბილურდეს
+    setTimeout(() => {
+      // შეამოწმე მხოლოდ იმ შემთხვევაში თუ Exam Mode არ არის ჩართული
+      const examModeCheckbox = document.getElementById('modeExam');
+      const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
+      
+      if (!isExamModeChecked) {
+        console.log("Calling checkExistingProgress from loadCSV");
+        checkExistingProgress();
       } else {
-        setTimeout(() => {
-          checkExistingProgress();
-        }, 500);
+        console.log("Exam mode is checked - skipping progress modal");
       }
-    }
+    }, 1000); // გაზარდე დაყოვნება 800ms → 1000ms
+  }
+}
 
     loaderOverlay.style.display = 'none';
     startBtn.disabled = false;
@@ -6503,6 +6872,17 @@ function updateSelectedTopics() {
 }
 
 function startTest() {
+  // მიმდინარე მოდულის წამოღება
+  const selectedModule = getSelectedModule();
+  if (!selectedModule) {
+    showNotification('გთხოვთ აირჩიოთ მოდული');
+    return;
+  }
+  
+  // განაახლე currentTestType
+  currentTestType = selectedModule;
+  console.log("Test type set to:", currentTestType);
+  
   if (!modeSequential.checked && !modeExam.checked) {
     showNotification('გთხოვთ აირჩიოთ ერთი რეჟიმი მაინც');
     return;
@@ -7119,50 +7499,91 @@ function bindQuestionCounterEvent() {
   });
 }
 
+// ==================== FIXED: checkExistingProgress with debounce ====================
 function checkExistingProgress() {
+  // თუ უკვე მოდალი ჩანს, აღარ გავუშვათ
+  if (isProgressModalShowing) {
+    console.log("Progress modal already showing, skipping");
+    return;
+  }
+  
+  // თუ ბოლო 2 წამში უკვე შევამოწმეთ, აღარ გავუშვათ
+  const now = Date.now();
+  if (now - lastProgressCheckTime < 2000) {
+    console.log("Progress check too frequent, skipping");
+    return;
+  }
+  lastProgressCheckTime = now;
+  
   if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
     console.log("Exam mode is active - skipping progress modal");
     return;
   }
   
-  if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) return;
+  if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) {
+    console.log("User not logged in or no tests loaded");
+    return;
+  }
   
-  const testTypeSelect = document.getElementById('testTypeSelect');
-  if (!testTypeSelect || testTypeSelect.value === '') return;
-  
-  const selectedModule = testTypeSelect.value;
+  // მიმდინარე მოდულის წამოღება checkbox-ებიდან
+  const selectedModule = getSelectedModule();
   console.log("Checking progress for module:", selectedModule);
   
+  if (!selectedModule) {
+    console.log("No module selected");
+    return;
+  }
+  
   const progress = userProgress[selectedModule];
-  if (!progress) return;
+  if (!progress) {
+    console.log("No progress for module:", selectedModule);
+    return;
+  }
   
   const hasNormalProgress = progress.normal && 
                            Object.keys(progress.normal.answeredQuestions || {}).length > 0;
   const hasExamProgress = progress.exam && 
                          Object.keys(progress.exam.answeredQuestions || {}).length > 0;
   
-  if (!hasNormalProgress && !hasExamProgress) return;
+  console.log("Has normal progress:", hasNormalProgress, "Has exam progress:", hasExamProgress);
   
-  const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
-  const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
-  const totalAnswered = normalCount + examCount;
-  
-  let moduleDisplayName = '';
-  switch(selectedModule) {
-    case 'rezidentura':
-      moduleDisplayName = 'რეზიდენტურა';
-      break;
-    case 'internalMedicine':
-      moduleDisplayName = 'შინაგანი მედიცინა';
-      break;
-    case 'pathology':
-      moduleDisplayName = 'პათოლოგია';
-      break;
-    default:
-      moduleDisplayName = selectedModule;
+  if (!hasNormalProgress && !hasExamProgress) {
+    console.log("No progress to resume");
+    return;
   }
   
-  showProgressResumeModal(totalAnswered, moduleDisplayName, progress, selectedModule);
+  // წავშალოთ წინა timeout თუ არსებობს
+  if (progressCheckTimeout) {
+    clearTimeout(progressCheckTimeout);
+  }
+  
+  // დავაყოვნოთ 500ms და შევამოწმოთ ისევ
+  progressCheckTimeout = setTimeout(() => {
+    // ისევ შევამოწმოთ, არის თუ არა ტესტის ეკრანი აქტიური
+    if (testScreen.classList.contains('active')) {
+      console.log("Test screen is active, not showing modal");
+      return;
+    }
+    
+    // ისევ შევამოწმოთ, არის თუ არა Exam Mode
+    if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
+      console.log("Exam mode is active - skipping progress modal");
+      return;
+    }
+    
+    // ისევ შევამოწმოთ მოდულები
+    const currentSelectedModule = getSelectedModule();
+    if (currentSelectedModule !== selectedModule) {
+      console.log("Module changed since check, skipping");
+      return;
+    }
+    
+    const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
+    const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
+    const totalAnswered = normalCount + examCount;
+    
+    showProgressResumeModal(totalAnswered, selectedModule, progress, selectedModule);
+  }, 500);
 }
 
 // დააკვირდი სისტემურ შეტყობინებებს
@@ -7196,9 +7617,11 @@ function setupForceLogoutListener() {
 function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
   console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
   
+  // დავსეტოთ ფლაგი
+  isProgressModalShowing = true;
+  
   // მოდულების ქართული სახელები
   const moduleNames = {
-    // რეზიდენტურა
     'samkurnaloo': 'სამკურნალო',
     'stomatologia': 'სტომატოლოგია',
     
@@ -7251,8 +7674,16 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const moduleDisplayName = moduleNames[selectedModule] || selectedModule;
   
-  const existingModal = document.querySelector('.modal-overlay[data-type="progress-resume"]');
-  if (existingModal) existingModal.remove();
+  // წავშალოთ ყველა არსებული მოდალი
+  const existingModals = document.querySelectorAll('.modal-overlay[data-type="progress-resume"]');
+  existingModals.forEach(modal => modal.remove());
+  
+  // შევამოწმოთ, არის თუ არა ტესტის ეკრანი აქტიური
+  if (testScreen.classList.contains('active')) {
+    console.log("Test screen is active, not showing modal");
+    isProgressModalShowing = false;
+    return;
+  }
   
   const modalOverlay = document.createElement('div');
   modalOverlay.className = 'modal-overlay active';
@@ -7274,7 +7705,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const p1 = document.createElement('p');
   p1.style.cssText = 'margin-bottom: 15px; font-size: 16px;';
-  p1.innerHTML = `თქვენ უკვე დაწერეთ <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> მოდულში: <strong style="color: var(--accent);">${moduleDisplayName}</strong>`;
+  p1.innerHTML = `თქვენ უკვე დაწერით <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> მოდულში: <strong style="color: var(--accent);">${moduleDisplayName}</strong>`;
   
   const p2 = document.createElement('p');
   p2.style.cssText = 'margin-bottom: 20px; color: #64748b;';
@@ -7314,6 +7745,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   continueBtn.addEventListener('click', function() {
     modalOverlay.remove();
+    isProgressModalShowing = false;
     
     console.log("Continue clicked. Progress object:", progress);
     console.log("Selected module:", selectedModule);
@@ -7369,6 +7801,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   restartBtn.addEventListener('click', async function() {
     modalOverlay.remove();
+    isProgressModalShowing = false;
     
     console.log("Restart clicked. Clearing progress for module:", selectedModule);
     
@@ -7449,13 +7882,43 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   closeBtn.addEventListener('click', function() {
     modalOverlay.remove();
+    isProgressModalShowing = false;
   });
   
   modalOverlay.addEventListener('click', function(e) {
     if (e.target === modalOverlay) {
       modalOverlay.remove();
+      isProgressModalShowing = false;
     }
   });
+}
+
+function onModuleSelected(moduleValue) {
+  // განაახლე dropdown ტექსტი
+  updateDropdownText(moduleValue);
+  
+  // განაახლე currentTestType
+  currentTestType = moduleValue;
+  
+  // თემების dropdown-ის ჩვენება/დამალვა
+  const topicsContainer = document.getElementById('topicsDropdownContainer');
+  if (moduleValue === 'samkurnaloo') {
+    topicsContainer.style.display = 'flex';
+  } else {
+    topicsContainer.style.display = 'none';
+    const topicsSelect = document.getElementById('topicsSelect');
+    if (topicsSelect) topicsSelect.value = 'all';
+    selectedTopic = null;
+  }
+  
+  // 🔥 დაიხუროს მოდულების სია
+  const container = document.getElementById('modulesContainer');
+  if (container) {
+    container.style.display = 'none';
+  }
+  
+  // ჩატვირთე მონაცემები
+  loadCSV();
 }
 
 function showCompletionScreen() {
@@ -7495,20 +7958,22 @@ startBtn.addEventListener('click', function() {
   console.log("Start button clicked");
   
   if (!allTests || allTests.length === 0) { 
-    showNotification('ტესტები ჯერ არ არის ჩატვირთული');
+    showNotification('აირჩიეთ მოდული დასაწყებად');
     return; 
   }
   
-  const testTypeSelect = document.getElementById('testTypeSelect');
-  if (!testTypeSelect || testTypeSelect.value === '') {
+  // მონიშნული მოდულის შემოწმება
+  const selectedModule = getSelectedModule();
+  if (!selectedModule) {
     showNotification('გთხოვთ აირჩიოთ მოდული');
     return;
   }
   
-  currentTestType = testTypeSelect.value;
+  currentTestType = selectedModule;
   console.log("Test type set to:", currentTestType);
   
-if (currentTestType === 'samkurnaloo') {
+  // თემების შემოწმება მხოლოდ სამკურნალოსთვის
+  if (currentTestType === 'samkurnaloo') {
     const topicsSelect = document.getElementById('topicsSelect');
     if (topicsSelect && (!topicsSelect.value || topicsSelect.value === '')) {
       showNotification('გთხოვთ აირჩიოთ თემა!');
@@ -7572,13 +8037,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-if (modeSequential) {
-  modeSequential.addEventListener('change', () => {
-    if (modeSequential.checked && modeExam.checked) {
-      modeExam.checked = false;
-    }
-  });
-}
+  if (modeSequential) {
+    modeSequential.addEventListener('change', () => {
+      if (modeSequential.checked && modeExam.checked) {
+        modeExam.checked = false;
+      }
+    });
+  }
   
   if (modeShuffleQuestions) {
     modeShuffleQuestions.addEventListener('change', () => {
@@ -7589,19 +8054,19 @@ if (modeSequential) {
     });
   }
   
-if (modeExam) {
-  modeExam.addEventListener('change', () => {
-    if (modeExam.checked) {
-      if (modeSequential) modeSequential.checked = false;
-      if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
-      if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
-    } else {
-      if (!modeSequential.checked) {
-        modeSequential.checked = true;
+  if (modeExam) {
+    modeExam.addEventListener('change', () => {
+      if (modeExam.checked) {
+        if (modeSequential) modeSequential.checked = false;
+        if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
+        if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
+      } else {
+        if (!modeSequential.checked) {
+          modeSequential.checked = true;
+        }
       }
-    }
-  });
-}
+    });
+  }
   
   setTimeout(() => {
     toggleTopicsDropdown();
@@ -7613,6 +8078,55 @@ if (modeExam) {
   window.showPasswordChangeFromSettings = showPasswordChangeFromSettings;
   window.printMistakes = printMistakes;
   window.showPasswordChangeModal = showPasswordChangeModal;
+
+
+  // ========== Modules-ის დახურვა გარედან დაჭერისას ==========
+  document.addEventListener('click', function(event) {
+    const container = document.getElementById('modulesContainer');
+    const dropdown = document.getElementById('testTypeSelect');
+    
+    if (container && dropdown && 
+        container.style.display === 'flex' && 
+        !container.contains(event.target) && 
+        !dropdown.contains(event.target)) {
+      container.style.display = 'none';
+    }
+  });
+
+  // Checkbox-ების event listeners
+  document.querySelectorAll('.module-checkbox').forEach(cb => {
+    cb.addEventListener('change', function() {
+      handleModuleCheckboxClick(this);
+    });
+  });
+
+  // მოდულის ჩატვირთვა ავტორიზაციის შემდეგ
+  const originalContinueAsGuest = document.getElementById('continueAsGuest').onclick;
+  document.getElementById('continueAsGuest').addEventListener('click', function() {
+    if (originalContinueAsGuest) originalContinueAsGuest.call(this);
+    setTimeout(loadSelectedModule, 500);
+  });
+
+  const originalLoginBtn = document.getElementById('loginBtn').onclick;
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    if (originalLoginBtn) originalLoginBtn.call(this);
+    setTimeout(loadSelectedModule, 1000);
+  });
+
+  const originalSignupBtn = document.getElementById('signupBtn').onclick;
+  document.getElementById('signupBtn').addEventListener('click', function() {
+    if (originalSignupBtn) originalSignupBtn.call(this);
+    setTimeout(loadSelectedModule, 1000);
+  });
+
+  // პერიოდულად გავასუფთაოთ ფლაგები
+  setInterval(() => {
+    if (!document.querySelector('.modal-overlay.active')) {
+      isProgressModalShowing = false;
+    }
+  }, 1000);
+
+  // ========== აქ მთავრდება ახალი კოდი ==========
 
 });
 </script>
