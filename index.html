@@ -6014,6 +6014,7 @@ function showSettingsPage() {
   document.getElementById('vectorCloseSettings').addEventListener('click', closeSettingsPage);
 }
 
+// ==================== FIXED getUserPassword FUNCTION ====================
 function getUserPassword(username) {
   try {
     const users = JSON.parse(localStorage.getItem('users') || '{}');
@@ -6041,31 +6042,59 @@ function togglePasswordVisibility(inputId, button) {
   }
 }
 
+// ==================== FIXED USERNAME CHANGE FUNCTION ====================
 async function enableUsernameEdit() {
   const usernameInput = document.getElementById('settingsUsername');
-  if (usernameInput) {
-    usernameInput.disabled = false;
-    usernameInput.focus();
-    
-    if (!document.getElementById('saveUsernameBtn')) {
-      const saveBtn = document.createElement('button');
-      saveBtn.id = 'saveUsernameBtn';
-      saveBtn.className = 'settings-edit-btn';
-      saveBtn.style.color = 'var(--success)';
-      saveBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        შენახვა
-      `;
-      saveBtn.onclick = saveUsername;
-      usernameInput.parentElement.appendChild(saveBtn);
+  if (!usernameInput) return;
+  
+  usernameInput.disabled = false;
+  usernameInput.focus();
+  
+  // წავშალოთ არსებული save ღილაკი
+  const existingSaveBtn = document.getElementById('saveUsernameBtn');
+  if (existingSaveBtn) existingSaveBtn.remove();
+  
+  // შევქმნათ ახალი save ღილაკი
+  const saveBtn = document.createElement('button');
+  saveBtn.id = 'saveUsernameBtn';
+  saveBtn.className = 'settings-edit-btn';
+  saveBtn.style.color = 'var(--success)';
+  saveBtn.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    შენახვა
+  `;
+  
+  // ღილაკის მშობელში ჩამატება
+  usernameInput.parentElement.appendChild(saveBtn);
+  
+  // ღილაკზე დაჭერის მოსმენა
+  saveBtn.onclick = async function() {
+    await saveUsername();
+  };
+  
+  // Enter ღილაკზე დაჭერის მოსმენა
+  usernameInput.onkeypress = async function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      await saveUsername();
     }
-  }
+  };
+  
+  // Escape ღილაკზე დაჭერის მოსმენა
+  usernameInput.onkeydown = function(e) {
+    if (e.key === 'Escape') {
+      cancelUsernameEdit();
+    }
+  };
 }
 
 async function saveUsername() {
-  const newUsername = document.getElementById('settingsUsername').value.trim();
+  const usernameInput = document.getElementById('settingsUsername');
+  if (!usernameInput) return;
+  
+  const newUsername = usernameInput.value.trim();
   
   if (!newUsername) {
     showNotification('სახელი და გვარი არ შეიძლება იყოს ცარიელი');
@@ -6092,6 +6121,7 @@ async function saveUsername() {
   try {
     const users = JSON.parse(localStorage.getItem('users') || '{}');
     
+    // შევამოწმოთ, არის თუ არა ახალი სახელი უკვე გამოყენებული
     if (users[newUsername]) {
       showNotification('ეს სახელი უკვე გამოყენებულია');
       return;
@@ -6108,10 +6138,9 @@ async function saveUsername() {
     const oldUsername = currentUser.username;
     const oldUserData = users[oldUsername];
     
-    // 🔴 მნიშვნელოვანი: დროებით გავთიშოთ Firebase listener
-    if (firebaseSyncEnabled && database) {
-      const oldSafeUsername = oldUsername.replace(/[.#$[\]]/g, '_');
-      database.ref('users/' + oldSafeUsername).off();
+    if (!oldUserData) {
+      showNotification('მომხმარებელი ვერ მოიძებნა');
+      return;
     }
     
     // 🔴 დავსეტოთ ფლაგი, რომ არ მოხდეს ავტომატური გასვლა
@@ -6119,11 +6148,17 @@ async function saveUsername() {
     
     // Firebase-ში ძველი მომხმარებლის წაშლა
     if (firebaseSyncEnabled && database) {
-      await database.ref('users/' + oldUsername.replace(/[.#$[\]]/g, '_')).remove();
+      const oldSafeUsername = oldUsername.replace(/[.#$[\]]/g, '_');
+      await database.ref('users/' + oldSafeUsername).remove();
     }
     
     // ახალი მომხმარებლის შექმნა
-    users[newUsername] = oldUserData;
+    users[newUsername] = {
+      ...oldUserData,
+      password: oldUserData.password,
+      progress: oldUserData.progress || userProgress,
+      lastUpdated: Date.now()
+    };
     delete users[oldUsername];
     
     localStorage.setItem('users', JSON.stringify(users));
@@ -6133,34 +6168,24 @@ async function saveUsername() {
       await saveUserToFirebase(newUsername, users[newUsername]);
     }
     
-    // შევინახოთ ძველი მნიშვნელობები
-    const oldProgress = userProgress;
-    const oldTestType = currentTestType;
-    const oldUserId = userId;
-    
     // განვაახლოთ currentUser
     currentUser = { 
       username: newUsername, 
       isGuest: false 
     };
     
-    // აღვადგინოთ პროგრესი ახალი მომხმარებლისთვის
-    userProgress = oldProgress;
-    
     // განვაახლოთ UI
     document.getElementById('usernameDisplay').textContent = newUsername;
     userName = newUsername;
     localStorage.setItem('chatUserName', userName);
-    localStorage.setItem('chatUserId', oldUserId);
     
-    // განვაახლოთ ჩატის აიდი
+    // ჩატის აიდის განახლება
     if (firebaseSyncEnabled && database) {
-      // განვაახლოთ ონლაინ სტატუსი
-      const userRef = database.ref('chat/onlineUsers/' + oldUserId);
+      const userRef = database.ref('chat/onlineUsers/' + userId);
       userRef.update({ name: newUsername });
     }
     
-    // ხელახლა დავაყენოთ Firebase listener-ები
+    // Firebase listener-ების ხელახლა დაყენება
     if (firebaseSyncEnabled && database) {
       setupModuleListener();
       setupUserDeletionListener();
@@ -6173,14 +6198,17 @@ async function saveUsername() {
     
     showNotification('მომხმარებელი წარმატებით შეიცვალა', false);
     
+    // Settings-ის გვერდის დახურვა და ხელახლა გახსნა
     closeSettingsPage();
+    setTimeout(() => showSettingsPage(), 300);
     
   } catch (error) {
     console.error('Error saving username:', error);
-    showNotification('შეცდომა სახელის შეცვლისას');
+    showNotification('შეცდომა სახელის შეცვლისას: ' + error.message);
     window._isChangingUsername = false;
   }
 }
+
 function cancelUsernameEdit() {
   const usernameInput = document.getElementById('settingsUsername');
   if (usernameInput) {
@@ -6192,8 +6220,13 @@ function cancelUsernameEdit() {
   }
 }
 
+// ==================== FIXED PASSWORD CHANGE FUNCTION ====================
 function showPasswordChangeFromSettings() {
   console.log("Opening password change modal from settings");
+  
+  // წავშალოთ არსებული მოდალი თუ არსებობს
+  const existingModal = document.getElementById('passwordModalOverlay');
+  if (existingModal) existingModal.remove();
   
   const modalOverlay = document.createElement('div');
   modalOverlay.className = 'modal-overlay active';
@@ -6213,6 +6246,7 @@ function showPasswordChangeFromSettings() {
   content.className = 'modal-content';
   content.style.cssText = 'margin-bottom: 20px;';
   
+  // მიმდინარე პაროლი
   const currentPassDiv = document.createElement('div');
   currentPassDiv.style.marginBottom = '20px';
   
@@ -6230,6 +6264,7 @@ function showPasswordChangeFromSettings() {
   currentPassDiv.appendChild(currentPassInput);
   currentPassDiv.appendChild(currentPassError);
   
+  // ახალი პაროლი
   const newPassDiv = document.createElement('div');
   newPassDiv.style.marginBottom = '20px';
   
@@ -6247,6 +6282,7 @@ function showPasswordChangeFromSettings() {
   newPassDiv.appendChild(newPassInput);
   newPassDiv.appendChild(newPassError);
   
+  // პაროლის გამეორება
   const confirmPassDiv = document.createElement('div');
   confirmPassDiv.style.marginBottom = '20px';
   
@@ -6268,6 +6304,7 @@ function showPasswordChangeFromSettings() {
   content.appendChild(newPassDiv);
   content.appendChild(confirmPassDiv);
   
+  // ღილაკები
   const buttons = document.createElement('div');
   buttons.className = 'modal-buttons';
   buttons.style.cssText = 'display: flex; gap: 15px; justify-content: center;';
@@ -6294,12 +6331,14 @@ function showPasswordChangeFromSettings() {
   
   document.body.appendChild(modalOverlay);
   
+  // Error messages-ის დამალვის ფუნქცია
   const hideAllErrors = () => {
     currentPassError.style.display = 'none';
     newPassError.style.display = 'none';
     confirmPassError.style.display = 'none';
   };
   
+  // Save ღილაკზე დაჭერა
   saveBtn.addEventListener('click', async function() {
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
@@ -6338,46 +6377,60 @@ function showPasswordChangeFromSettings() {
     if (hasError) return;
     
     try {
+      // წამოვიღოთ მომხმარებლები localStorage-დან
       const users = JSON.parse(localStorage.getItem('users') || '{}');
       
-      // შეამოწმეთ მიმდინარე პაროლი
+      // შევამოწმოთ currentUser
+      if (!currentUser || !currentUser.username) {
+        showNotification('მომხმარებელი ვერ მოიძებნა');
+        modalOverlay.remove();
+        return;
+      }
+      
+      // შევამოწმოთ მიმდინარე პაროლი
       if (users[currentUser.username]?.password !== currentPassword) {
         currentPassError.textContent = 'მიმდინარე პაროლი არასწორია';
         currentPassError.style.display = 'block';
         return;
       }
       
-      // განაახლეთ პაროლი localStorage-ში
+      // 🔥 Firebase-ში პაროლის განახლება
+      if (firebaseSyncEnabled && database) {
+        const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
+        await database.ref('users/' + safeUsername).update({
+          password: newPassword,
+          lastUpdated: Date.now()
+        });
+      }
+      
+      // localStorage-ში პაროლის განახლება
       users[currentUser.username].password = newPassword;
       users[currentUser.username].lastUpdated = Date.now();
       localStorage.setItem('users', JSON.stringify(users));
       
-      // განაახლეთ Firebase-ში
-      if (firebaseSyncEnabled && database) {
-        await saveUserToFirebase(currentUser.username, users[currentUser.username]);
-      }
+      // მოდალის დახურვა
+      modalOverlay.remove();
       
-      // არ შევცვალოთ currentUser, მხოლოდ პაროლი განახლდა
+      // წარმატების შეტყობინება
       showNotification('პაროლი წარმატებით შეიცვალა', false);
       
-      // დავხუროთ მოდალი
-      document.getElementById('passwordModalOverlay').remove();
-      
-      // განვაახლოთ settings გვერდი
+      // Settings-ის გვერდის განახლება
       closeSettingsPage();
       setTimeout(() => showSettingsPage(), 300);
       
     } catch (error) {
       console.error('Error changing password:', error);
-      newPassError.textContent = 'შეცდომა პაროლის შეცვლისას';
+      newPassError.textContent = 'შეცდომა პაროლის შეცვლისას: ' + error.message;
       newPassError.style.display = 'block';
     }
   });
   
+  // Cancel ღილაკზე დაჭერა
   cancelBtn.addEventListener('click', function() {
-    document.getElementById('passwordModalOverlay').remove();
+    modalOverlay.remove();
   });
   
+  // მოდალის გარეთ დაჭერისას დახურვა
   modalOverlay.addEventListener('click', function(e) {
     if (e.target === modalOverlay) {
       modalOverlay.remove();
