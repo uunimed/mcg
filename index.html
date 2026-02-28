@@ -3526,22 +3526,27 @@ try {
   firebaseSyncEnabled = false;
 }
 
-// ==================== GLOBAL SYNC FUNCTIONS ====================
 function saveUserToFirebase(username, userData) {
   if (!firebaseSyncEnabled || !database || !username) return Promise.resolve(false);
   
-  return database.ref('users/' + username.replace(/[.#$[\]]/g, '_')).set({
+  // 🔥 მნიშვნელოვანი: დავრწმუნდეთ, რომ მთელი პროგრესი ინახება
+  const dataToSave = {
     username: username,
     password: userData.password,
-    progress: userData.progress || {},
+    progress: userData.progress || userProgress, // გამოვიყენოთ მიმდინარე პროგრესი
+    selectedModule: currentTestType || userData.selectedModule,
     lastUpdated: Date.now()
-  }).then(() => {
-    console.log('User data saved to Firebase:', username);
-    return true;
-  }).catch(error => {
-    console.error('Error saving user to Firebase:', error);
-    return false;
-  });
+  };
+  
+  return database.ref('users/' + username.replace(/[.#$[\]]/g, '_')).set(dataToSave)
+    .then(() => {
+      console.log('User data saved to Firebase:', username);
+      return true;
+    })
+    .catch(error => {
+      console.error('Error saving user to Firebase:', error);
+      return false;
+    });
 }
 
 async function syncUserWithFirebase(username, localUserData) {
@@ -3717,7 +3722,6 @@ let examPrevBtn, examNextBtn, examAutoBtn, examFinishBtn;
 let detailedResultsModal = document.getElementById('detailedResultsModal');
 let detailedResultsContent = document.getElementById('detailedResultsContent');
 
-// ==================== USER PROGRESS FUNCTIONS ====================
 async function saveUserProgress() {
   if (currentUser && currentUser.username && !currentUser.isGuest) {
     try {
@@ -3728,8 +3732,10 @@ async function saveUserProgress() {
         localStorage.setItem('users', JSON.stringify(users));
         console.log('Progress saved locally for', currentUser.username);
         
+        // 🔥 მნიშვნელოვანი: ყოველთვის შევინახოთ Firebase-ში
         if (firebaseSyncEnabled && database) {
           await saveUserToFirebase(currentUser.username, users[currentUser.username]);
+          console.log('Progress synced to Firebase for', currentUser.username);
         }
       }
     } catch (error) {
@@ -3738,7 +3744,6 @@ async function saveUserProgress() {
   }
 }
 
-// ==================== FIXED: LOAD USER PROGRESS WITH DELETION CHECK ====================
 async function loadUserProgress() {
     if (!currentUser || !currentUser.username) {
         console.log("No current user, skipping progress load");
@@ -3799,34 +3804,33 @@ async function loadUserProgress() {
                 
                 return;
             }
-        }
-
-        // თუ Firebase-ში არსებობს, განვაგრძოთ პროგრესის ჩატვირთვა
-        const users = JSON.parse(localStorage.getItem('users') || '{}');
-        let localUserData = users[currentUser.username] || null;
-        
-        if (localUserData && localUserData.progress) {
-            userProgress = localUserData.progress;
-            console.log('Progress loaded locally for', currentUser.username);
-        }
-        
-        if (firebaseSyncEnabled && database) {
-            const syncedUserData = await syncUserWithFirebase(currentUser.username, localUserData || { 
-                password: '', 
-                progress: userProgress,
-                lastUpdated: Date.now()
-            });
             
-            if (syncedUserData && syncedUserData.progress) {
-                userProgress = syncedUserData.progress;
-                
-                if (users[currentUser.username]) {
-                    users[currentUser.username].progress = syncedUserData.progress;
-                    users[currentUser.username].lastUpdated = syncedUserData.lastUpdated || Date.now();
-                    localStorage.setItem('users', JSON.stringify(users));
-                }
-                
-                console.log('Progress synced from Firebase for', currentUser.username);
+            // 🔥 მნიშვნელოვანი: Firebase-დან წამოღებული მონაცემები გამოვიყენოთ
+            console.log("Using Firebase data for user:", currentUser.username);
+            
+            // შევქმნათ userProgress ობიექტი Firebase-დან
+            if (firebaseUserData.progress) {
+                userProgress = firebaseUserData.progress;
+                console.log('Progress loaded from Firebase for', currentUser.username);
+            }
+            
+            // განვაახლოთ localStorage Firebase-ის მონაცემებით
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            users[currentUser.username] = {
+                password: firebaseUserData.password || '',
+                progress: userProgress,
+                lastUpdated: firebaseUserData.lastUpdated || Date.now()
+            };
+            localStorage.setItem('users', JSON.stringify(users));
+            
+        } else {
+            // თუ Firebase არ მუშაობს, გამოვიყენოთ localStorage
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            let localUserData = users[currentUser.username] || null;
+            
+            if (localUserData && localUserData.progress) {
+                userProgress = localUserData.progress;
+                console.log('Progress loaded locally for', currentUser.username);
             }
         }
         
@@ -4650,7 +4654,6 @@ function applySelectedModule(savedModule, fromFirebase = false) {
   }
 }
 
-// Firebase-დან მოდულის ცვლილებების მოსმენა
 function setupModuleListener() {
   if (!firebaseSyncEnabled || !database || !currentUser || currentUser.isGuest) {
     console.log("Cannot setup module listener:", {
@@ -4679,6 +4682,28 @@ function setupModuleListener() {
     const data = snapshot.val();
     console.log("Firebase user data changed:", data);
     
+    // 🔥 მნიშვნელოვანი: თუ პროგრესი შეიცვალა Firebase-ში, განვაახლოთ localStorage
+    if (data.progress) {
+      console.log("Progress changed in Firebase, updating local storage");
+      
+      // განვაახლოთ userProgress
+      userProgress = data.progress;
+      
+      // განვაახლოთ localStorage
+      const users = JSON.parse(localStorage.getItem('users') || '{}');
+      if (users[currentUser.username]) {
+        users[currentUser.username].progress = data.progress;
+        users[currentUser.username].lastUpdated = data.lastUpdated || Date.now();
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+      
+      // თუ ტესტის ეკრანი აქტიურია, განვაახლოთ მიმდინარე კითხვა
+      if (testScreen.classList.contains('active') && sessionTests.length > 0) {
+        console.log("Refreshing current question with updated progress");
+        renderCurrentQuestion();
+      }
+    }
+    
     // თუ მოდული შეიცვალა და ეს ცვლილება არ არის ჩვენი მოწყობილობიდან
     if (data.selectedModule) {
       console.log(`Selected module in Firebase: ${data.selectedModule}, currentTestType: ${currentTestType}`);
@@ -4687,7 +4712,7 @@ function setupModuleListener() {
         console.log(`Module changed in Firebase from ${currentTestType} to ${data.selectedModule}`);
         
         // გამოვიყენოთ ახალი მოდული
-        applySelectedModule(data.selectedModule);
+        applySelectedModule(data.selectedModule, true);
         
         // მოდულის ქართული სახელი
         const moduleGeoName = moduleNames[data.selectedModule] || data.selectedModule;
@@ -4697,14 +4722,55 @@ function setupModuleListener() {
       } else {
         console.log("Module hasn't changed, skipping");
       }
-    } else {
-      console.log("No selectedModule in Firebase data");
     }
   }, (error) => {
     console.error("Error in module listener:", error);
   });
   
   console.log("Module listener setup complete");
+}
+
+// დავამატოთ ეს ფუნქცია Firebase-დან პროგრესის პერიოდულად ჩასატვირთად
+function startProgressSync() {
+  if (!firebaseSyncEnabled || !database || !currentUser || currentUser.isGuest) return;
+  
+  console.log("Starting periodic progress sync");
+  
+  // ყოველ 30 წამში შევამოწმოთ Firebase
+  setInterval(() => {
+    if (currentUser && !currentUser.isGuest) {
+      console.log("Periodic progress check...");
+      
+      database.ref('users/' + currentUser.username.replace(/[.#$[\]]/g, '_')).once('value')
+        .then(snapshot => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            
+            if (data.progress) {
+              // შევადაროთ localStorage-ის და Firebase-ის მონაცემები
+              const users = JSON.parse(localStorage.getItem('users') || '{}');
+              const localProgress = users[currentUser.username]?.progress;
+              
+              // თუ Firebase-ის მონაცემები უფრო ახალია, გამოვიყენოთ ისინი
+              if (data.lastUpdated > (users[currentUser.username]?.lastUpdated || 0)) {
+                console.log("Firebase data is newer, updating local storage");
+                userProgress = data.progress;
+                
+                users[currentUser.username].progress = data.progress;
+                users[currentUser.username].lastUpdated = data.lastUpdated;
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                // თუ ტესტის ეკრანი აქტიურია, განვაახლოთ
+                if (testScreen.classList.contains('active') && sessionTests.length > 0) {
+                  renderCurrentQuestion();
+                }
+              }
+            }
+          }
+        })
+        .catch(err => console.error("Periodic sync error:", err));
+    }
+  }, 30000); // 30 წამი
 }
 
 // ==================== AUTH FUNCTIONS ====================
@@ -4924,6 +4990,9 @@ setupUserDeletionListener();
 
 // მოდულის Firebase listener
 setupModuleListener();
+
+// 🔥 დაამატე ეს ხაზი - პროგრესის სინქრონიზაციის დაწყება
+startProgressSync();
 
 // ჩატის ინიციალიზაცია
 initChat();
