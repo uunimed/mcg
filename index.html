@@ -3544,21 +3544,6 @@ function saveUserToFirebase(username, userData) {
   });
 }
 
-function loadUserFromFirebase(username) {
-  if (!firebaseSyncEnabled || !database || !username) return Promise.resolve(null);
-  
-  return database.ref('users/' + username.replace(/[.#$[\]]/g, '_')).once('value').then(snapshot => {
-    if (snapshot.exists()) {
-      console.log('User data loaded from Firebase:', username);
-      return snapshot.val();
-    }
-    return null;
-  }).catch(error => {
-    console.error('Error loading user from Firebase:', error);
-    return null;
-  });
-}
-
 async function syncUserWithFirebase(username, localUserData) {
   if (!firebaseSyncEnabled || !database || !username) return localUserData;
   
@@ -3672,6 +3657,9 @@ let progressModalShown = false;
 let progressCheckTimeout = null;
 let isProgressModalShowing = false;
 let lastProgressCheckTime = 0;
+
+// 🔴 ახალი ფლაგი სახელის შეცვლისთვის
+window._isChangingUsername = false;
 
 // ==================== CHAT FUNCTIONS ====================
 let chatMessages = [];
@@ -3864,6 +3852,12 @@ function setupUserDeletionListener() {
     userRef.on('value', (snapshot) => {
         const userData = snapshot.val();
         
+        // 🔴 თუ სახელს ვცვლით, არ გავუშვათ ავტომატური გასვლა
+        if (window._isChangingUsername) {
+            console.log("Username is being changed, ignoring deletion event");
+            return;
+        }
+        
         // თუ მომხმარებელი წაშლილია Firebase-დან
         if (!userData) {
             console.warn("User deleted from Firebase - forcing logout");
@@ -3884,6 +3878,12 @@ function setupUserDeletionListener() {
         const data = snapshot.val();
         if (!data) return;
         
+        // 🔴 თუ სახელს ვცვლით, არ გავუშვათ ავტომატური გასვლა
+        if (window._isChangingUsername) {
+            console.log("Username is being changed, ignoring force logout");
+            return;
+        }
+        
         // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
         if (data.userId === currentUser.username || data.userId === safeUsername) {
             console.warn("Force logout message received");
@@ -3892,8 +3892,13 @@ function setupUserDeletionListener() {
     });
 }
 
-// ==================== HANDLE ACCOUNT DELETION ====================
 function handleAccountDeletion(reason = "ადმინისტრატორის მიერ") {
+    // 🔴 თუ სახელს ვცვლით, არ გავუშვათ ავტომატური გასვლა
+    if (window._isChangingUsername) {
+        console.log("Username is being changed, skipping account deletion");
+        return;
+    }
+    
     // გავასუფთაოთ localStorage მთლიანად
     localStorage.removeItem('users');
     localStorage.removeItem('currentUser');
@@ -4087,13 +4092,18 @@ if (allTests.length === 0) {
     }
 }
 
-// ==================== FIXED: LOAD USER FROM FIREBASE WITH DELETION CHECK ====================
 function loadUserFromFirebase(username) {
     if (!firebaseSyncEnabled || !database || !username) return Promise.resolve(null);
     
     return database.ref('users/' + username.replace(/[.#$[\]]/g, '_')).once('value').then(snapshot => {
         if (snapshot.exists()) {
             const userData = snapshot.val();
+            
+            // 🔴 თუ სახელს ვცვლით, ყველაფერი ნორმალურად მიმდინარეობს
+            if (window._isChangingUsername) {
+                console.log("Username change in progress, returning user data");
+                return userData;
+            }
             
             // თუ მომხმარებელი მონიშნულია როგორც წაშლილი, არ დავაბრუნოთ
             if (userData.deleted === true) {
@@ -6014,36 +6024,79 @@ async function saveUsername() {
     const oldUsername = currentUser.username;
     const oldUserData = users[oldUsername];
     
+    // 🔴 მნიშვნელოვანი: დროებით გავთიშოთ Firebase listener
+    if (firebaseSyncEnabled && database) {
+      const oldSafeUsername = oldUsername.replace(/[.#$[\]]/g, '_');
+      database.ref('users/' + oldSafeUsername).off();
+    }
+    
+    // 🔴 დავსეტოთ ფლაგი, რომ არ მოხდეს ავტომატური გასვლა
+    window._isChangingUsername = true;
+    
+    // Firebase-ში ძველი მომხმარებლის წაშლა
     if (firebaseSyncEnabled && database) {
       await database.ref('users/' + oldUsername.replace(/[.#$[\]]/g, '_')).remove();
     }
     
+    // ახალი მომხმარებლის შექმნა
     users[newUsername] = oldUserData;
     delete users[oldUsername];
     
     localStorage.setItem('users', JSON.stringify(users));
     
+    // Firebase-ში ახალი მომხმარებლის შენახვა
     if (firebaseSyncEnabled && database) {
       await saveUserToFirebase(newUsername, users[newUsername]);
     }
     
-    currentUser.username = newUsername;
+    // შევინახოთ ძველი მნიშვნელობები
+    const oldProgress = userProgress;
+    const oldTestType = currentTestType;
+    const oldUserId = userId;
     
+    // განვაახლოთ currentUser
+    currentUser = { 
+      username: newUsername, 
+      isGuest: false 
+    };
+    
+    // აღვადგინოთ პროგრესი ახალი მომხმარებლისთვის
+    userProgress = oldProgress;
+    
+    // განვაახლოთ UI
     document.getElementById('usernameDisplay').textContent = newUsername;
     userName = newUsername;
     localStorage.setItem('chatUserName', userName);
+    localStorage.setItem('chatUserId', oldUserId);
+    
+    // განვაახლოთ ჩატის აიდი
+    if (firebaseSyncEnabled && database) {
+      // განვაახლოთ ონლაინ სტატუსი
+      const userRef = database.ref('chat/onlineUsers/' + oldUserId);
+      userRef.update({ name: newUsername });
+    }
+    
+    // ხელახლა დავაყენოთ Firebase listener-ები
+    if (firebaseSyncEnabled && database) {
+      setupModuleListener();
+      setupUserDeletionListener();
+    }
+    
+    // 🔴 გავაუქმოთ ფლაგი
+    setTimeout(() => {
+      window._isChangingUsername = false;
+    }, 2000);
     
     showNotification('მომხმარებელი წარმატებით შეიცვალა', false);
     
     closeSettingsPage();
-    setTimeout(() => showSettingsPage(), 300);
     
   } catch (error) {
     console.error('Error saving username:', error);
     showNotification('შეცდომა სახელის შეცვლისას');
+    window._isChangingUsername = false;
   }
 }
-
 function cancelUsernameEdit() {
   const usernameInput = document.getElementById('settingsUsername');
   if (usernameInput) {
@@ -6202,22 +6255,34 @@ function showPasswordChangeFromSettings() {
     
     try {
       const users = JSON.parse(localStorage.getItem('users') || '{}');
+      
+      // შეამოწმეთ მიმდინარე პაროლი
       if (users[currentUser.username]?.password !== currentPassword) {
         currentPassError.textContent = 'მიმდინარე პაროლი არასწორია';
         currentPassError.style.display = 'block';
         return;
       }
       
+      // განაახლეთ პაროლი localStorage-ში
       users[currentUser.username].password = newPassword;
       users[currentUser.username].lastUpdated = Date.now();
       localStorage.setItem('users', JSON.stringify(users));
       
+      // განაახლეთ Firebase-ში
       if (firebaseSyncEnabled && database) {
         await saveUserToFirebase(currentUser.username, users[currentUser.username]);
       }
       
+      // არ შევცვალოთ currentUser, მხოლოდ პაროლი განახლდა
       showNotification('პაროლი წარმატებით შეიცვალა', false);
+      
+      // დავხუროთ მოდალი
       document.getElementById('passwordModalOverlay').remove();
+      
+      // განვაახლოთ settings გვერდი
+      closeSettingsPage();
+      setTimeout(() => showSettingsPage(), 300);
+      
     } catch (error) {
       console.error('Error changing password:', error);
       newPassError.textContent = 'შეცდომა პაროლის შეცვლისას';
