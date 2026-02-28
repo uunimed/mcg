@@ -92,7 +92,10 @@ body{
   background: white;
   border-radius: 16px;
   width: 90%;
-  max-width: 50%;
+  max-width: 600px;  /* შეცვალე 50% → 600px */
+  max-height: 90vh;  /* დაამატე მაქსიმალური სიმაღლე */
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
   animation: modalAppear 0.4s ease;
@@ -266,7 +269,10 @@ body{
 }
 
 .auth-content {
+  flex: 1;
+  overflow-y: auto;
   padding: 30px;
+  min-height: 0;  /* მნიშვნელოვანია flex-ისთვის */
 }
 
 .auth-tab-content {
@@ -670,23 +676,26 @@ body{
 /* ==================== SETTINGS PAGE - FIXED: 80% WIDTH, 90% HEIGHT, VECTOR CLOSE ==================== */
 .settings-page {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80vw;
-  height: 90vh;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  box-sizing: border-box;
   animation: fadeIn 0.3s ease;
 }
 
 .settings-container {
   max-width: 1100px;
   width: 100%;
-  height: 100%;
+  max-height: 90vh;  /* შეცვალე height → max-height */
+  height: auto;
   background: white;
   border-radius: 24px;
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
@@ -747,6 +756,7 @@ body{
   flex: 1;
   overflow-y: auto;
   padding: 28px;
+  min-height: 0;  /* დაამატე ეს */
 }
 
 .settings-section {
@@ -923,6 +933,24 @@ body{
 
 .mistake-user-answer {
   color: var(--danger);
+}
+
+/* Auth modal scrollbar */
+.auth-content::-webkit-scrollbar,
+#settingsContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-content::-webkit-scrollbar-track,
+#settingsContent::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.auth-content::-webkit-scrollbar-thumb,
+#settingsContent::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 10px;
 }
 
 /* Messenger-style chat notification */
