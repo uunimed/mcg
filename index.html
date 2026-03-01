@@ -970,7 +970,7 @@ body {
 .normal-mode-container {
   margin-top: 0cm !important;
   padding-top: 0 !important;
-  padding-bottom: 80px !important;  /* დაამატეთ ეს */
+  padding-bottom: 80px !important; 
 }
 
 .question-text {
@@ -1417,7 +1417,7 @@ body {
   align-items: center;
   padding: 15px 10px;
   background: transparent;
-  border-top: 1px solid #e2e8f0;  /* ეს არის დივაიდერი */
+  border-top: 1px solid #e2e8f0;
   box-shadow: none;
   z-index: 100;
   width: 100%;
@@ -2066,11 +2066,11 @@ body {
   }
 
 .notification {
-  left: 50% !important;              /* შეცვალეთ 10px → 50% */
-  right: auto !important;             /* შეცვალეთ 10px → auto */
-  transform: translateX(-50%) !important;  /* დაამატეთ ეს */
+  left: 50% !important;   
+  right: auto !important;  
+  transform: translateX(-50%) !important;
   width: auto !important;
-  max-width: 90% !important;          /* შეცვალეთ none → 90% */
+  max-width: 90% !important;    
   padding: 14px 16px !important;
   font-size: 15px !important;
   box-sizing: border-box !important;
@@ -2437,8 +2437,8 @@ body {
     height: 100% !important;
     padding-bottom: 150px !important;
     overflow-y: auto !important;
-      width: 100% !important;        /* <- დაამატეთ ეს */
-  margin: 0 !important;          /* <- დაამატეთ ეს */
+      width: 100% !important;  
+  margin: 0 !important;  
   }
 
   .question-left-panel {
@@ -2465,7 +2465,7 @@ body {
   .exam-answers-container {
     margin-bottom: 10px !important;
     padding: 0 5px !important;
-    gap: 2px !important;   /* <- დაამატეთ ეს */
+    gap: 2px !important; 
   }
 
   .exam-answer-item {
@@ -2677,7 +2677,7 @@ body {
 
   .normal-mode-container .navigation {
     position: fixed !important;
-    bottom: 45px !important; /* Above chat/online panel */
+    bottom: 45px !important;
     left: 10px !important;
     right: 10px !important;
     top: auto !important;
@@ -2812,11 +2812,11 @@ body {
 </style>
 </head>
 <body>
-  <!-- Firebase SDK -->
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   
-<!-- Enhanced Login/Signup Modal -->
+
 <div id="authModal" class="auth-modal-overlay">
   <div class="auth-modal">
 <div class="auth-header">
@@ -2833,7 +2833,7 @@ body {
     </div>
     
     <div id="authContent" class="auth-content">
-      <!-- Guest Tab (Default) -->
+
       <div id="guestTab" class="auth-tab-content active">
         <div class="auth-form">
           <div class="form-group">
@@ -2851,7 +2851,7 @@ body {
         </div>
       </div>
       
-      <!-- Login Tab -->
+
       <div id="loginTab" class="auth-tab-content">
         <div class="auth-form">
           <div class="form-group">
@@ -2878,7 +2878,7 @@ body {
         </div>
       </div>
       
-      <!-- Signup Tab -->
+
       <div id="signupTab" class="auth-tab-content">
         <div class="auth-form">
           <div class="form-group">
@@ -2921,7 +2921,7 @@ body {
   </div>
 </div>
 
-<!-- Timer and User Info Container -->
+
 <div class="timer-user-container">
   <div id="userInfo" class="user-info" style="display: none;">
     <div class="user-menu">
@@ -2955,9 +2955,9 @@ body {
   <div id="timer"></div>
 </div>
 
-<!-- Chat and Online Status Container -->
+
 <div class="bottom-left-container">
-  <!-- Chat Button -->
+
 <button id="chatButton" class="chat-button">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="white"/>
@@ -2966,20 +2966,20 @@ body {
   <div id="chatNotification" class="chat-notification" style="display: none;"></div>
 </button>
   
-  <!-- Question Counter - Bottom Right Corner (Visible in normal mode) -->
+
 <div id="questionCounter" class="question-counter hidden">
   <div id="currentQuestion" class="current-question">1</div>
   <div class="counter-separator">/</div>
   <div id="totalQuestions" class="total-questions">0</div>
 </div>
 
-  <!-- Online Status - Next to chat button -->
+ 
   <div class="online-status">
     <div class="online-dot"></div>
     <span class="online-text">ონლაინ: <span id="onlineCount">1</span></span>
   </div>
   
-  <!-- Chat Window - 80% height -->
+
   <div id="chatWindow" class="chat-window">
     <div class="chat-header">
       <span>მიმოწერები</span>
@@ -2990,7 +2990,7 @@ body {
 </button>
 </div>
     <div id="chatMessages" class="chat-messages">
-      <!-- Messages will be inserted here -->
+    
     </div>
     <div class="chat-input-area">
       <input type="text" id="chatInput" class="chat-input" placeholder="დაწერეთ...">
@@ -3003,12 +3003,12 @@ body {
   </div>
 </div>
   
-  <!-- Modal for Detailed Results -->
+
   <div id="detailedResultsModal" class="modal-overlay">
     <div class="modal" style="max-width: 800px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
       <div class="modal-header" style="margin-bottom: 20px;">დეტალური შედეგები</div>
       <div id="detailedResultsContent" style="flex: 1; overflow-y: auto; padding-right: 10px;">
-        <!-- Detailed results will be inserted here -->
+
       </div>
       <div class="modal-buttons" style="margin-top: 20px;">
         <button id="closeDetailsBtn" class="modal-btn confirm">დახურვა</button>
@@ -3017,7 +3017,7 @@ body {
   </div>
   
 <div class="container">
-    <!-- Options Screen -->
+
     <div id="optionsScreen" class="options-screen">
       <div class="mode-label">აირჩიეთ რეჟიმი:</div>
       
@@ -3028,18 +3028,18 @@ body {
       მოდული:
     </label>
 
-    <!-- Dropdown button -->
+
     <div id="testTypeSelect"
          onclick="toggleModules()"
          style="cursor: pointer; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
       აირჩიეთ
     </div>
 
-    <!-- Modules list (hidden by default) -->
+
     <div id="modulesContainer"
          style="display: none; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; margin-top: 6px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
 
-      <!-- რეზიდენტურა -->
+
       <div style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center; padding: 4px;">
         რეზიდენტურა
       </div>
@@ -3051,7 +3051,6 @@ body {
         <input type="checkbox" class="module-checkbox" value="stomatologia"> სტომატოლოგია
       </label>
 
-      <!-- სალიცენზიო -->
       <div style="font-weight: bold; background: #f1f5f9; color: #0ea5a4; text-align: center; padding: 4px; margin-top: 6px;">
         სალიცენზიო
       </div>
@@ -3337,7 +3336,7 @@ function saveUserToFirebase(username, userData) {
   
   console.log("Saving to Firebase:", username);
   
-  // 🔥 მნიშვნელოვანი: დავრწმუნდეთ, რომ მთელი პროგრესი ინახება
+
   const dataToSave = {
     username: username,
     password: userData.password,
@@ -3387,7 +3386,7 @@ async function syncUserWithFirebase(username, localUserData) {
 let currentUser = null;
 let currentTestType = null;
 let userProgress = {
-  // რეზიდენტურა
+
   samkurnaloo: {
     normal: { answeredQuestions: {}, currentIndex: 0 },
     exam: { answeredQuestions: {}, currentIndex: 0 },
@@ -3398,7 +3397,7 @@ let userProgress = {
     exam: { answeredQuestions: {}, currentIndex: 0 },
     wrongQuestions: []
   },
-  // სალიცენზიო - დაამატეთ ყველა მოდული
+
   alergologia: {
     normal: { answeredQuestions: {}, currentIndex: 0 },
     exam: { answeredQuestions: {}, currentIndex: 0 },
@@ -3465,13 +3464,12 @@ let lastTimerUpdate = Date.now();
 let isWrongQuestionsMode = false;
 let progressModalShown = false;
 
-// მოდულების ქართული სახელები
+
 const moduleNames = {
-  // რეზიდენტურა
+
   'samkurnaloo': 'სამკურნალო',
   'stomatologia': 'სტომატოლოგია',
   
-  // სალიცენზიო
   'alergologia': 'ალერგოლოგია',
   'angiokirurgia': 'ანგიოქირურგია',
   'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
@@ -3523,7 +3521,7 @@ let progressCheckTimeout = null;
 let isProgressModalShowing = false;
 let lastProgressCheckTime = 0;
 
-// 🔴 ახალი ფლაგი სახელის შეცვლისთვის
+
 window._isChangingUsername = false;
 
 // ==================== CHAT FUNCTIONS ====================
@@ -3563,7 +3561,7 @@ const currentQuestionEl = document.getElementById('currentQuestion');
 const totalQuestionsEl = document.getElementById('totalQuestions');
 const loaderOverlay = document.getElementById('loaderOverlay');
 
-// Chat elements
+
 let chatButton, chatWindow, closeChat, chatMessagesEl, onlineCount, chatInput, sendBtn;
 
 const modeSequential = document.getElementById('modeSequential');
@@ -3592,7 +3590,7 @@ async function saveUserProgress() {
         localStorage.setItem('users', JSON.stringify(users));
         console.log('Progress saved locally for', currentUser.username);
         
-        // 🔥 მნიშვნელოვანი: ყოველთვის შევინახოთ Firebase-ში
+
         if (firebaseSyncEnabled && database) {
           await saveUserToFirebase(currentUser.username, users[currentUser.username]);
           console.log('Progress synced to Firebase for', currentUser.username);
@@ -3613,35 +3611,28 @@ async function loadUserProgress() {
     console.log("Loading progress for user:", currentUser.username);
 
     try {
-        // პირველ რიგში შეამოწმე Firebase-ში არსებობს თუ არა მომხმარებელი
+
         if (firebaseSyncEnabled && database) {
             const firebaseUserData = await loadUserFromFirebase(currentUser.username);
             
-            // თუ Firebase-ში მომხმარებელი არ არსებობს - ანგარიში წაშლილია
             if (!firebaseUserData) {
                 console.warn("User not found in Firebase - account was deleted");
                 
-                // წავშალოთ localStorage-დან
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
                 if (users[currentUser.username]) {
                     delete users[currentUser.username];
                     localStorage.setItem('users', JSON.stringify(users));
                 }
                 
-                // წავშალოთ ჩატის მონაცემები
                 localStorage.removeItem('chatUserName');
                 localStorage.removeItem('chatUserId');
                 
-                // გამოვაჩინოთ შეტყობინება
                 showNotification('თქვენი ანგარიში წაიშალა. გთხოვთ დარეგისტრირდეთ თავიდან.', true);
                 
-                // გავასუფთაოთ currentUser
                 currentUser = null;
                 
-                // დავმალოთ იუზერის ინფო
                 document.getElementById('userInfo').style.display = 'none';
                 
-                // გამოვაჩინოთ ავტორიზაციის მოდალი
                 setTimeout(() => {
                     document.getElementById('authModal').style.display = 'flex';
                 }, 2000);
@@ -3649,7 +3640,6 @@ async function loadUserProgress() {
                 return;
             }
             
-            // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
             if (firebaseUserData.deleted === true) {
                 console.warn("User account is marked as deleted");
                 
@@ -3665,16 +3655,13 @@ async function loadUserProgress() {
                 return;
             }
             
-            // 🔥 მნიშვნელოვანი: Firebase-დან წამოღებული მონაცემები გამოვიყენოთ
             console.log("Using Firebase data for user:", currentUser.username);
             
-            // შევქმნათ userProgress ობიექტი Firebase-დან
             if (firebaseUserData.progress) {
                 userProgress = firebaseUserData.progress;
                 console.log('Progress loaded from Firebase for', currentUser.username);
             }
             
-            // განვაახლოთ localStorage Firebase-ის მონაცემებით
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             users[currentUser.username] = {
                 password: firebaseUserData.password || '',
@@ -3684,7 +3671,6 @@ async function loadUserProgress() {
             localStorage.setItem('users', JSON.stringify(users));
             
         } else {
-            // თუ Firebase არ მუშაობს, გამოვიყენოთ localStorage
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             let localUserData = users[currentUser.username] || null;
             
@@ -3694,7 +3680,6 @@ async function loadUserProgress() {
             }
         }
         
-        // დააყენე რეალურ დროში მონიტორინგი
         setupUserDeletionListener();
         
     } catch (error) {
@@ -3712,22 +3697,18 @@ function setupUserDeletionListener() {
     const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
     const userRef = database.ref('users/' + safeUsername);
     
-    // მოვუსმინოთ ცვლილებებს Firebase-ში
     userRef.on('value', (snapshot) => {
         const userData = snapshot.val();
         
-        // 🔴 თუ სახელს ვცვლით, არ გავუშვათ ავტომატური გასვლა
         if (window._isChangingUsername) {
             console.log("Username is being changed, ignoring deletion event");
             return;
         }
         
-        // თუ მომხმარებელი წაშლილია Firebase-დან
         if (!userData) {
             console.warn("User deleted from Firebase - forcing logout");
             handleAccountDeletion("წაშლილია ადმინისტრატორის მიერ");
         }
-        // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
         else if (userData.deleted === true) {
             console.warn("User account is deleted - forcing logout");
             handleAccountDeletion("დაბლოკილია ადმინისტრატორის მიერ");
@@ -3736,19 +3717,16 @@ function setupUserDeletionListener() {
         console.error("Error in user listener:", error);
     });
     
-    // ასევე მოვუსმინოთ სისტემურ შეტყობინებებს
     const forceLogoutRef = database.ref('system/forceLogout');
     forceLogoutRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
         
-        // 🔴 თუ სახელს ვცვლით, არ გავუშვათ ავტომატური გასვლა
         if (window._isChangingUsername) {
             console.log("Username is being changed, ignoring force logout");
             return;
         }
         
-        // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
         if (data.userId === currentUser.username || data.userId === safeUsername) {
             console.warn("Force logout message received");
             handleAccountDeletion(data.reason || 'ადმინისტრატორის მიერ');
@@ -3757,53 +3735,42 @@ function setupUserDeletionListener() {
 }
 
 function handleAccountDeletion(reason = "ადმინისტრატორის მიერ") {
-    // 🔴 თუ სახელს ვცვლით, არ გავუშვათ ავტომატური გასვლა
     if (window._isChangingUsername) {
         console.log("Username is being changed, skipping account deletion");
         return;
     }
     
-    // გავასუფთაოთ localStorage მთლიანად
     localStorage.removeItem('users');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('chatUserName');
     localStorage.removeItem('chatUserId');
     localStorage.removeItem('lastSeenMessageTime');
     
-    // გავასუფთაოთ sessionStorage
     sessionStorage.clear();
     
-    // გავაუქმოთ currentUser
     currentUser = null;
     
-    // დავმალოთ იუზერის ინფო
     const userInfo = document.getElementById('userInfo');
     if (userInfo) userInfo.style.display = 'none';
     
-    // დავმალოთ ტაიმერი
     const timer = document.getElementById('timer');
     if (timer) timer.classList.add('hidden');
     
-    // წავშალოთ ჩატის ფანჯარა
     const chatWindow = document.getElementById('chatWindow');
     if (chatWindow) chatWindow.classList.remove('active');
     
-    // გამოვაჩინოთ შეტყობინება
     showNotification(`⛔ თქვენი ანგარიში ${reason}. გთხოვთ დარეგისტრირდეთ თავიდან.`, true);
     
-    // გადავიყვანოთ მთავარ გვერდზე
     if (testScreen && testScreen.classList.contains('active')) {
         testScreen.classList.remove('active');
         optionsScreen.style.display = 'block';
     }
     
-    // გამოვაჩინოთ ავტორიზაციის მოდალი
     setTimeout(() => {
         const authModal = document.getElementById('authModal');
         if (authModal) {
             authModal.style.display = 'flex';
             
-            // გადავრთოთ სტუმრის ტაბზე
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.auth-tab-content').forEach(c => c.classList.remove('active'));
             
@@ -3844,26 +3811,22 @@ async function handleLogin() {
   }
   
   try {
-    // პირველ რიგში შეამოწმე Firebase
     let firebaseUserData = null;
     if (firebaseSyncEnabled && database) {
       firebaseUserData = await loadUserFromFirebase(username);
       
-      // თუ Firebase-ში მომხმარებელი არ არსებობს
       if (!firebaseUserData) {
         document.getElementById('loginUsernameError').textContent = 'მომხმარებელი არ არსებობს ან წაშლილია';
         document.getElementById('loginUsernameError').style.display = 'block';
         return;
       }
       
-      // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
       if (firebaseUserData.deleted === true) {
         document.getElementById('loginUsernameError').textContent = 'ეს ანგარიში დაბლოკილია ადმინისტრატორის მიერ';
         document.getElementById('loginUsernameError').style.display = 'block';
         return;
       }
       
-      // შეამოწმე პაროლი Firebase-ში
       if (firebaseUserData.password !== password) {
         document.getElementById('loginPasswordError').textContent = 'პაროლი არასწორია';
         document.getElementById('loginPasswordError').style.display = 'block';
@@ -3871,7 +3834,6 @@ async function handleLogin() {
       }
     }
     
-    // შეამოწმე localStorage-შიც
     let users = JSON.parse(localStorage.getItem('users') || '{}');
     let userFound = false;
     
@@ -3880,7 +3842,6 @@ async function handleLogin() {
     }
     
     if (!userFound && firebaseUserData) {
-      // Firebase-ში არსებობს, შევქმნათ localStorage-ში
       users[username] = {
         password: firebaseUserData.password,
         progress: firebaseUserData.progress || {},
@@ -3899,13 +3860,11 @@ async function handleLogin() {
       return;
     }
     
-    // წარმატებული შესვლა
     currentUser = { 
       username: username, 
       isGuest: false
     };
     
-    // 🔥 მნიშვნელოვანი: ჯერ ჩავტვირთოთ Firebase-დან მონაცემები
     if (firebaseUserData && firebaseUserData.progress) {
       userProgress = firebaseUserData.progress;
       console.log("Progress loaded from Firebase for", username);
@@ -3925,17 +3884,14 @@ async function handleLogin() {
   
   showNotification('მოგესალმებით!', false);
   
-  // 🔥 მნიშვნელოვანი: ჩატვირთეთ მოდული Firebase-დან
   setupUserDeletionListener();
   setupModuleListener();
   initChat();
   bindUserMenuEvents();
   updateTimerDisplay();
   
-  // 🔥 ჯერ ჩატვირთეთ მოდული, შემდეგ CSV
   await loadSelectedModule();
   
-  // ჩატვირთეთ CSV
   if (allTests.length === 0) {
     loadCSV();
   } else {
@@ -3961,13 +3917,11 @@ function loadUserFromFirebase(username) {
         if (snapshot.exists()) {
             const userData = snapshot.val();
             
-            // 🔴 თუ სახელს ვცვლით, ყველაფერი ნორმალურად მიმდინარეობს
             if (window._isChangingUsername) {
                 console.log("Username change in progress, returning user data");
                 return userData;
             }
             
-            // თუ მომხმარებელი მონიშნულია როგორც წაშლილი, არ დავაბრუნოთ
             if (userData.deleted === true) {
                 console.log("User is marked as deleted in Firebase");
                 return null;
@@ -3989,7 +3943,6 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
 
   const mode = isExamMode ? 'exam' : 'normal';
   
-  // 1. ვამოწმებთ, რომ მოდულის ობიექტი არსებობს
   if (!userProgress[currentTestType]) {
     userProgress[currentTestType] = {
       normal: { answeredQuestions: {}, currentIndex: 0 },
@@ -3998,17 +3951,14 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
     };
   }
   
-  // 2. ვამოწმებთ, რომ რეჟიმის (normal/exam) ობიექტი არსებობს
   if (!userProgress[currentTestType][mode]) {
     userProgress[currentTestType][mode] = { answeredQuestions: {}, currentIndex: 0 };
   }
 
-  // 🔴 მთავარი შესწორება #1: Firebase-მა შეიძლება წაშალოს answeredQuestions ობიექტი, თუ ის ცარიელი იყო!
   if (!userProgress[currentTestType][mode].answeredQuestions) {
     userProgress[currentTestType][mode].answeredQuestions = {};
   }
   
-  // 🔴 მთავარი შესწორება #2: Firebase-მა შეიძლება მასივი გადააქციოს ობიექტად ან წაშალოს
   if (!Array.isArray(userProgress[currentTestType].wrongQuestions)) {
     if (userProgress[currentTestType].wrongQuestions) {
       userProgress[currentTestType].wrongQuestions = Object.values(userProgress[currentTestType].wrongQuestions);
@@ -4036,7 +3986,6 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
   const previousAnswer = userProgress[currentTestType][mode].answeredQuestions[globalQuestionId];
   const hasPreviousAnswer = previousAnswer !== undefined;
 
-  // ახლა უკვე უსაფრთხოა პასუხის ჩაწერა
   userProgress[currentTestType][mode].answeredQuestions[globalQuestionId] = {
     selectedAnswer: selectedAnswer,
     isCorrect: isCorrect,
@@ -4191,7 +4140,6 @@ function startWrongQuestionsMode() {
 function toggleModules() {
   const container = document.getElementById('modulesContainer');
   if (container) {
-    // თუ ღიაა - დახურე, თუ დახურულია - გახსენი
     if (container.style.display === 'flex') {
       container.style.display = 'none';
     } else {
@@ -4205,56 +4153,44 @@ function handleModuleCheckboxClick(clickedCheckbox) {
   const container = document.getElementById('modulesContainer');
   
   if (clickedCheckbox.checked) {
-    // ყველა სხვა მოხსენი
     allCheckboxes.forEach(cb => {
       if (cb !== clickedCheckbox) {
         cb.checked = false;
       }
     });
     
-    // შენახვა და ჩატვირთვა
     const moduleValue = clickedCheckbox.value;
     saveSelectedModule(moduleValue);
     
-    // 🔥 მნიშვნელოვანი: ჯერ განაახლე თემების ხილვადობა
     updateTopicsVisibility();
     
-    // შემდეგ გამოიძახე onModuleSelected (რომელიც თავის მხრივ იძახებს loadCSV-ს)
     onModuleSelected(moduleValue);
     
-    // მნიშვნელოვანი: განაახლე currentTestType
     currentTestType = moduleValue;
     console.log("Module selected:", moduleValue);
     
-    // 🔥 დაიხუროს დროპდაუნი არჩევის შემდეგ
     if (container) {
       container.style.display = 'none';
     }
     
   } else {
-    // თუ მონიშვნა მოიხსნა
     saveSelectedModule(null);
     updateDropdownText(null);
     
-    // 🔥 დამალე topics dropdown
     updateTopicsVisibility();
     
-    // გაასუფთავე ტესტები
     allTestsWithTopics = [];
     allTests = [];
     totalQuestionsEl.textContent = '0';
     
-    // გაასუფთავე currentTestType
     currentTestType = null;
     
-    // 🔥 დროპდაუნი მაინც დაიხუროს
     if (container) {
       container.style.display = 'none';
     }
   }
 }
 
-// Dropdown ტექსტის განახლება
 function updateDropdownText(moduleValue) {
   const dropdown = document.getElementById('testTypeSelect');
   const moduleNames = {
@@ -4314,18 +4250,15 @@ function updateDropdownText(moduleValue) {
 }
 
 function updateTopicsVisibility() {
-  // ახალი ვერსია: ვიღებთ მონიშნულ მოდულს checkbox-ებიდან
   const selectedModule = getSelectedModule();
   const topicsContainer = document.getElementById('topicsDropdownContainer');
   const topicsSelect = document.getElementById('topicsSelect');
   
   if (!topicsContainer || !topicsSelect) return;
   
-  // მხოლოდ სამკურნალოსთვის ვაჩვენოთ თემების dropdown
   if (selectedModule === 'samkurnaloo') {
     topicsContainer.style.display = 'flex';
     
-    // თუ უკვე ჩატვირთულია ტესტები, განვაახლოთ თემების სია
     if (allTestsWithTopics && allTestsWithTopics.length > 0) {
       extractTopics();
       populateTopicsList();
@@ -4345,7 +4278,6 @@ function saveSelectedModule(moduleValue) {
   if (!currentUser || currentUser.isGuest) return;
   
   try {
-    // შენახვა localStorage-ში
     const users = JSON.parse(localStorage.getItem('users') || '{}');
     if (users[currentUser.username]) {
       if (!users[currentUser.username].selectedModules) {
@@ -4356,11 +4288,9 @@ function saveSelectedModule(moduleValue) {
       localStorage.setItem('users', JSON.stringify(users));
     }
     
-    // Firebase-ში შენახვა (თუ შესაძლებელია)
     if (firebaseSyncEnabled && database) {
       const userRef = database.ref('users/' + currentUser.username.replace(/[.#$[\]]/g, '_'));
       
-      // შევქმნათ ობიექტი, რომელიც შეიცავს მოდულს და დროს
       const updateData = {
         selectedModule: moduleValue,
         lastModuleUpdate: Date.now(),
@@ -4376,7 +4306,6 @@ function saveSelectedModule(moduleValue) {
         .catch(err => console.error('Firebase save error:', err));
     }
     
-    // currentTestType-ის განახლება
     currentTestType = moduleValue;
     
   } catch (error) {
@@ -4392,7 +4321,6 @@ function loadSelectedModule() {
   
   console.log("Loading selected module for user:", currentUser.username);
   
-  // პირველ რიგში შევამოწმოთ Firebase
   if (firebaseSyncEnabled && database) {
     const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
     console.log("Checking Firebase for module at path: users/" + safeUsername);
@@ -4403,12 +4331,10 @@ function loadSelectedModule() {
           const firebaseData = snapshot.val();
           console.log("Firebase user data loaded:", firebaseData);
           
-          // 🔥 მთავარი შესწორება: შევამოწმოთ selectedModule პირდაპირ
           if (firebaseData.selectedModule) {
             const savedModule = firebaseData.selectedModule;
             console.log("Found module in Firebase:", savedModule);
             
-            // განვაახლოთ localStorage Firebase-ის მონაცემებით
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (!users[currentUser.username]) {
               users[currentUser.username] = {
@@ -4428,7 +4354,6 @@ function loadSelectedModule() {
             }
             localStorage.setItem('users', JSON.stringify(users));
             
-            // 🔥 გამოვიყენოთ Firebase-დან წამოღებული მოდული
             applySelectedModule(savedModule, true);
             
           } else {
@@ -4450,7 +4375,6 @@ function loadSelectedModule() {
   }
 }
 
-// 🔥 ახალი ფუნქცია Firebase-დან მომხმარებლის ჩასატვირთად
 function loadUserFromFirebaseAndApply() {
   if (!firebaseSyncEnabled || !database || !currentUser) return;
   
@@ -4462,7 +4386,6 @@ function loadUserFromFirebaseAndApply() {
         const firebaseData = snapshot.val();
         console.log("User data loaded from Firebase:", firebaseData);
         
-        // შევქმნათ localStorage-ში მომხმარებლის ჩანაწერი
         const users = JSON.parse(localStorage.getItem('users') || '{}');
         users[currentUser.username] = {
           password: firebaseData.password || '',
@@ -4474,19 +4397,16 @@ function loadUserFromFirebaseAndApply() {
         };
         localStorage.setItem('users', JSON.stringify(users));
         
-        // განვაახლოთ userProgress
         if (firebaseData.progress) {
           userProgress = firebaseData.progress;
         }
         
-        // თუ არის selectedModule, გამოვიყენოთ
         if (firebaseData.selectedModule) {
           applySelectedModule(firebaseData.selectedModule, true);
         }
       } else {
         console.log("User not found in Firebase either");
-        // თუ Firebase-შიც არ არის, მაშინ პირველი შესვლაა
-        // არაფერს ვაკეთებთ
+
       }
     })
     .catch(error => {
@@ -4494,7 +4414,6 @@ function loadUserFromFirebaseAndApply() {
     });
 }
 
-// ცალკე ფუნქცია localStorage-დან ჩასატვირთად
 function loadSelectedModuleFromLocal() {
   try {
     const users = JSON.parse(localStorage.getItem('users') || '{}');
@@ -4505,8 +4424,7 @@ function loadSelectedModuleFromLocal() {
       applySelectedModule(savedModule, false);
     } else {
       console.log("No saved module found in localStorage");
-      // თუ არც Firebase-ში და არც localStorage-ში არ არის მოდული, მაშინ პირველი შესვლაა
-      // არაფერს ვაკეთებთ, მომხმარებელმა თავად უნდა აირჩიოს
+
     }
   } catch (error) {
     console.error('Error loading selected module from localStorage:', error);
@@ -4516,42 +4434,34 @@ function loadSelectedModuleFromLocal() {
 function applySelectedModule(savedModule, fromFirebase = false) {
   console.log(`Applying module: ${savedModule} (fromFirebase: ${fromFirebase})`);
   
-  // ყველა checkbox-ის მოხსნა
   document.querySelectorAll('.module-checkbox').forEach(cb => cb.checked = false);
   
-  // შენახულის მონიშვნა
   const targetCheckbox = document.querySelector(`.module-checkbox[value="${savedModule}"]`);
   if (targetCheckbox) {
     targetCheckbox.checked = true;
     updateDropdownText(savedModule);
     currentTestType = savedModule;
     
-    // 🔥 განაახლე თემების ხილვადობა
     updateTopicsVisibility();
     
-    // 🔥 დახურე მოდულების სია
     const container = document.getElementById('modulesContainer');
     if (container) {
       container.style.display = 'none';
     }
     
-    // 🔥 მნიშვნელოვანი: განაახლე start ღილაკი
     const startBtn = document.getElementById('startBtn');
     if (startBtn) {
       startBtn.disabled = false;
     }
     
-    // 🔥 ჩატვირთე CSV თუ ჯერ არ არის ჩატვირთული
     if (allTestsWithTopics.length === 0) {
       console.log("Tests not loaded yet, loading CSV...");
       loadCSV();
     } else {
       console.log("Tests already loaded, refreshing UI");
-      // თუ უკვე ჩატვირთულია, განაახლე თემები
       extractTopics();
       populateTopicsList();
       
-      // 🔥 შეამოწმე პროგრესი
       setTimeout(() => {
         const examModeCheckbox = document.getElementById('modeExam');
         if (!examModeCheckbox || !examModeCheckbox.checked) {
@@ -4583,7 +4493,6 @@ function setupModuleListener() {
   const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
   const userRef = database.ref('users/' + safeUsername);
   
-  // მოვუსმინოთ ცვლილებებს
   userRef.on('value', (snapshot) => {
     console.log("Firebase value event triggered!");
     
@@ -4595,27 +4504,22 @@ function setupModuleListener() {
     const data = snapshot.val();
     console.log("Firebase user data changed:", data);
     
-    // 🔥 თუ მოდული შეიცვალა და ეს ცვლილება არ არის ჩვენი მოწყობილობიდან
     if (data.selectedModule) {
       console.log(`Selected module in Firebase: ${data.selectedModule}, currentTestType: ${currentTestType}`);
       
       if (data.selectedModule !== currentTestType) {
         console.log(`Module changed in Firebase from ${currentTestType} to ${data.selectedModule}`);
         
-        // 🔥 გამოვიყენოთ ახალი მოდული
         applySelectedModule(data.selectedModule, true);
         
-        // მოდულის ქართული სახელი
         const moduleGeoName = moduleNames[data.selectedModule] || data.selectedModule;
         
-        // ვაჩვენოთ შეტყობინება ქართულად
         showNotification(`მოდული შეიცვალა: ${moduleGeoName}`, false);
       } else {
         console.log("Module hasn't changed, skipping");
       }
     }
     
-    // 🔥 თუ პროგრესი შეიცვალა, განვაახლოთ
     if (data.progress) {
       console.log("Progress changed in Firebase, updating local storage");
       userProgress = data.progress;
@@ -4634,13 +4538,11 @@ function setupModuleListener() {
   console.log("Module listener setup complete");
 }
 
-// დავამატოთ ეს ფუნქცია Firebase-დან პროგრესის პერიოდულად ჩასატვირთად
 function startProgressSync() {
   if (!firebaseSyncEnabled || !database || !currentUser || currentUser.isGuest) return;
   
   console.log("Starting periodic progress sync");
   
-  // ყოველ 30 წამში შევამოწმოთ Firebase
   setInterval(() => {
     if (currentUser && !currentUser.isGuest) {
       console.log("Periodic progress check...");
@@ -4651,11 +4553,9 @@ function startProgressSync() {
             const data = snapshot.val();
             
             if (data.progress) {
-              // შევადაროთ localStorage-ის და Firebase-ის მონაცემები
               const users = JSON.parse(localStorage.getItem('users') || '{}');
               const localProgress = users[currentUser.username]?.progress;
               
-              // თუ Firebase-ის მონაცემები უფრო ახალია, გამოვიყენოთ ისინი
               if (data.lastUpdated > (users[currentUser.username]?.lastUpdated || 0)) {
                 console.log("Firebase data is newer, updating local storage");
                 userProgress = data.progress;
@@ -4664,7 +4564,6 @@ function startProgressSync() {
                 users[currentUser.username].lastUpdated = data.lastUpdated;
                 localStorage.setItem('users', JSON.stringify(users));
                 
-                // თუ ტესტის ეკრანი აქტიურია, განვაახლოთ
                 if (testScreen.classList.contains('active') && sessionTests.length > 0) {
                   renderCurrentQuestion();
                 }
@@ -4674,7 +4573,7 @@ function startProgressSync() {
         })
         .catch(err => console.error("Periodic sync error:", err));
     }
-  }, 30000); // 30 წამი
+  }, 30000); 
 }
 
 // ==================== AUTH FUNCTIONS ====================
@@ -4783,12 +4682,10 @@ async function handleSignup() {
   const password = document.getElementById('signupPassword').value;
   const confirmPassword = document.getElementById('signupConfirmPassword').value;
   
-  // Error ელემენტების გასუფთავება
   document.getElementById('signupUsernameError').style.display = 'none';
   document.getElementById('signupPasswordError').style.display = 'none';
   document.getElementById('signupConfirmError').style.display = 'none';
   
-  // ვალიდაცია
   if (!username) {
     document.getElementById('signupUsernameError').textContent = 'სახელი და გვარი აუცილებელია';
     document.getElementById('signupUsernameError').style.display = 'block';
@@ -4833,7 +4730,6 @@ async function handleSignup() {
   }
   
   try {
-    // შევამოწმოთ localStorage-ში
     const users = JSON.parse(localStorage.getItem('users') || '{}');
     
     if (users[username]) {
@@ -4842,7 +4738,6 @@ async function handleSignup() {
       return;
     }
     
-    // შევამოწმოთ Firebase-ში (თუ ხელმისაწვდომია)
     if (firebaseSyncEnabled && database) {
       console.log("Checking Firebase for existing user:", username);
       const firebaseUser = await loadUserFromFirebase(username);
@@ -4853,11 +4748,9 @@ async function handleSignup() {
       }
     }
     
-    // შევქმნათ ახალი მომხმარებლის ობიექტი
     const newUser = {
       password: password,
       progress: {
-        // რეზიდენტურა
         samkurnaloo: {
           normal: { answeredQuestions: {}, currentIndex: 0 },
           exam: { answeredQuestions: {}, currentIndex: 0 },
@@ -4868,7 +4761,6 @@ async function handleSignup() {
           exam: { answeredQuestions: {}, currentIndex: 0 },
           wrongQuestions: []
         },
-        // სალიცენზიო მოდულები
         alergologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
         angiokirurgia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
         anesteziologia: { normal: { answeredQuestions: {}, currentIndex: 0 }, exam: { answeredQuestions: {}, currentIndex: 0 }, wrongQuestions: [] },
@@ -4917,26 +4809,21 @@ async function handleSignup() {
       lastUpdated: Date.now()
     };
     
-    // შევინახოთ localStorage-ში
     users[username] = newUser;
     localStorage.setItem('users', JSON.stringify(users));
     console.log("User saved to localStorage:", username);
     
-    // შევინახოთ Firebase-ში (თუ ხელმისაწვდომია)
     if (firebaseSyncEnabled && database) {
       console.log("Saving user to Firebase:", username);
       await saveUserToFirebase(username, newUser);
     }
     
-    // გავასუფთაოთ ინფუთები
     document.getElementById('signupUsername').value = '';
     document.getElementById('signupPassword').value = '';
     document.getElementById('signupConfirmPassword').value = '';
     
-    // ვაჩვენოთ წარმატების შეტყობინება
     showNotification('რეგისტრაცია წარმატებულია!', false);
     
-    // ავტომატური შესვლა რეგისტრაციის შემდეგ
     console.log("Auto-logging in after signup...");
     
     currentUser = { 
@@ -4944,33 +4831,25 @@ async function handleSignup() {
       isGuest: false 
     };
     
-    // ჩატვირთეთ პროგრესი (ახალი მომხმარებლისთვის ეს იქნება ცარიელი)
     userProgress = newUser.progress;
     
-    // დახურეთ მოდალი
     document.getElementById('authModal').style.display = 'none';
     
-    // აჩვენეთ მომხმარებლის ინფო
     const userInfo = document.getElementById('userInfo');
     if (userInfo) {
       userInfo.style.display = 'flex';
       document.getElementById('usernameDisplay').textContent = currentUser.username;
     }
     
-    // განაახლეთ ჩატის სახელი
     userName = currentUser.username;
     localStorage.setItem('chatUserName', userName);
     
-    // ჩატის ინიციალიზაცია
     initChat();
     
-    // მომხმარებლის მენიუს ღილაკების მიბმა
     bindUserMenuEvents();
     
-    // ტაიმერის განახლება
     updateTimerDisplay();
     
-    // 🔥 მნიშვნელოვანი: შევამოწმოთ, არის თუ არა ტესტები უკვე ჩატვირთული
     if (allTests.length === 0) {
       console.log("Loading CSV after signup...");
       await loadCSV();
@@ -4978,7 +4857,6 @@ async function handleSignup() {
       console.log("Tests already loaded, enabling start button");
       startBtn.disabled = false;
       
-      // 🔥 მნიშვნელოვანი: შევამოწმოთ არსებული პროგრესი (ახალი მომხმარებლისთვის ცარიელი იქნება)
       setTimeout(() => {
         const examModeCheckbox = document.getElementById('modeExam');
         if (!examModeCheckbox || !examModeCheckbox.checked) {
@@ -4987,14 +4865,12 @@ async function handleSignup() {
       }, 500);
     }
     
-// Firebase listener-ების დაყენება
 if (firebaseSyncEnabled && database) {
   setupUserDeletionListener();
   setupModuleListener();
   startProgressSync();
 }
 
-// 🔥 მოდულის ჩატვირთვა (ახალი მომხმარებლისთვის ცარიელი იქნება)
 loadSelectedModule();
 
 console.log("Signup and auto-login completed successfully!");
@@ -5860,7 +5736,7 @@ function startExamMode() {
   timerElement.classList.add('hidden');
   normalModeContainer.classList.add('hidden');
   examModeContainer.classList.remove('hidden');
-  examRightPanel.classList.remove('hidden');  // ეს ხაზი უნდა იყოს
+  examRightPanel.classList.remove('hidden'); 
   questionCounter.classList.add('hidden');
   
   createExamTestBoxes();
@@ -6019,11 +5895,9 @@ async function enableUsernameEdit() {
   usernameInput.disabled = false;
   usernameInput.focus();
   
-  // წავშალოთ არსებული save ღილაკი
   const existingSaveBtn = document.getElementById('saveUsernameBtn');
   if (existingSaveBtn) existingSaveBtn.remove();
   
-  // შევქმნათ ახალი save ღილაკი
   const saveBtn = document.createElement('button');
   saveBtn.id = 'saveUsernameBtn';
   saveBtn.className = 'settings-edit-btn';
@@ -6035,15 +5909,12 @@ async function enableUsernameEdit() {
     შენახვა
   `;
   
-  // ღილაკის მშობელში ჩამატება
   usernameInput.parentElement.appendChild(saveBtn);
   
-  // ღილაკზე დაჭერის მოსმენა
   saveBtn.onclick = async function() {
     await saveUsername();
   };
   
-  // Enter ღილაკზე დაჭერის მოსმენა
   usernameInput.onkeypress = async function(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -6051,7 +5922,6 @@ async function enableUsernameEdit() {
     }
   };
   
-  // Escape ღილაკზე დაჭერის მოსმენა
   usernameInput.onkeydown = function(e) {
     if (e.key === 'Escape') {
       cancelUsernameEdit();
@@ -6090,7 +5960,6 @@ async function saveUsername() {
   try {
     const users = JSON.parse(localStorage.getItem('users') || '{}');
     
-    // შევამოწმოთ, არის თუ არა ახალი სახელი უკვე გამოყენებული
     if (users[newUsername]) {
       showNotification('ეს სახელი უკვე გამოყენებულია');
       return;
@@ -6112,16 +5981,13 @@ async function saveUsername() {
       return;
     }
     
-    // 🔴 დავსეტოთ ფლაგი, რომ არ მოხდეს ავტომატური გასვლა
     window._isChangingUsername = true;
     
-    // Firebase-ში ძველი მომხმარებლის წაშლა
     if (firebaseSyncEnabled && database) {
       const oldSafeUsername = oldUsername.replace(/[.#$[\]]/g, '_');
       await database.ref('users/' + oldSafeUsername).remove();
     }
     
-    // ახალი მომხმარებლის შექმნა
     users[newUsername] = {
       ...oldUserData,
       password: oldUserData.password,
@@ -6132,42 +5998,35 @@ async function saveUsername() {
     
     localStorage.setItem('users', JSON.stringify(users));
     
-    // Firebase-ში ახალი მომხმარებლის შენახვა
     if (firebaseSyncEnabled && database) {
       await saveUserToFirebase(newUsername, users[newUsername]);
     }
     
-    // განვაახლოთ currentUser
     currentUser = { 
       username: newUsername, 
       isGuest: false 
     };
     
-    // განვაახლოთ UI
     document.getElementById('usernameDisplay').textContent = newUsername;
     userName = newUsername;
     localStorage.setItem('chatUserName', userName);
     
-    // ჩატის აიდის განახლება
     if (firebaseSyncEnabled && database) {
       const userRef = database.ref('chat/onlineUsers/' + userId);
       userRef.update({ name: newUsername });
     }
     
-    // Firebase listener-ების ხელახლა დაყენება
     if (firebaseSyncEnabled && database) {
       setupModuleListener();
       setupUserDeletionListener();
     }
     
-    // 🔴 გავაუქმოთ ფლაგი
     setTimeout(() => {
       window._isChangingUsername = false;
     }, 2000);
     
     showNotification('მომხმარებელი წარმატებით შეიცვალა', false);
     
-    // Settings-ის გვერდის დახურვა და ხელახლა გახსნა
     closeSettingsPage();
     setTimeout(() => showSettingsPage(), 300);
     
@@ -6193,7 +6052,6 @@ function cancelUsernameEdit() {
 function showPasswordChangeFromSettings() {
   console.log("Opening password change modal from settings");
   
-  // წავშალოთ არსებული მოდალი თუ არსებობს
   const existingModal = document.getElementById('passwordModalOverlay');
   if (existingModal) existingModal.remove();
   
@@ -6215,7 +6073,6 @@ function showPasswordChangeFromSettings() {
   content.className = 'modal-content';
   content.style.cssText = 'margin-bottom: 20px;';
   
-  // მიმდინარე პაროლი
   const currentPassDiv = document.createElement('div');
   currentPassDiv.style.marginBottom = '20px';
   
@@ -6233,7 +6090,6 @@ function showPasswordChangeFromSettings() {
   currentPassDiv.appendChild(currentPassInput);
   currentPassDiv.appendChild(currentPassError);
   
-  // ახალი პაროლი
   const newPassDiv = document.createElement('div');
   newPassDiv.style.marginBottom = '20px';
   
@@ -6251,7 +6107,6 @@ function showPasswordChangeFromSettings() {
   newPassDiv.appendChild(newPassInput);
   newPassDiv.appendChild(newPassError);
   
-  // პაროლის გამეორება
   const confirmPassDiv = document.createElement('div');
   confirmPassDiv.style.marginBottom = '20px';
   
@@ -6273,7 +6128,6 @@ function showPasswordChangeFromSettings() {
   content.appendChild(newPassDiv);
   content.appendChild(confirmPassDiv);
   
-  // ღილაკები
   const buttons = document.createElement('div');
   buttons.className = 'modal-buttons';
   buttons.style.cssText = 'display: flex; gap: 15px; justify-content: center;';
@@ -6300,14 +6154,12 @@ function showPasswordChangeFromSettings() {
   
   document.body.appendChild(modalOverlay);
   
-  // Error messages-ის დამალვის ფუნქცია
   const hideAllErrors = () => {
     currentPassError.style.display = 'none';
     newPassError.style.display = 'none';
     confirmPassError.style.display = 'none';
   };
   
-  // Save ღილაკზე დაჭერა
   saveBtn.addEventListener('click', async function() {
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
@@ -6346,24 +6198,20 @@ function showPasswordChangeFromSettings() {
     if (hasError) return;
     
     try {
-      // წამოვიღოთ მომხმარებლები localStorage-დან
       const users = JSON.parse(localStorage.getItem('users') || '{}');
       
-      // შევამოწმოთ currentUser
       if (!currentUser || !currentUser.username) {
         showNotification('მომხმარებელი ვერ მოიძებნა');
         modalOverlay.remove();
         return;
       }
       
-      // შევამოწმოთ მიმდინარე პაროლი
       if (users[currentUser.username]?.password !== currentPassword) {
         currentPassError.textContent = 'მიმდინარე პაროლი არასწორია';
         currentPassError.style.display = 'block';
         return;
       }
       
-      // 🔥 Firebase-ში პაროლის განახლება
       if (firebaseSyncEnabled && database) {
         const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
         await database.ref('users/' + safeUsername).update({
@@ -6372,18 +6220,14 @@ function showPasswordChangeFromSettings() {
         });
       }
       
-      // localStorage-ში პაროლის განახლება
       users[currentUser.username].password = newPassword;
       users[currentUser.username].lastUpdated = Date.now();
       localStorage.setItem('users', JSON.stringify(users));
       
-      // მოდალის დახურვა
       modalOverlay.remove();
       
-      // წარმატების შეტყობინება
       showNotification('პაროლი წარმატებით შეიცვალა', false);
       
-      // Settings-ის გვერდის განახლება
       closeSettingsPage();
       setTimeout(() => showSettingsPage(), 300);
       
@@ -6394,12 +6238,10 @@ function showPasswordChangeFromSettings() {
     }
   });
   
-  // Cancel ღილაკზე დაჭერა
   cancelBtn.addEventListener('click', function() {
     modalOverlay.remove();
   });
   
-  // მოდალის გარეთ დაჭერისას დახურვა
   modalOverlay.addEventListener('click', function(e) {
     if (e.target === modalOverlay) {
       modalOverlay.remove();
@@ -6414,13 +6256,10 @@ function renderMistakesList() {
   
   const wrongQuestionIds = userProgress[currentTestType]?.wrongQuestions || [];
   
-  // მოდულების ქართული სახელები
   const moduleNames = {
-    // რეზიდენტურა
     'samkurnaloo': 'სამკურნალო',
     'stomatologia': 'სტომატოლოგია',
     
-    // სალიცენზიო
     'alergologia': 'ალერგოლოგია',
     'angiokirurgia': 'ანგიოქირურგია',
     'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
@@ -6520,13 +6359,10 @@ function printMistakes() {
     return;
   }
   
-  // მოდულების ქართული სახელები
   const moduleNames = {
-    // რეზიდენტურა
     'samkurnaloo': 'სამკურნალო',
     'stomatologia': 'სტომატოლოგია',
     
-    // სალიცენზიო
     'alergologia': 'ალერგოლოგია',
     'angiokirurgia': 'ანგიოქირურგია',
     'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
@@ -6860,7 +6696,6 @@ function loadCSV() {
   resetLoader();
   startBtn.disabled = true;
   
-  // გამოიყენე არჩეული მოდული checkbox-ებიდან
   const testType = getSelectedModule();
   console.log("Loading CSV for module:", testType);
 
@@ -6870,13 +6705,10 @@ function loadCSV() {
     return;
   }
   
-  // CSV URLs ყველა მოდულისთვის
   const csvUrls = {
-    // რეზიდენტურა
     'samkurnaloo': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=69945858&single=true&output=csv",
     'stomatologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=924975691&single=true&output=csv",
     
-    // სალიცენზიო
     'alergologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1370781418&single=true&output=csv",
     'angiokirurgia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=1996746758&single=true&output=csv",
     'anesteziologia': "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAKLvhjOkhFoadqGeDcS_T74DdtGNqLPY30zld05OjmbwwP_i-anVEF0uNNTtb29NoPKLm6XTAxIGu/pub?gid=861241916&single=true&output=csv",
@@ -6958,7 +6790,6 @@ function loadCSV() {
     
     populateTopicsList();
 
-    // 🔥 დაამატე ეს ხაზები აქ - loaderOverlay.style.display = 'none'-მდე
     if (getSelectedModule() === 'samkurnaloo') {
       extractTopics();
       populateTopicsList();
@@ -7086,7 +6917,6 @@ function buildTestsFromCSV(rawRows){
     const normalizedA = normalizeLine(columnA);
     const topic = normalizeLine(columnB);
     
-    // 🔥 მნიშვნელოვანი: B სვეტში თუ არის რამე, ეს არის თემა
     if (topic && topic !== '') {
       currentTopic = topic;
     }
@@ -7127,10 +6957,8 @@ function buildTestsFromCSV(rawRows){
   
   console.log(`Built ${tests.length} tests from CSV`);
   
-  // გავფილტროთ მხოლოდ ის ტესტები რომლებსაც პასუხები აქვთ
   const filteredTests = tests.filter(t => Array.isArray(t.answers) && t.answers.length > 0);
   
-  // თემების განაწილების ლოგი
   const topicCounts = {};
   filteredTests.forEach(test => {
     const topic = test.topic || 'ზოგადი';
@@ -7256,14 +7084,12 @@ function updateSelectedTopics() {
 }
 
 function startTest() {
-  // მიმდინარე მოდულის წამოღება
   const selectedModule = getSelectedModule();
   if (!selectedModule) {
     showNotification('გთხოვთ აირჩიოთ მოდული');
     return;
   }
   
-  // განაახლე currentTestType
   currentTestType = selectedModule;
   console.log("Test type set to:", currentTestType);
   
@@ -7428,7 +7254,6 @@ function startTest() {
     `;
   }
 
-  // Get the examCountdown element
   const examCountdown = document.getElementById('examCountdown');
 
   if (examMode) {
@@ -7439,7 +7264,6 @@ function startTest() {
     examModeContainer.classList.add('hidden');
     examRightPanel.classList.add('hidden');
     
-    // 🔴 FORCE HIDE COUNTDOWN IN NORMAL MODE
     if (examCountdown) examCountdown.style.display = 'none';
     
     questionCounter.classList.remove('hidden');
@@ -7468,7 +7292,6 @@ function renderCurrentQuestion() {
     currentQuestionEl.textContent = currentIndex + 1;
     totalQuestionsEl.textContent = sessionTests.length;
     
-    // 🔴 FORCE HIDE COUNTDOWN IN NORMAL MODE
     if (examCountdown) examCountdown.style.display = 'none';
     
     if (isEditingQuestionNumber) {
@@ -7885,13 +7708,11 @@ function bindQuestionCounterEvent() {
 
 // ==================== FIXED: checkExistingProgress with debounce ====================
 function checkExistingProgress() {
-  // თუ უკვე მოდალი ჩანს, აღარ გავუშვათ
   if (isProgressModalShowing) {
     console.log("Progress modal already showing, skipping");
     return;
   }
   
-  // თუ ბოლო 2 წამში უკვე შევამოწმეთ, აღარ გავუშვათ
   const now = Date.now();
   if (now - lastProgressCheckTime < 2000) {
     console.log("Progress check too frequent, skipping");
@@ -7909,7 +7730,6 @@ function checkExistingProgress() {
     return;
   }
   
-  // მიმდინარე მოდულის წამოღება checkbox-ებიდან
   const selectedModule = getSelectedModule();
   console.log("Checking progress for module:", selectedModule);
   
@@ -7936,26 +7756,21 @@ function checkExistingProgress() {
     return;
   }
   
-  // წავშალოთ წინა timeout თუ არსებობს
   if (progressCheckTimeout) {
     clearTimeout(progressCheckTimeout);
   }
   
-  // დავაყოვნოთ 500ms და შევამოწმოთ ისევ
   progressCheckTimeout = setTimeout(() => {
-    // ისევ შევამოწმოთ, არის თუ არა ტესტის ეკრანი აქტიური
     if (testScreen.classList.contains('active')) {
       console.log("Test screen is active, not showing modal");
       return;
     }
     
-    // ისევ შევამოწმოთ, არის თუ არა Exam Mode
     if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
       console.log("Exam mode is active - skipping progress modal");
       return;
     }
     
-    // ისევ შევამოწმოთ მოდულები
     const currentSelectedModule = getSelectedModule();
     if (currentSelectedModule !== selectedModule) {
       console.log("Module changed since check, skipping");
@@ -7970,7 +7785,6 @@ function checkExistingProgress() {
   }, 500);
 }
 
-// დააკვირდი სისტემურ შეტყობინებებს
 function setupForceLogoutListener() {
     if (!firebaseSyncEnabled || !database) return;
     
@@ -7978,19 +7792,15 @@ function setupForceLogoutListener() {
         const data = snapshot.val();
         if (!data) return;
         
-        // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
         if (data.userId === currentUser?.username || 
             data.userId === localStorage.getItem('chatUserId')) {
             
-            // გაასუფთავე localStorage
             localStorage.removeItem('currentUser');
             localStorage.removeItem('users');
             sessionStorage.clear();
             
-            // გამოაჩინე შეტყობინება
             showNotification('თქვენი ანგარიში წაიშალა', true);
             
-            // გადატვირთე გვერდი
             setTimeout(() => {
                 location.reload();
             }, 2000);
@@ -8001,15 +7811,12 @@ function setupForceLogoutListener() {
 function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
   console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
   
-  // დავსეტოთ ფლაგი
   isProgressModalShowing = true;
   
-  // მოდულების ქართული სახელები
   const moduleNames = {
     'samkurnaloo': 'სამკურნალო',
     'stomatologia': 'სტომატოლოგია',
     
-    // სალიცენზიო
     'alergologia': 'ალერგოლოგია',
     'angiokirurgia': 'ანგიოქირურგია',
     'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
@@ -8058,11 +7865,9 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const moduleDisplayName = moduleNames[selectedModule] || selectedModule;
   
-  // წავშალოთ ყველა არსებული მოდალი
   const existingModals = document.querySelectorAll('.modal-overlay[data-type="progress-resume"]');
   existingModals.forEach(modal => modal.remove());
   
-  // შევამოწმოთ, არის თუ არა ტესტის ეკრანი აქტიური
   if (testScreen.classList.contains('active')) {
     console.log("Test screen is active, not showing modal");
     isProgressModalShowing = false;
@@ -8278,22 +8083,17 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
 }
 
 function onModuleSelected(moduleValue) {
-  // განაახლე dropdown ტექსტი
   updateDropdownText(moduleValue);
   
-  // განაახლე currentTestType
   currentTestType = moduleValue;
   
-  // 🔥 მნიშვნელოვანი: განაახლე თემების ხილვადობა
   updateTopicsVisibility();
   
-  // 🔥 დაიხუროს მოდულების სია
   const container = document.getElementById('modulesContainer');
   if (container) {
     container.style.display = 'none';
   }
   
-  // ჩატვირთე მონაცემები
   loadCSV();
 }
 
@@ -8338,7 +8138,6 @@ startBtn.addEventListener('click', function() {
     return; 
   }
   
-  // მონიშნული მოდულის შემოწმება
   const selectedModule = getSelectedModule();
   if (!selectedModule) {
     showNotification('გთხოვთ აირჩიოთ მოდული');
@@ -8348,7 +8147,6 @@ startBtn.addEventListener('click', function() {
   currentTestType = selectedModule;
   console.log("Test type set to:", currentTestType);
   
-  // თემების შემოწმება მხოლოდ სამკურნალოსთვის
   if (currentTestType === 'samkurnaloo') {
     const topicsSelect = document.getElementById('topicsSelect');
     if (topicsSelect && (!topicsSelect.value || topicsSelect.value === '')) {
@@ -8456,7 +8254,6 @@ window.addEventListener('DOMContentLoaded', () => {
   window.showPasswordChangeModal = showPasswordChangeModal;
 
 
-  // ========== Modules-ის დახურვა გარედან დაჭერისას ==========
   document.addEventListener('click', function(event) {
     const container = document.getElementById('modulesContainer');
     const dropdown = document.getElementById('testTypeSelect');
@@ -8469,45 +8266,36 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Checkbox-ების event listeners
   document.querySelectorAll('.module-checkbox').forEach(cb => {
     cb.addEventListener('change', function() {
       handleModuleCheckboxClick(this);
     });
   });
 
-// მოდულის ჩატვირთვა ავტორიზაციის შემდეგ
 const originalContinueAsGuest = document.getElementById('continueAsGuest').onclick;
 document.getElementById('continueAsGuest').addEventListener('click', function() {
   if (originalContinueAsGuest) originalContinueAsGuest.call(this);
-  // სტუმრისთვის არ გვინდა მოდულის ჩატვირთვა Firebase-დან
   console.log("Guest user - skipping module load from Firebase");
 });
 
 const originalLoginBtn = document.getElementById('loginBtn').onclick;
 document.getElementById('loginBtn').addEventListener('click', function() {
   if (originalLoginBtn) originalLoginBtn.call(this);
-  // loadSelectedModule უკვე გამოძახებულია handleLogin-ის ბოლოს
-  // აქ აღარ გვჭირდება დამატებითი გამოძახება
+
 });
 
 const originalSignupBtn = document.getElementById('signupBtn').onclick;
 document.getElementById('signupBtn').addEventListener('click', function() {
   if (originalSignupBtn) originalSignupBtn.call(this);
-  // რეგისტრაციის შემდეგ მომხმარებელი ჯერ არ არის ავტორიზებული
-  // მოდულის ჩატვირთვა მოხდება შესვლის შემდეგ
+
 });
 
-  // პერიოდულად გავასუფთაოთ ფლაგები
   setInterval(() => {
     if (!document.querySelector('.modal-overlay.active')) {
       isProgressModalShowing = false;
     }
   }, 1000);
 
-  // ========== აქ მთავრდება ახალი კოდი ==========
-
-  // 🔥 დაამატეთ ეს ხაზი - თემების საწყისი მდგომარეობის დასაყენებლად
   setTimeout(() => {
     updateTopicsVisibility();
   }, 100);
