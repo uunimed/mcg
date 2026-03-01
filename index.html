@@ -968,13 +968,14 @@ body {
 
 /* ==================== SPACING ADJUSTMENTS ==================== */
 .normal-mode-container {
-  margin-top: 0.5cm !important;
+  margin-top: 0cm !important;
   padding-top: 0 !important;
+  padding-bottom: 80px !important;  /* დაამატეთ ეს */
 }
 
 .question-text {
-  margin-top: 0 !important;
-  font-size: 25px;
+  margin-top: -10 !important;
+  font-size: 23px;
   font-weight: 600;
   line-height: 1.5;
   color: #0f172a;
@@ -1344,7 +1345,7 @@ body {
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  margin-bottom: 25px;
+  margin-bottom: 80px;
   flex: 1;
 }
 
@@ -1407,13 +1408,19 @@ body {
 
 /* ==================== NAVIGATION ==================== */
 .navigation {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 15px 10px;
-  border-top: 1px solid #e2e8f0;
+  background: transparent;
+  border-top: 1px solid #e2e8f0;  /* ეს არის დივაიდერი */
+  box-shadow: none;
+  z-index: 100;
   width: 100%;
-  margin-top: auto;
 }
 
 .nav-center {
