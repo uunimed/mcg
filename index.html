@@ -2211,11 +2211,10 @@ body {
     height: 35px !important;
   }
 
-  .normal-mode-container .exam-countdown,
-  .normal-mode-container #examCountdown,
-  #examCountdown {
+.normal-mode-container .exam-countdown,
+.normal-mode-container #examCountdown {
     display: none !important;
-  }
+}
 
   /* Bottom panel */
   .bottom-left-container {
@@ -2454,36 +2453,41 @@ body {
     margin-bottom: 6px !important;
   }
 
-  .exam-countdown {
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    color: var(--danger) !important;
-    margin: 5px 0 10px 0 !important;
-    padding: 8px !important;
-    background: #fee2e2 !important;
-    border-radius: 8px !important;
-    text-align: center !important;
-  }
+.exam-countdown {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: var(--danger) !important;
+  margin: 5px 0 10px 0 !important;
+  padding: 8px !important;
+  background: #fee2e2 !important;
+  border-radius: 8px !important;
+  text-align: center !important;
+  display: block !important;
+  width: 100% !important;
+}
 
-  .exam-right-panel {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-    border-left: none !important;
-    margin: 0 !important;
-    padding: 5px 10px 10px 10px !important;
-    order: 2 !important;
-    display: block !important;
-  }
+.exam-right-panel {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  border-left: none !important;
+  margin: 0 !important;
+  padding: 5px 10px 10px 10px !important;
+  order: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
 
 .exam-test-boxes {
   display: grid !important;
-  grid-template-columns: repeat(5, 1fr) !important;  /* 5 სვეტი */
+  grid-template-columns: repeat(5, 1fr) !important;
   gap: 2px !important;
-  max-height: 500px !important;                       /* სიმაღლე 8 მწკრივისთვის */
-  overflow-y: auto !important;                         /* ასქროლვა */
+  max-height: 500px !important;
+  overflow-y: auto !important;
   padding: 5px 12px !important;
   background: transparent !important;
+  width: 100% !important;
 }
 
   .test-box {
@@ -5750,7 +5754,7 @@ function startExamMode() {
   timerElement.classList.add('hidden');
   normalModeContainer.classList.add('hidden');
   examModeContainer.classList.remove('hidden');
-  examRightPanel.classList.remove('hidden');
+  examRightPanel.classList.remove('hidden');  // ეს ხაზი უნდა იყოს
   questionCounter.classList.add('hidden');
   
   createExamTestBoxes();
