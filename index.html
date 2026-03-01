@@ -3465,6 +3465,59 @@ let lastTimerUpdate = Date.now();
 let isWrongQuestionsMode = false;
 let progressModalShown = false;
 
+// მოდულების ქართული სახელები
+const moduleNames = {
+  // რეზიდენტურა
+  'samkurnaloo': 'სამკურნალო',
+  'stomatologia': 'სტომატოლოგია',
+  
+  // სალიცენზიო
+  'alergologia': 'ალერგოლოგია',
+  'angiokirurgia': 'ანგიოქირურგია',
+  'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
+  'bavshvta_gadaudebeli': 'ბავშვთა გადაუდებელი',
+  'bavshvta_kardiorevmatologia': 'ბავშვთა კარდიორევმატოლოგია',
+  'bavshvta_nevrologia': 'ბავშვთა ნევროლოგია',
+  'bavshvta_nevrologia2': 'ბავშვთა ნეფროლოგია',
+  'gadaudebeli_medicina': 'გადაუდებელი მედიცინა',
+  'gastroenterologia': 'გასტროენტეროლოგია',
+  'ginekologia': 'გინეკოლოგია',
+  'dermatologia': 'დერმატოლოგია',
+  'endokrinologia': 'ენდოკრინოლოგია',
+  'zogadi_kirurgia': 'ზოგადი ქირურგია',
+  'terapiuli_stomatologia': 'თერაპიული სტომატოლოგია',
+  'infekciuri': 'ინფექციური',
+  'kardiologia': 'კარდიოლოგია',
+  'kardiokirurgia': 'კარდიოქირურგია',
+  'laboratoriuli_medicina': 'ლაბორატორიული მედიცინა',
+  'narkologia': 'ნარკოლოგია',
+  'nevrologia': 'ნევროლოგია',
+  'neonatologia': 'ნეონატოლოგია',
+  'nefrologia': 'ნეფროლოგია',
+  'onkologia': 'ონკოლოგია',
+  'ortodontia': 'ორთოდონტია',
+  'ortopedia_travmatologia': 'ორთოპედია ტრავმატოლოგია',
+  'ortopediuli_stomatologia': 'ორთოპედიული სტომატოლოგია',
+  'otorinolaringologia': 'ოტორინოლარინგოლოგია',
+  'oftalmologia': 'ოფთალმოლოგია',
+  'patologia': 'პათოლოგია',
+  'pediatria': 'პედიატრია',
+  'plastikuri_kirurgia': 'პლასტიკური და რეკონსტრუქციული ქირურგია',
+  'radiologia': 'რადიოლოგია',
+  'radiacioni_onkologia': 'რადიაციული ონკოლოგია',
+  'reproduqtologia': 'რეპროდუქტოლოგია',
+  'revmatologia': 'რევმატოლოგია',
+  'saokjao_medicina': 'საოჯახო მედიცინა',
+  'sportuli_medicina': 'სპორტული მედიცინა',
+  'toksikologia': 'ტოქსიკოლოგია',
+  'urologia': 'უროლოგია',
+  'ftiziatria_pulmonologia': 'ფთიზიატრია, პულმონოლოგია',
+  'psikiatria': 'ფსიქიატრია',
+  'qba_saxis_kirurgia': 'ყბა-სახის ქირურგია',
+  'shinagani_medicina': 'შინაგანი მედიცინა',
+  'hematologia': 'ჰემატოლოგია'
+};
+
 // ==================== PROGRESS MODAL CONTROL ====================
 let progressCheckTimeout = null;
 let isProgressModalShowing = false;
@@ -3879,8 +3932,8 @@ async function handleLogin() {
   bindUserMenuEvents();
   updateTimerDisplay();
   
-  // 🔥 ჩატვირთეთ მოდული
-  await loadSelectedModule();  // <-- დაამატეთ ეს ხაზი
+  // 🔥 ჯერ ჩატვირთეთ მოდული, შემდეგ CSV
+  await loadSelectedModule();
   
   // ჩატვირთეთ CSV
   if (allTests.length === 0) {
@@ -4339,7 +4392,7 @@ function loadSelectedModule() {
   
   console.log("Loading selected module for user:", currentUser.username);
   
-  // პირველ რიგში შევამოწმოთ Firebase (ეს მუშაობს)
+  // პირველ რიგში შევამოწმოთ Firebase
   if (firebaseSyncEnabled && database) {
     const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
     console.log("Checking Firebase for module at path: users/" + safeUsername);
@@ -4348,17 +4401,14 @@ function loadSelectedModule() {
       .then(snapshot => {
         if (snapshot.exists()) {
           const firebaseData = snapshot.val();
-          console.log("Firebase user data:", firebaseData);
+          console.log("Firebase user data loaded:", firebaseData);
           
-          // 🔥 მთავარი შესწორება: Firebase-ში ყოველთვის არის selectedModule
+          // 🔥 მთავარი შესწორება: შევამოწმოთ selectedModule პირდაპირ
           if (firebaseData.selectedModule) {
             const savedModule = firebaseData.selectedModule;
             console.log("Found module in Firebase:", savedModule);
             
-            // 🔥 ახალ მოწყობილობაზე localStorage ცარიელია, მაგრამ Firebase-ში მონაცემებია
-            // ამიტომ პირდაპირ გამოვიყენოთ Firebase-დან წამოღებული მოდული
-            
-            // შევქმნათ localStorage-ში მომხმარებლის ჩანაწერი Firebase-ის მონაცემებით
+            // განვაახლოთ localStorage Firebase-ის მონაცემებით
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (!users[currentUser.username]) {
               users[currentUser.username] = {
@@ -4370,7 +4420,6 @@ function loadSelectedModule() {
                 lastUpdated: firebaseData.lastUpdated || Date.now()
               };
             } else {
-              // თუ უკვე არსებობს, განვაახლოთ selectedModule
               if (!users[currentUser.username].selectedModules) {
                 users[currentUser.username].selectedModules = {};
               }
@@ -4383,18 +4432,12 @@ function loadSelectedModule() {
             applySelectedModule(savedModule, true);
             
           } else {
-            console.log("No selectedModule in Firebase");
-            // Firebase-ში არ არის, ვცადოთ localStorage
+            console.log("No selectedModule in Firebase, trying localStorage");
             loadSelectedModuleFromLocal();
           }
         } else {
-          console.log("User not found in Firebase");
-          // Firebase-ში მომხმარებელი არ არის (ეს ახალ მოწყობილობაზე შესვლისას ხდება?!)
-          // ეს ნიშნავს, რომ მომხმარებელი სხვა მოწყობილობაზეა შექმნილი და Firebase-ში მონაცემები არ არის
-          
-          // 🔥 მნიშვნელოვანი: ამ შემთხვევაში უნდა ჩავტვირთოთ მომხმარებლის მონაცემები Firebase-დან
-          // თუნდაც users/ ნოდი არ არსებობდეს, შესაძლოა მომხმარებელი სხვაგან არის შენახული
-          loadUserFromFirebaseAndApply();
+          console.log("User not found in Firebase, trying localStorage");
+          loadSelectedModuleFromLocal();
         }
       })
       .catch(error => {
@@ -4492,41 +4535,32 @@ function applySelectedModule(savedModule, fromFirebase = false) {
       container.style.display = 'none';
     }
     
-    // გაასუფთავე ფლაგი, რომ ახალი ჩატვირთვისას იმუშაოს
-    window._progressCheckExecuted = false;
+    // 🔥 მნიშვნელოვანი: განაახლე start ღილაკი
+    const startBtn = document.getElementById('startBtn');
+    if (startBtn) {
+      startBtn.disabled = false;
+    }
     
-    // თუ ტესტები ჯერ არ არის ჩატვირთული, ჩატვირთე
+    // 🔥 ჩატვირთე CSV თუ ჯერ არ არის ჩატვირთული
     if (allTestsWithTopics.length === 0) {
       console.log("Tests not loaded yet, loading CSV...");
       loadCSV();
     } else {
-      console.log("Tests already loaded, skipping CSV load");
-      // თუ უკვე ჩატვირთულია, მაინც განაახლე start ღილაკი
-      startBtn.disabled = false;
-      
-      // 🔥 განაახლე თემების სია
+      console.log("Tests already loaded, refreshing UI");
+      // თუ უკვე ჩატვირთულია, განაახლე თემები
       extractTopics();
       populateTopicsList();
-      updateTopicsVisibility(); 
-      // თუ Firebase-დან მოვიდა და მომხმარებელი რეგისტრირებულია, შეამოწმე პროგრესი
-      if (fromFirebase && currentUser && !currentUser.isGuest) {
-        setTimeout(() => {
-          const examModeCheckbox = document.getElementById('modeExam');
-          if (!examModeCheckbox || !examModeCheckbox.checked) {
-            console.log("Checking existing progress after module load from Firebase");
-            checkExistingProgress();
-          }
-        }, 500);
-      }
+      
+      // 🔥 შეამოწმე პროგრესი
+      setTimeout(() => {
+        const examModeCheckbox = document.getElementById('modeExam');
+        if (!examModeCheckbox || !examModeCheckbox.checked) {
+          checkExistingProgress();
+        }
+      }, 500);
     }
     
     console.log("Module applied successfully:", savedModule);
-    
-    // აჩვენე შეტყობინება მხოლოდ თუ Firebase-დან მოდის და არ არის პირველი ჩატვირთვა
-    if (fromFirebase && document.getElementById('authModal').style.display === 'none') {
-      const moduleGeoName = moduleNames[savedModule] || savedModule;
-      showNotification(`მოდული: ${moduleGeoName}`, false);
-    }
     
   } else {
     console.log("Target checkbox not found for module:", savedModule);
@@ -4561,36 +4595,14 @@ function setupModuleListener() {
     const data = snapshot.val();
     console.log("Firebase user data changed:", data);
     
-    // 🔥 მნიშვნელოვანი: თუ პროგრესი შეიცვალა Firebase-ში, განვაახლოთ localStorage
-    if (data.progress) {
-      console.log("Progress changed in Firebase, updating local storage");
-      
-      // განვაახლოთ userProgress
-      userProgress = data.progress;
-      
-      // განვაახლოთ localStorage
-      const users = JSON.parse(localStorage.getItem('users') || '{}');
-      if (users[currentUser.username]) {
-        users[currentUser.username].progress = data.progress;
-        users[currentUser.username].lastUpdated = data.lastUpdated || Date.now();
-        localStorage.setItem('users', JSON.stringify(users));
-      }
-      
-      // თუ ტესტის ეკრანი აქტიურია, განვაახლოთ მიმდინარე კითხვა
-      if (testScreen.classList.contains('active') && sessionTests.length > 0) {
-        console.log("Refreshing current question with updated progress");
-        renderCurrentQuestion();
-      }
-    }
-    
-    // თუ მოდული შეიცვალა და ეს ცვლილება არ არის ჩვენი მოწყობილობიდან
+    // 🔥 თუ მოდული შეიცვალა და ეს ცვლილება არ არის ჩვენი მოწყობილობიდან
     if (data.selectedModule) {
       console.log(`Selected module in Firebase: ${data.selectedModule}, currentTestType: ${currentTestType}`);
       
       if (data.selectedModule !== currentTestType) {
         console.log(`Module changed in Firebase from ${currentTestType} to ${data.selectedModule}`);
         
-        // გამოვიყენოთ ახალი მოდული
+        // 🔥 გამოვიყენოთ ახალი მოდული
         applySelectedModule(data.selectedModule, true);
         
         // მოდულის ქართული სახელი
@@ -4600,6 +4612,19 @@ function setupModuleListener() {
         showNotification(`მოდული შეიცვალა: ${moduleGeoName}`, false);
       } else {
         console.log("Module hasn't changed, skipping");
+      }
+    }
+    
+    // 🔥 თუ პროგრესი შეიცვალა, განვაახლოთ
+    if (data.progress) {
+      console.log("Progress changed in Firebase, updating local storage");
+      userProgress = data.progress;
+      
+      const users = JSON.parse(localStorage.getItem('users') || '{}');
+      if (users[currentUser.username]) {
+        users[currentUser.username].progress = data.progress;
+        users[currentUser.username].lastUpdated = data.lastUpdated || Date.now();
+        localStorage.setItem('users', JSON.stringify(users));
       }
     }
   }, (error) => {
