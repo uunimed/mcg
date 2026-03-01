@@ -3763,145 +3763,188 @@ function handleAccountDeletion(reason = "ადმინისტრატორ
     }, 2000);
 }
 
-// ==================== FIXED: HANDLE LOGIN WITH DELETION CHECK ====================
+// 🔥 გაუმჯობესებული handleLogin ფუნქცია
 async function handleLogin() {
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    
-    document.getElementById('loginUsernameError').style.display = 'none';
-    document.getElementById('loginPasswordError').style.display = 'none';
-    
-    if (!username) {
-        document.getElementById('loginUsernameError').textContent = 'სახელი და გვარი აუცილებელია';
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  
+  document.getElementById('loginUsernameError').style.display = 'none';
+  document.getElementById('loginPasswordError').style.display = 'none';
+  
+  if (!username) {
+    document.getElementById('loginUsernameError').textContent = 'სახელი და გვარი აუცილებელია';
+    document.getElementById('loginUsernameError').style.display = 'block';
+    return;
+  }
+  
+  const nameParts = username.split(/\s+/);
+  if (nameParts.length < 2) {
+    document.getElementById('loginUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელიც და გვარიც';
+    document.getElementById('loginUsernameError').style.display = 'block';
+    return;
+  }
+  
+  if (!password) {
+    document.getElementById('loginPasswordError').textContent = 'პაროლი აუცილებელია';
+    document.getElementById('loginPasswordError').style.display = 'block';
+    return;
+  }
+  
+  try {
+    // პირველ რიგში შეამოწმე Firebase
+    let firebaseUserData = null;
+    if (firebaseSyncEnabled && database) {
+      firebaseUserData = await loadUserFromFirebase(username);
+      
+      // თუ Firebase-ში მომხმარებელი არ არსებობს
+      if (!firebaseUserData) {
+        document.getElementById('loginUsernameError').textContent = 'მომხმარებელი არ არსებობს ან წაშლილია';
         document.getElementById('loginUsernameError').style.display = 'block';
         return;
-    }
-    
-    const nameParts = username.split(/\s+/);
-    if (nameParts.length < 2) {
-        document.getElementById('loginUsernameError').textContent = 'გთხოვთ შეიყვანოთ სახელიც და გვარიც';
+      }
+      
+      // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
+      if (firebaseUserData.deleted === true) {
+        document.getElementById('loginUsernameError').textContent = 'ეს ანგარიში დაბლოკილია ადმინისტრატორის მიერ';
         document.getElementById('loginUsernameError').style.display = 'block';
         return;
-    }
-    
-    if (!password) {
-        document.getElementById('loginPasswordError').textContent = 'პაროლი აუცილებელია';
+      }
+      
+      // შეამოწმე პაროლი Firebase-ში
+      if (firebaseUserData.password !== password) {
+        document.getElementById('loginPasswordError').textContent = 'პაროლი არასწორია';
         document.getElementById('loginPasswordError').style.display = 'block';
         return;
+      }
     }
     
-    try {
-        // პირველ რიგში შეამოწმე Firebase
-        if (firebaseSyncEnabled && database) {
-            const firebaseUser = await loadUserFromFirebase(username);
-            
-            // თუ Firebase-ში მომხმარებელი არ არსებობს
-            if (!firebaseUser) {
-                document.getElementById('loginUsernameError').textContent = 'მომხმარებელი არ არსებობს ან წაშლილია';
-                document.getElementById('loginUsernameError').style.display = 'block';
-                return;
-            }
-            
-            // თუ მომხმარებელი მონიშნულია როგორც წაშლილი
-            if (firebaseUser.deleted === true) {
-                document.getElementById('loginUsernameError').textContent = 'ეს ანგარიში დაბლოკილია ადმინისტრატორის მიერ';
-                document.getElementById('loginUsernameError').style.display = 'block';
-                return;
-            }
-            
-            // შეამოწმე პაროლი Firebase-ში
-            if (firebaseUser.password !== password) {
-                document.getElementById('loginPasswordError').textContent = 'პაროლი არასწორია';
-                document.getElementById('loginPasswordError').style.display = 'block';
-                return;
-            }
-        }
-        
-        // შეამოწმე localStorage-შიც
-        let users = JSON.parse(localStorage.getItem('users') || '{}');
-        let userFound = false;
-        
-        if (users[username] && users[username].password === password) {
-            userFound = true;
-        }
-        
-        if (!userFound && firebaseSyncEnabled && database) {
-            // თუ Firebase-ში არსებობს მაგრამ localStorage-ში არა, შევქმნათ
-            const firebaseUser = await loadUserFromFirebase(username);
-            if (firebaseUser && firebaseUser.password === password && !firebaseUser.deleted) {
-                users[username] = {
-                    password: firebaseUser.password,
-                    progress: firebaseUser.progress || {
-                        rezidentura: {
-                            normal: { answeredQuestions: {}, currentIndex: 0 },
-                            exam: { answeredQuestions: {}, currentIndex: 0 },
-                            wrongQuestions: []
-                        }
-                    },
-                    lastUpdated: firebaseUser.lastUpdated || Date.now()
-                };
-                localStorage.setItem('users', JSON.stringify(users));
-                userFound = true;
-            }
-        }
-        
-        if (!userFound) {
-            document.getElementById('loginUsernameError').textContent = 'მომხმარებელი ან პაროლი არასწორია';
-            document.getElementById('loginUsernameError').style.display = 'block';
-            return;
-        }
-        
-// წარმატებული შესვლა
-// წარმატებული შესვლა
-currentUser = { 
-    username: username, 
-    isGuest: false
-};
-
-await loadUserProgress();
-
-document.getElementById('loginUsername').value = '';
-document.getElementById('loginPassword').value = '';
-
-document.getElementById('authModal').style.display = 'none';
-document.getElementById('userInfo').style.display = 'flex';
-document.getElementById('usernameDisplay').textContent = currentUser.username;
-
-userName = currentUser.username;
-localStorage.setItem('chatUserName', userName);
-
-showNotification('მოგესალმებით!', false);
-
-// გაუშვი მონიტორინგი
-setupUserDeletionListener();
-
-// მოდულის Firebase listener
-setupModuleListener();
-
-initChat();
-bindUserMenuEvents();
-updateTimerDisplay();
-
-// ჩატვირთე მოდული Firebase-დან - ეს უნდა იყოს ბოლოს
-loadSelectedModule();
-
-if (allTests.length === 0) {
-    loadCSV();
-} else {
-    startBtn.disabled = false;
-    setTimeout(() => {
+    // შეამოწმე localStorage-შიც
+    let users = JSON.parse(localStorage.getItem('users') || '{}');
+    let userFound = false;
+    
+    if (users[username] && users[username].password === password) {
+      userFound = true;
+    }
+    
+    if (!userFound && firebaseUserData) {
+      // Firebase-ში არსებობს, შევქმნათ localStorage-ში
+      users[username] = {
+        password: firebaseUserData.password,
+        progress: firebaseUserData.progress || {},
+        selectedModules: {
+          selected: firebaseUserData.selectedModule || null
+        },
+        lastUpdated: firebaseUserData.lastUpdated || Date.now()
+      };
+      localStorage.setItem('users', JSON.stringify(users));
+      userFound = true;
+    }
+    
+    if (!userFound) {
+      document.getElementById('loginUsernameError').textContent = 'მომხმარებელი ან პაროლი არასწორია';
+      document.getElementById('loginUsernameError').style.display = 'block';
+      return;
+    }
+    
+    // წარმატებული შესვლა
+    currentUser = { 
+      username: username, 
+      isGuest: false
+    };
+    
+    // 🔥 მნიშვნელოვანი: ჯერ ჩავტვირთოთ Firebase-დან მონაცემები
+    if (firebaseUserData && firebaseUserData.progress) {
+      userProgress = firebaseUserData.progress;
+      console.log("Progress loaded from Firebase for", username);
+    } else {
+      await loadUserProgress();
+    }
+    
+    document.getElementById('loginUsername').value = '';
+    document.getElementById('loginPassword').value = '';
+    
+    document.getElementById('authModal').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'flex';
+    document.getElementById('usernameDisplay').textContent = currentUser.username;
+    
+    userName = currentUser.username;
+    localStorage.setItem('chatUserName', userName);
+    
+    showNotification('მოგესალმებით!', false);
+    
+    // 🔥 მნიშვნელოვანი: ჩატვირთეთ მოდული Firebase-დან
+    setupUserDeletionListener();
+    setupModuleListener();
+    initChat();
+    bindUserMenuEvents();
+    updateTimerDisplay();
+    
+    // 🔥 ჩატვირთეთ მოდული
+    await loadSelectedModule();
+    
+    // ჩატვირთეთ CSV
+    if (allTests.length === 0) {
+      loadCSV();
+    } else {
+      startBtn.disabled = false;
+      setTimeout(() => {
         const examModeCheckbox = document.getElementById('modeExam');
         if (!examModeCheckbox || !examModeCheckbox.checked) {
-            checkExistingProgress();
+          checkExistingProgress();
         }
-    }, 500);
-}
-        
-    } catch (error) {
-        console.error('Login error:', error);
-        showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
+      }, 500);
     }
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
+  }
 }
+
+// 🔥 ახალი ფუნქცია Firebase-დან მომხმარებლის ჩასატვირთად
+function loadUserFromFirebaseAndApply() {
+  if (!firebaseSyncEnabled || !database || !currentUser) return;
+  
+  const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
+  
+  database.ref('users/' + safeUsername).once('value')
+    .then(snapshot => {
+      if (snapshot.exists()) {
+        const firebaseData = snapshot.val();
+        console.log("User data loaded from Firebase:", firebaseData);
+        
+        // შევქმნათ localStorage-ში მომხმარებლის ჩანაწერი
+        const users = JSON.parse(localStorage.getItem('users') || '{}');
+        users[currentUser.username] = {
+          password: firebaseData.password || '',
+          progress: firebaseData.progress || {},
+          selectedModules: {
+            selected: firebaseData.selectedModule || null
+          },
+          lastUpdated: firebaseData.lastUpdated || Date.now()
+        };
+        localStorage.setItem('users', JSON.stringify(users));
+        
+        // განვაახლოთ userProgress
+        if (firebaseData.progress) {
+          userProgress = firebaseData.progress;
+        }
+        
+        // თუ არის selectedModule, გამოვიყენოთ
+        if (firebaseData.selectedModule) {
+          applySelectedModule(firebaseData.selectedModule, true);
+        }
+      } else {
+        console.log("User not found in Firebase either");
+        // თუ Firebase-შიც არ არის, მაშინ პირველი შესვლაა
+        // არაფერს ვაკეთებთ
+      }
+    })
+    .catch(error => {
+      console.error("Error loading user from Firebase:", error);
+    });
+}
+
 
 function loadUserFromFirebase(username) {
     if (!firebaseSyncEnabled || !database || !username) return Promise.resolve(null);
@@ -4342,7 +4385,7 @@ function loadSelectedModule() {
   
   console.log("Loading selected module for user:", currentUser.username);
   
-  // პირველ რიგში შევამოწმოთ Firebase
+  // პირველ რიგში შევამოწმოთ Firebase (ეს მუშაობს)
   if (firebaseSyncEnabled && database) {
     const safeUsername = currentUser.username.replace(/[.#$[\]]/g, '_');
     console.log("Checking Firebase for module at path: users/" + safeUsername);
@@ -4353,34 +4396,51 @@ function loadSelectedModule() {
           const firebaseData = snapshot.val();
           console.log("Firebase user data:", firebaseData);
           
-          // თუ Firebase-ში არის selectedModule, გამოვიყენოთ ის
+          // 🔥 მთავარი შესწორება: Firebase-ში ყოველთვის არის selectedModule
           if (firebaseData.selectedModule) {
             const savedModule = firebaseData.selectedModule;
             console.log("Found module in Firebase:", savedModule);
             
-            // განვაახლოთ localStorage-ც
+            // 🔥 ახალ მოწყობილობაზე localStorage ცარიელია, მაგრამ Firebase-ში მონაცემებია
+            // ამიტომ პირდაპირ გამოვიყენოთ Firebase-დან წამოღებული მოდული
+            
+            // შევქმნათ localStorage-ში მომხმარებლის ჩანაწერი Firebase-ის მონაცემებით
             const users = JSON.parse(localStorage.getItem('users') || '{}');
-            if (users[currentUser.username]) {
+            if (!users[currentUser.username]) {
+              users[currentUser.username] = {
+                password: firebaseData.password || '',
+                progress: firebaseData.progress || {},
+                selectedModules: {
+                  selected: savedModule
+                },
+                lastUpdated: firebaseData.lastUpdated || Date.now()
+              };
+            } else {
+              // თუ უკვე არსებობს, განვაახლოთ selectedModule
               if (!users[currentUser.username].selectedModules) {
                 users[currentUser.username].selectedModules = {};
               }
               users[currentUser.username].selectedModules.selected = savedModule;
               users[currentUser.username].lastUpdated = Date.now();
-              localStorage.setItem('users', JSON.stringify(users));
             }
+            localStorage.setItem('users', JSON.stringify(users));
             
-            // გამოვიყენოთ Firebase-დან წამოღებული მოდული
-            applySelectedModule(savedModule, true); // მეორე პარამეტრი მიუთითებს რომ Firebase-დან მოდის
+            // 🔥 გამოვიყენოთ Firebase-დან წამოღებული მოდული
+            applySelectedModule(savedModule, true);
             
           } else {
-            console.log("No selectedModule in Firebase, checking localStorage");
+            console.log("No selectedModule in Firebase");
             // Firebase-ში არ არის, ვცადოთ localStorage
             loadSelectedModuleFromLocal();
           }
         } else {
-          console.log("User not found in Firebase, checking localStorage");
-          // Firebase-ში მომხმარებელი არ არის, ვცადოთ localStorage
-          loadSelectedModuleFromLocal();
+          console.log("User not found in Firebase");
+          // Firebase-ში მომხმარებელი არ არის (ეს ახალ მოწყობილობაზე შესვლისას ხდება?!)
+          // ეს ნიშნავს, რომ მომხმარებელი სხვა მოწყობილობაზეა შექმნილი და Firebase-ში მონაცემები არ არის
+          
+          // 🔥 მნიშვნელოვანი: ამ შემთხვევაში უნდა ჩავტვირთოთ მომხმარებლის მონაცემები Firebase-დან
+          // თუნდაც users/ ნოდი არ არსებობდეს, შესაძლოა მომხმარებელი სხვაგან არის შენახული
+          loadUserFromFirebaseAndApply();
         }
       })
       .catch(error => {
@@ -4389,10 +4449,10 @@ function loadSelectedModule() {
       });
   } else {
     console.log("Firebase not available, checking localStorage");
-    // Firebase არ არის ხელმისაწვდომი, ვცადოთ localStorage
     loadSelectedModuleFromLocal();
   }
 }
+
 
 // ცალკე ფუნქცია localStorage-დან ჩასატვირთად
 function loadSelectedModuleFromLocal() {
