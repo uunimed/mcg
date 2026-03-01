@@ -3863,42 +3863,42 @@ async function handleLogin() {
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
     
-    document.getElementById('authModal').style.display = 'none';
-    document.getElementById('userInfo').style.display = 'flex';
-    document.getElementById('usernameDisplay').textContent = currentUser.username;
-    
-    userName = currentUser.username;
-    localStorage.setItem('chatUserName', userName);
-    
-    showNotification('მოგესალმებით!', false);
-    
-    // 🔥 მნიშვნელოვანი: ჩატვირთეთ მოდული Firebase-დან
-    setupUserDeletionListener();
-    setupModuleListener();
-    initChat();
-    bindUserMenuEvents();
-    updateTimerDisplay();
-    
-    // 🔥 ჩატვირთეთ მოდული
-    await loadSelectedModule();
-    
-    // ჩატვირთეთ CSV
-    if (allTests.length === 0) {
-      loadCSV();
-    } else {
-      startBtn.disabled = false;
-      setTimeout(() => {
-        const examModeCheckbox = document.getElementById('modeExam');
-        if (!examModeCheckbox || !examModeCheckbox.checked) {
-          checkExistingProgress();
-        }
-      }, 500);
-    }
-    
-  } catch (error) {
-    console.error('Login error:', error);
-    showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
+  document.getElementById('authModal').style.display = 'none';
+  document.getElementById('userInfo').style.display = 'flex';
+  document.getElementById('usernameDisplay').textContent = currentUser.username;
+  
+  userName = currentUser.username;
+  localStorage.setItem('chatUserName', userName);
+  
+  showNotification('მოგესალმებით!', false);
+  
+  // 🔥 მნიშვნელოვანი: ჩატვირთეთ მოდული Firebase-დან
+  setupUserDeletionListener();
+  setupModuleListener();
+  initChat();
+  bindUserMenuEvents();
+  updateTimerDisplay();
+  
+  // 🔥 ჩატვირთეთ მოდული
+  await loadSelectedModule();  // <-- დაამატეთ ეს ხაზი
+  
+  // ჩატვირთეთ CSV
+  if (allTests.length === 0) {
+    loadCSV();
+  } else {
+    startBtn.disabled = false;
+    setTimeout(() => {
+      const examModeCheckbox = document.getElementById('modeExam');
+      if (!examModeCheckbox || !examModeCheckbox.checked) {
+        checkExistingProgress();
+      }
+    }, 500);
   }
+  
+} catch (error) {
+  console.error('Login error:', error);
+  showNotification('შეცდომა შესვლის დროს. სცადეთ მოგვიანებით');
+}
 }
 
 function loadUserFromFirebase(username) {
@@ -4288,7 +4288,6 @@ function getSelectedModule() {
   const checkedBox = document.querySelector('.module-checkbox:checked');
   return checkedBox ? checkedBox.value : null;
 }
-// არჩეული მოდულის შენახვა localStorage-სა და Firebase-ში
 function saveSelectedModule(moduleValue) {
   if (!currentUser || currentUser.isGuest) return;
   
@@ -4963,14 +4962,17 @@ async function handleSignup() {
       }, 500);
     }
     
-    // Firebase listener-ების დაყენება
-    if (firebaseSyncEnabled && database) {
-      setupUserDeletionListener();
-      setupModuleListener();
-      startProgressSync();
-    }
-    
-    console.log("Signup and auto-login completed successfully!");
+// Firebase listener-ების დაყენება
+if (firebaseSyncEnabled && database) {
+  setupUserDeletionListener();
+  setupModuleListener();
+  startProgressSync();
+}
+
+// 🔥 მოდულის ჩატვირთვა (ახალი მომხმარებლისთვის ცარიელი იქნება)
+loadSelectedModule();
+
+console.log("Signup and auto-login completed successfully!");
     
   } catch (error) {
     console.error('Signup error:', error);
