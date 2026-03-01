@@ -6940,23 +6940,17 @@ function loadCSV() {
       document.getElementById('topicsDropdownContainer').style.display = 'flex';
     }
 
-    if (currentUser && !currentUser.isGuest) {
-      if (!window._progressCheckExecuted) {
-        window._progressCheckExecuted = true;
-        
-        setTimeout(() => {
-          const examModeCheckbox = document.getElementById('modeExam');
-          const isExamModeChecked = examModeCheckbox && examModeCheckbox.checked;
-          
-          if (!isExamModeChecked) {
-            console.log("Calling checkExistingProgress from loadCSV");
-            checkExistingProgress();
-          } else {
-            console.log("Exam mode is checked - skipping progress modal");
-          }
-        }, 1000);
-      }
-    }
+if (currentUser && !currentUser.isGuest) {
+  if (!window._progressCheckExecuted) {
+    window._progressCheckExecuted = true;
+    
+    setTimeout(() => {
+      // 🔥 აქ ვიყენებთ განახლებულ checkExistingProgress-ს
+      console.log("Calling checkExistingProgress from loadCSV");
+      checkExistingProgress();
+    }, 1000);
+  }
+}
 
     loaderOverlay.style.display = 'none';
     startBtn.disabled = false;
@@ -7874,11 +7868,6 @@ function checkExistingProgress() {
   }
   lastProgressCheckTime = now;
   
-  if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
-    console.log("Exam mode is active - skipping progress modal");
-    return;
-  }
-  
   if (!currentUser || currentUser.isGuest || !allTestsWithTopics.length) {
     console.log("User not logged in or no tests loaded");
     return;
@@ -7924,12 +7913,6 @@ function checkExistingProgress() {
       return;
     }
     
-    // ისევ შევამოწმოთ, არის თუ არა Exam Mode
-    if (document.getElementById('modeExam') && document.getElementById('modeExam').checked) {
-      console.log("Exam mode is active - skipping progress modal");
-      return;
-    }
-    
     // ისევ შევამოწმოთ მოდულები
     const currentSelectedModule = getSelectedModule();
     if (currentSelectedModule !== selectedModule) {
@@ -7937,44 +7920,28 @@ function checkExistingProgress() {
       return;
     }
     
-    const normalCount = hasNormalProgress ? Object.keys(progress.normal.answeredQuestions || {}).length : 0;
-    const examCount = hasExamProgress ? Object.keys(progress.exam.answeredQuestions || {}).length : 0;
-    const totalAnswered = normalCount + examCount;
-    
-    showProgressResumeModal(totalAnswered, selectedModule, progress, selectedModule);
+    // 🔥 მნიშვნელოვანი: თუ არსებობს საგამოცდო პროგრესი, ვაჩვენოთ ის პირველ რიგში
+    // მიუხედავად იმისა, ჩართულია თუ არა exam mode ჩექბოქსი
+    if (hasExamProgress) {
+      console.log("Exam progress exists - showing exam resume modal regardless of checkbox state");
+      showExamProgressResumeModal(progress, selectedModule);
+    }
+    // თუ საგამოცდო პროგრესი არ არის, მაგრამ არის ნორმალური პროგრესი
+    else if (hasNormalProgress) {
+      console.log("Normal mode - showing normal resume modal");
+      showNormalProgressResumeModal(progress, selectedModule);
+    }
+    // სხვა შემთხვევაში არაფერს ვაჩვენებთ
+    else {
+      console.log("No matching progress for current mode selection");
+    }
   }, 500);
 }
 
-// დააკვირდი სისტემურ შეტყობინებებს
-function setupForceLogoutListener() {
-    if (!firebaseSyncEnabled || !database) return;
-    
-    database.ref('system/forceLogout').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-        
-        // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
-        if (data.userId === currentUser?.username || 
-            data.userId === localStorage.getItem('chatUserId')) {
-            
-            // გაასუფთავე localStorage
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('users');
-            sessionStorage.clear();
-            
-            // გამოაჩინე შეტყობინება
-            showNotification('თქვენი ანგარიში წაიშალა', true);
-            
-            // გადატვირთე გვერდი
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
-        }
-    });
-}
-
-function showProgressResumeModal(totalAnswered, moduleName, progress, selectedModule) {
-  console.log("Showing progress resume modal for module:", moduleName, "total:", totalAnswered);
+// 🔥 ახალი ფუნქცია საგამოცდო რეჟიმის პროგრესის აღსადგენად
+// 🔥 გაუმჯობესებული ფუნქცია საგამოცდო რეჟიმის პროგრესის აღსადგენად
+function showExamProgressResumeModal(progress, selectedModule) {
+  console.log("Showing exam progress resume modal for module:", selectedModule);
   
   // დავსეტოთ ფლაგი
   isProgressModalShowing = true;
@@ -8033,6 +8000,252 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const moduleDisplayName = moduleNames[selectedModule] || selectedModule;
   
+  // გამოვთვალოთ რამდენი კითხვაა უკვე დაწერილი
+  const answeredCount = progress.exam && progress.exam.answeredQuestions ? 
+                        Object.keys(progress.exam.answeredQuestions).length : 0;
+  
+  // წავშალოთ ყველა არსებული მოდალი
+  const existingModals = document.querySelectorAll('.modal-overlay[data-type="progress-resume"]');
+  existingModals.forEach(modal => modal.remove());
+  
+  // შევამოწმოთ, არის თუ არა ტესტის ეკრანი აქტიური
+  if (testScreen.classList.contains('active')) {
+    console.log("Test screen is active, not showing modal");
+    isProgressModalShowing = false;
+    return;
+  }
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'modal-overlay active';
+  modalOverlay.setAttribute('data-type', 'progress-resume');
+  modalOverlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+  
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.cssText = 'background: white; border-radius: 16px; padding: 30px; max-width: 550px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);';
+  
+  const header = document.createElement('div');
+  header.className = 'modal-header';
+  header.style.cssText = 'font-size: 24px; font-weight: 600; color: #1e293b; margin-bottom: 20px; text-align: center;';
+  header.innerHTML = '📝 საგამოცდო რეჟიმი';
+  
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+  content.style.cssText = 'margin-bottom: 30px; text-align: center;';
+  
+  const p1 = document.createElement('p');
+  p1.style.cssText = 'margin-bottom: 15px; font-size: 16px;';
+  p1.innerHTML = `თქვენ უკვე დაწერით <strong style="color: var(--accent);">${answeredCount} ტესტი</strong> მოდულში: <strong style="color: var(--accent);">${moduleDisplayName}</strong>`;
+  
+  const p2 = document.createElement('p');
+  p2.style.cssText = 'margin-bottom: 20px; color: #64748b; font-size: 16px;';
+  p2.innerHTML = '🕒 გამოცდის დარჩენილი დრო: <strong>' + formatExamTime(progress.exam?.examTimeRemaining || 3*60*60) + '</strong>';
+  
+  const p3 = document.createElement('p');
+  p3.style.cssText = 'margin-bottom: 20px; color: #0f172a; font-weight: 500;';
+  p3.textContent = 'გსურთ გააგრძელოთ საგამოცდო რეჟიმში მუშაობა?';
+  
+  const infoDiv = document.createElement('div');
+  infoDiv.style.cssText = 'margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; text-align: left; font-size: 14px; color: #334155;';
+  infoDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+      <span style="color: var(--success);">✓</span> <span>აღდგება ზუსტად ის ტესტები, რაც წინა მოწყობილობაში იყო</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+      <span style="color: var(--success);">✓</span> <span>თქვენი პასუხები შენახულია (${answeredCount} პასუხი)</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="color: var(--success);">✓</span> <span>გამოცდის დარჩენილი დრო აღდგება</span>
+    </div>
+  `;
+  
+  content.appendChild(p1);
+  content.appendChild(p2);
+  content.appendChild(p3);
+  content.appendChild(infoDiv);
+  
+  const buttons = document.createElement('div');
+  buttons.style.cssText = 'display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;';
+  
+  const continueBtn = document.createElement('button');
+  continueBtn.id = 'continueExamProgressBtn';
+  continueBtn.style.cssText = 'padding: 14px 24px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; min-width: 200px; flex: 1 1 auto;';
+  continueBtn.innerHTML = '✅ გავაგრძელოთ საგამოცდო რეჟიმში მუშაობა';
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.id = 'closeExamProgressBtn';
+  closeBtn.style.cssText = 'padding: 12px 20px; background: var(--danger); color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; min-width: 120px; flex: 1 1 auto;';
+  closeBtn.textContent = '❌ დახურვა';
+  
+  buttons.appendChild(continueBtn);
+  buttons.appendChild(closeBtn);
+  
+  modal.appendChild(header);
+  modal.appendChild(content);
+  modal.appendChild(buttons);
+  modalOverlay.appendChild(modal);
+  
+  document.body.appendChild(modalOverlay);
+  
+  continueBtn.addEventListener('click', function() {
+    modalOverlay.remove();
+    isProgressModalShowing = false;
+    
+    console.log("Continue exam clicked. Progress object:", progress);
+    console.log("Selected module:", selectedModule);
+    
+    // 🔥 მნიშვნელოვანი: ჩავრთოთ Exam mode checkbox
+    const modeExam = document.getElementById('modeExam');
+    const modeSequential = document.getElementById('modeSequential');
+    const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
+    const modeShuffleAnswers = document.getElementById('modeShuffleAnswers');
+    
+    if (modeExam) {
+      modeExam.checked = true;
+      console.log("Exam mode checkbox enabled");
+    }
+    if (modeSequential) modeSequential.checked = false;
+    if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
+    if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
+    
+    // მოდულის დაყენება
+    const moduleCheckbox = document.querySelector(`.module-checkbox[value="${selectedModule}"]`);
+    if (moduleCheckbox) {
+      moduleCheckbox.checked = true;
+      updateDropdownText(selectedModule);
+      console.log("Module checkbox set:", selectedModule);
+    }
+    
+    currentTestType = selectedModule;
+    
+    const topicsSelect = document.getElementById('topicsSelect');
+    if (topicsSelect) {
+      topicsSelect.value = 'all';
+      selectedTopic = null;
+    }
+    
+    // 🔥 მნიშვნელოვანი: შევინახოთ პროგრესი
+    window.savedProgress = progress;
+    
+    setTimeout(() => {
+      if (allTestsWithTopics.length > 0) {
+        console.log("Starting test with saved exam progress");
+        startTest();
+      } else {
+        console.log("Loading CSV first, then starting test");
+        loadCSV();
+      }
+    }, 300);
+    
+    showNotification('✅ საგამოცდო რეჟიმის პროგრესი აღდგენილია', false);
+  });
+  
+  closeBtn.addEventListener('click', function() {
+    modalOverlay.remove();
+    isProgressModalShowing = false;
+  });
+  
+  modalOverlay.addEventListener('click', function(e) {
+    if (e.target === modalOverlay) {
+      modalOverlay.remove();
+      isProgressModalShowing = false;
+    }
+  });
+}
+
+// დააკვირდი სისტემურ შეტყობინებებს
+function setupForceLogoutListener() {
+    if (!firebaseSyncEnabled || !database) return;
+    
+    database.ref('system/forceLogout').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        // თუ ეს შეტყობინება ჩვენს მომხმარებელს ეხება
+        if (data.userId === currentUser?.username || 
+            data.userId === localStorage.getItem('chatUserId')) {
+            
+            // გაასუფთავე localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('users');
+            sessionStorage.clear();
+            
+            // გამოაჩინე შეტყობინება
+            showNotification('თქვენი ანგარიში წაიშალა', true);
+            
+            // გადატვირთე გვერდი
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    });
+}
+
+// 🔥 ხელახლა განვსაზღვროთ ჩვეულებრივი მოდალი ნორმალური რეჟიმისთვის
+function showNormalProgressResumeModal(progress, selectedModule) {
+  console.log("Showing normal progress resume modal for module:", selectedModule);
+  
+  // დავსეტოთ ფლაგი
+  isProgressModalShowing = true;
+  
+  // მოდულების ქართული სახელები
+  const moduleNames = {
+    'samkurnaloo': 'სამკურნალო',
+    'stomatologia': 'სტომატოლოგია',
+    
+    // სალიცენზიო
+    'alergologia': 'ალერგოლოგია',
+    'angiokirurgia': 'ანგიოქირურგია',
+    'anesteziologia': 'ანესთეზიოლოგია, რეანიმატოლოგია',
+    'bavshvta_gadaudebeli': 'ბავშვთა გადაუდებელი',
+    'bavshvta_kardiorevmatologia': 'ბავშვთა კარდიორევმატოლოგია',
+    'bavshvta_nevrologia': 'ბავშვთა ნევროლოგია',
+    'bavshvta_nevrologia2': 'ბავშვთა ნეფროლოგია',
+    'gadaudebeli_medicina': 'გადაუდებელი მედიცინა',
+    'gastroenterologia': 'გასტროენტეროლოგია',
+    'ginekologia': 'გინეკოლოგია',
+    'dermatologia': 'დერმატოლოგია',
+    'endokrinologia': 'ენდოკრინოლოგია',
+    'zogadi_kirurgia': 'ზოგადი ქირურგია',
+    'terapiuli_stomatologia': 'თერაპიული სტომატოლოგია',
+    'infekciuri': 'ინფექციური',
+    'kardiologia': 'კარდიოლოგია',
+    'kardiokirurgia': 'კარდიოქირურგია',
+    'laboratoriuli_medicina': 'ლაბორატორიული მედიცინა',
+    'narkologia': 'ნარკოლოგია',
+    'nevrologia': 'ნევროლოგია',
+    'neonatologia': 'ნეონატოლოგია',
+    'nefrologia': 'ნეფროლოგია',
+    'onkologia': 'ონკოლოგია',
+    'ortodontia': 'ორთოდონტია',
+    'ortopedia_travmatologia': 'ორთოპედია ტრავმატოლოგია',
+    'ortopediuli_stomatologia': 'ორთოპედიული სტომატოლოგია',
+    'otorinolaringologia': 'ოტორინოლარინგოლოგია',
+    'oftalmologia': 'ოფთალმოლოგია',
+    'patologia': 'პათოლოგია',
+    'pediatria': 'პედიატრია',
+    'plastikuri_kirurgia': 'პლასტიკური და რეკონსტრუქციული ქირურგია',
+    'radiologia': 'რადიოლოგია',
+    'radiacioni_onkologia': 'რადიაციული ონკოლოგია',
+    'reproduqtologia': 'რეპროდუქტოლოგია',
+    'revmatologia': 'რევმატოლოგია',
+    'saokjao_medicina': 'საოჯახო მედიცინა',
+    'sportuli_medicina': 'სპორტული მედიცინა',
+    'toksikologia': 'ტოქსიკოლოგია',
+    'urologia': 'უროლოგია',
+    'ftiziatria_pulmonologia': 'ფთიზიატრია, პულმონოლოგია',
+    'psikiatria': 'ფსიქიატრია',
+    'qba_saxis_kirurgia': 'ყბა-სახის ქირურგია',
+    'shinagani_medicina': 'შინაგანი მედიცინა',
+    'hematologia': 'ჰემატოლოგია'
+  };
+  
+  const moduleDisplayName = moduleNames[selectedModule] || selectedModule;
+  
+  // გამოვთვალოთ რამდენი კითხვაა უკვე დაწერილი
+  const answeredCount = progress.normal && progress.normal.answeredQuestions ? 
+                        Object.keys(progress.normal.answeredQuestions).length : 0;
+  
   // წავშალოთ ყველა არსებული მოდალი
   const existingModals = document.querySelectorAll('.modal-overlay[data-type="progress-resume"]');
   existingModals.forEach(modal => modal.remove());
@@ -8056,7 +8269,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   const header = document.createElement('div');
   header.className = 'modal-header';
   header.style.cssText = 'font-size: 24px; font-weight: 600; color: #1e293b; margin-bottom: 20px; text-align: center;';
-  header.textContent = 'გსურთ გაგრძელება?';
+  header.textContent = '📚 გსურთ გაგრძელება?';
   
   const content = document.createElement('div');
   content.className = 'modal-content';
@@ -8064,7 +8277,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   
   const p1 = document.createElement('p');
   p1.style.cssText = 'margin-bottom: 15px; font-size: 16px;';
-  p1.innerHTML = `თქვენ უკვე დაწერით <strong style="color: var(--accent);">${totalAnswered} ტესტი</strong> მოდულში: <strong style="color: var(--accent);">${moduleDisplayName}</strong>`;
+  p1.innerHTML = `თქვენ უკვე დაწერით <strong style="color: var(--accent);">${answeredCount} ტესტი</strong> მოდულში: <strong style="color: var(--accent);">${moduleDisplayName}</strong>`;
   
   const p2 = document.createElement('p');
   p2.style.cssText = 'margin-bottom: 20px; color: #64748b;';
@@ -8079,17 +8292,17 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
   const continueBtn = document.createElement('button');
   continueBtn.id = 'continueProgressBtn';
   continueBtn.style.cssText = 'padding: 12px 20px; background: var(--success); color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; min-width: 120px; flex: 1 1 auto;';
-  continueBtn.textContent = 'გაგრძელება';
+  continueBtn.textContent = '✅ გაგრძელება';
   
   const restartBtn = document.createElement('button');
   restartBtn.id = 'restartProgressBtn';
   restartBtn.style.cssText = 'padding: 12px 20px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; min-width: 120px; flex: 1 1 auto;';
-  restartBtn.textContent = 'თავიდან დაწყება';
+  restartBtn.textContent = '🔄 თავიდან დაწყება';
   
   const closeBtn = document.createElement('button');
   closeBtn.id = 'closeProgressBtn';
   closeBtn.style.cssText = 'padding: 12px 20px; background: var(--danger); color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; min-width: 120px; flex: 1 1 auto;';
-  closeBtn.textContent = 'დახურვა';
+  closeBtn.textContent = '❌ დახურვა';
   
   buttons.appendChild(continueBtn);
   buttons.appendChild(restartBtn);
@@ -8106,43 +8319,31 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
     modalOverlay.remove();
     isProgressModalShowing = false;
     
-    console.log("Continue clicked. Progress object:", progress);
+    console.log("Continue normal mode clicked. Progress object:", progress);
     console.log("Selected module:", selectedModule);
     
-    currentTestType = selectedModule;
-    
+    // 🔥 მნიშვნელოვანი: გამოვრთოთ Exam mode
     const modeExam = document.getElementById('modeExam');
     const modeSequential = document.getElementById('modeSequential');
     const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
     const modeShuffleAnswers = document.getElementById('modeShuffleAnswers');
     
-    const testTypeSelect = document.getElementById('testTypeSelect');
-    if (testTypeSelect) {
-      testTypeSelect.value = selectedModule;
-      toggleTopicsDropdown();
+    if (modeExam) modeExam.checked = false;
+    if (modeSequential) modeSequential.checked = true;
+    
+    // მოდულის დაყენება
+    const moduleCheckbox = document.querySelector(`.module-checkbox[value="${selectedModule}"]`);
+    if (moduleCheckbox) {
+      moduleCheckbox.checked = true;
+      updateDropdownText(selectedModule);
     }
+    
+    currentTestType = selectedModule;
     
     const topicsSelect = document.getElementById('topicsSelect');
     if (topicsSelect) {
       topicsSelect.value = 'all';
       selectedTopic = null;
-    }
-    
-    const hasNormalProgress = progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0;
-    const hasExamProgress = progress.exam && Object.keys(progress.exam.answeredQuestions || {}).length > 0;
-    
-    console.log("Has normal progress:", hasNormalProgress, "Has exam progress:", hasExamProgress);
-    
-    if (hasExamProgress && !hasNormalProgress) {
-      if (modeExam) modeExam.checked = true;
-      if (modeSequential) modeSequential.checked = false;
-      if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
-      if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
-      console.log("Selected exam mode");
-    } else {
-      if (modeExam) modeExam.checked = false;
-      if (modeSequential) modeSequential.checked = true;
-      console.log("Selected normal mode");
     }
     
     window.savedProgress = progress;
@@ -8155,7 +8356,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       }
     }, 300);
     
-    showNotification('პროგრესი წარმატებით ჩაიტვირთა', false);
+    showNotification('✅ პროგრესი წარმატებით ჩაიტვირთა', false);
   });
   
   restartBtn.addEventListener('click', async function() {
@@ -8195,35 +8396,28 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       }
     }
     
+    // გამოვრთოთ Exam mode
     const modeExam = document.getElementById('modeExam');
     const modeSequential = document.getElementById('modeSequential');
     const modeShuffleQuestions = document.getElementById('modeShuffleQuestions');
     const modeShuffleAnswers = document.getElementById('modeShuffleAnswers');
     
-    const testTypeSelect = document.getElementById('testTypeSelect');
-    if (testTypeSelect) {
-      testTypeSelect.value = selectedModule;
-      currentTestType = selectedModule;
-      toggleTopicsDropdown();
+    if (modeExam) modeExam.checked = false;
+    if (modeSequential) modeSequential.checked = true;
+    
+    // მოდულის დაყენება
+    const moduleCheckbox = document.querySelector(`.module-checkbox[value="${selectedModule}"]`);
+    if (moduleCheckbox) {
+      moduleCheckbox.checked = true;
+      updateDropdownText(selectedModule);
     }
+    
+    currentTestType = selectedModule;
     
     const topicsSelect = document.getElementById('topicsSelect');
     if (topicsSelect) {
       topicsSelect.value = 'all';
       selectedTopic = null;
-    }
-    
-    const hasNormalProgress = progress.normal && Object.keys(progress.normal.answeredQuestions || {}).length > 0;
-    const hasExamProgress = progress.exam && Object.keys(progress.exam.answeredQuestions || {}).length > 0;
-    
-    if (hasExamProgress && !hasNormalProgress) {
-      if (modeExam) modeExam.checked = true;
-      if (modeSequential) modeSequential.checked = false;
-      if (modeShuffleQuestions) modeShuffleQuestions.checked = true;
-      if (modeShuffleAnswers) modeShuffleAnswers.checked = false;
-    } else {
-      if (modeExam) modeExam.checked = false;
-      if (modeSequential) modeSequential.checked = true;
     }
     
     window.savedProgress = null;
@@ -8236,7 +8430,7 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       }
     }, 300);
     
-    showNotification('პროგრესი გასუფთავდა. ტესტი იწყება პირველი კითხვიდან', false);
+    showNotification('🔄 პროგრესი გასუფთავდა. ტესტი იწყება პირველი კითხვიდან', false);
   });
   
   closeBtn.addEventListener('click', function() {
@@ -8250,6 +8444,15 @@ function showProgressResumeModal(totalAnswered, moduleName, progress, selectedMo
       isProgressModalShowing = false;
     }
   });
+}
+
+// 🔥 დამხმარე ფუნქცია დროის ფორმატირებისთვის
+function formatExamTime(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
 function onModuleSelected(moduleValue) {
