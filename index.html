@@ -2058,25 +2058,21 @@ body {
     font-size: 13px !important;
   }
 
-  .notification {
-    left: 10px !important;
-    right: 10px !important;
-    width: auto !important;
-    max-width: none !important;
-    transform: translateX(-50%) !important;
-    transform: none !important;
-    padding: 14px 16px !important;
-    font-size: 15px !important;
-    box-sizing: border-box !important;
-    display: table !important;
-    white-space: normal !important;
-    text-align: center !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    min-width: fit-content !important;
-    max-width: 100% !important;
-  }
-
+.notification {
+  left: 50% !important;              /* შეცვალეთ 10px → 50% */
+  right: auto !important;             /* შეცვალეთ 10px → auto */
+  transform: translateX(-50%) !important;  /* დაამატეთ ეს */
+  width: auto !important;
+  max-width: 90% !important;          /* შეცვალეთ none → 90% */
+  padding: 14px 16px !important;
+  font-size: 15px !important;
+  box-sizing: border-box !important;
+  display: table !important;
+  white-space: normal !important;
+  text-align: center !important;
+  margin: 0 auto !important;
+  min-width: fit-content !important;
+}
   /* SETTINGS PAGE */
   .settings-page {
     position: fixed !important;
