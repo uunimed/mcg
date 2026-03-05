@@ -620,6 +620,21 @@ body {
   background: #f8fafc;
 }
 
+.message.received .message-author {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.message.received .message-author span {
+    background: #0ea5a4;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
 /* ==================== SETTINGS PAGE ==================== */
 .settings-page {
   position: fixed;
@@ -5302,68 +5317,80 @@ function setupFirebaseListeners() {
   try {
     displayedMessageKeys.clear();
     
-    database.ref('chat/messages').limitToLast(50).once('value').then((snapshot) => {
-      if (snapshot.exists()) {
+database.ref('chat/messages').limitToLast(50).once('value').then((snapshot) => {
+    if (snapshot.exists()) {
         const messages = [];
         
         snapshot.forEach((childSnapshot) => {
-          const message = childSnapshot.val();
-          const messageKey = childSnapshot.key;
-          messages.push({ ...message, key: messageKey });
+            const message = childSnapshot.val();
+            const messageKey = childSnapshot.key;
+            messages.push({ ...message, key: messageKey });
         });
         
         messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
         
         messages.forEach(msg => {
-          displayedMessageKeys.add(msg.key);
-          const isMyMessage = msg.userId === userId;
-          
-          addMessageToChat(msg.author, msg.text, isMyMessage, new Date(msg.timestamp));
-          
-          if (!isMyMessage && msg.timestamp > lastSeenMessageTime) {
-            unreadMessagesCount++;
-          }
+            displayedMessageKeys.add(msg.key);
+            const isMyMessage = msg.userId === userId;
+            
+            addMessageToChat(
+                msg.author, 
+                msg.text, 
+                isMyMessage, 
+                new Date(msg.timestamp),
+                msg.isAdmin === true || msg.adminBadge === true 
+            );
+            
+            if (!isMyMessage && msg.timestamp > lastSeenMessageTime) {
+                unreadMessagesCount++;
+            }
         });
         
         updateChatNotification();
         
         setTimeout(() => {
-          if (isChatOpen) {
-            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-          }
+            if (isChatOpen) {
+                chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }
         }, 200);
-      }
-      
-      allMessagesLoaded = true;
-    }).catch(error => {
-      console.error('Error loading initial messages:', error);
-      loadLocalMessagesAsFallback();
-    });
+    }
     
-    database.ref('chat/messages').orderByKey().limitToLast(1).on('child_added', (snapshot) => {
-      const message = snapshot.val();
-      const messageKey = snapshot.key;
-      
-      if (displayedMessageKeys.has(messageKey)) {
+    allMessagesLoaded = true;
+}).catch(error => {
+    console.error('Error loading initial messages:', error);
+    loadLocalMessagesAsFallback();
+});
+    
+database.ref('chat/messages').orderByKey().limitToLast(1).on('child_added', (snapshot) => {
+    const message = snapshot.val();
+    const messageKey = snapshot.key;
+    
+    if (displayedMessageKeys.has(messageKey)) {
         return;
-      }
-      
-      displayedMessageKeys.add(messageKey);
-      const isMyMessage = message.userId === userId;
-      
-      if (!isMyMessage) {
+    }
+    
+    displayedMessageKeys.add(messageKey);
+    const isMyMessage = message.userId === userId;
+    
+    if (!isMyMessage) {
         const messageTime = message.timestamp || Date.now();
         
-        addMessageToChat(message.author, message.text, false, new Date(messageTime));
+        addMessageToChat(
+            message.author, 
+            message.text, 
+            false, 
+            new Date(messageTime),
+            message.isAdmin === true || message.adminBadge === true 
+        );
         
         if (!isChatOpen && messageTime > lastSeenMessageTime) {
-          unreadMessagesCount++;
-          updateChatNotification();
+            unreadMessagesCount++;
+            updateChatNotification();
         }
         
         lastSeenMessageTime = Math.max(lastSeenMessageTime, messageTime);
-      }
-    });
+    }
+});
     
     database.ref('chat/onlineUsers').on('value', (snapshot) => {
       if (snapshot.exists()) {
@@ -5467,47 +5494,47 @@ function setUserOnline() {
 }
 
 function sendMessageToFirebase() {
-  if (!chatInput) return;
-  
-  const message = chatInput.value.trim();
-  if (!message) return;
-  
-  if (!userName) {
-    if (currentUser && currentUser.username) {
-      userName = currentUser.username;
-    } else {
-      userName = 'სტუმარი N' + Math.floor(Math.random() * 1000);
+    if (!chatInput) return;
+    
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    if (!userName) {
+        if (currentUser && currentUser.username) {
+            userName = currentUser.username; // რეგისტრირებული მომხმარებლის სახელი
+        } else {
+            userName = 'სტუმარი N' + Math.floor(Math.random() * 1000); // სტუმარი
+        }
+        localStorage.setItem('chatUserName', userName);
     }
-    localStorage.setItem('chatUserName', userName);
-  }
-  
-  const messageData = {
-    text: message,
-    author: userName,
-    userId: userId,
-    timestamp: Date.now()
-  };
-  
-  chatInput.value = '';
-  
-  addMessageToChat(userName, message, true, new Date());
-  
-  saveMessageToLocalStorage(messageData);
-  
-  if (firebaseSyncEnabled && database) {
-    const newMessageRef = database.ref('chat/messages').push();
-    const messageKey = newMessageRef.key;
     
-    displayedMessageKeys.add(messageKey);
+    const messageData = {
+        text: message,
+        author: userName, // აქ იგზავნება სახელი
+        userId: userId,
+        timestamp: Date.now()
+    };
     
-    newMessageRef.set(messageData)
-      .catch((error) => {
-        console.error('Error sending message to Firebase:', error);
-        showNotification('შეტყობინება შენახულია მხოლოდ ლოკალურად', false);
-      });
-  } else {
-    showNotification('შეტყობინება შენახულია ლოკალურად', false);
-  }
+    chatInput.value = '';
+    
+    addMessageToChat(userName, message, true, new Date()); // აქაც სახელი გადაეცემა
+    
+    saveMessageToLocalStorage(messageData);
+    
+    if (firebaseSyncEnabled && database) {
+        const newMessageRef = database.ref('chat/messages').push();
+        const messageKey = newMessageRef.key;
+        
+        displayedMessageKeys.add(messageKey);
+        
+        newMessageRef.set(messageData)
+            .catch((error) => {
+                console.error('Error sending message to Firebase:', error);
+                showNotification('შეტყობინება შენახულია მხოლოდ ლოკალურად', false);
+            });
+    } else {
+        showNotification('შეტყობინება შენახულია ლოკალურად', false);
+    }
 }
 
 function saveMessageToLocalStorage(messageData) {
@@ -5528,35 +5555,42 @@ function saveMessageToLocalStorage(messageData) {
   }
 }
 
-function addMessageToChat(author, message, isSent, timestamp) {
-  if (!chatMessagesEl) return;
-  
-  const messageDiv = document.createElement('div');
-  messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-  
-  const time = timestamp.toLocaleTimeString('ka-GE', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-  
-  messageDiv.innerHTML = `
-    <div class="message-author">${escapeHtml(author)}</div>
-    <div class="message-time">${time}</div>
-    <div class="message-content">${escapeHtml(message)}</div>
-  `;
-  
-  chatMessagesEl.appendChild(messageDiv);
-  
-  if (isSent) {
-    lastSeenMessageTime = Math.max(lastSeenMessageTime, timestamp.getTime());
-    localStorage.setItem('lastSeenMessageTime', lastSeenMessageTime.toString());
-  }
-  
-  if (isChatOpen) {
-    setTimeout(() => {
-      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-    }, 100);
-  }
+function addMessageToChat(author, message, isSent, timestamp, isAdmin = false) {
+    if (!chatMessagesEl) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+    
+    const time = timestamp.toLocaleTimeString('ka-GE', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // ადმინის ბეიჯი
+    const adminBadge = isAdmin ? 
+        '<span style="background: #0ea5a4; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 8px; font-weight: 600;">ადმინისტრატორი</span>' : 
+        '';
+    
+    messageDiv.innerHTML = `
+        <div class="message-author">
+            ${escapeHtml(author)}${adminBadge}
+        </div>
+        <div class="message-time">${time}</div>
+        <div class="message-content">${escapeHtml(message)}</div>
+    `;
+    
+    chatMessagesEl.appendChild(messageDiv);
+    
+    if (isSent) {
+        lastSeenMessageTime = Math.max(lastSeenMessageTime, timestamp.getTime());
+        localStorage.setItem('lastSeenMessageTime', lastSeenMessageTime.toString());
+    }
+    
+    if (isChatOpen) {
+        setTimeout(() => {
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }, 100);
+    }
 }
 
 function updateChatNotification() {
