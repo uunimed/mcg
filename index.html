@@ -4080,7 +4080,7 @@ function initOnlinePresence() {
         name: userName,
         lastSeen: now,
         firstSeen: sessionStart, 
-        sessionStart: sessionStart,
+        sessionStart: sessionStart, 
         module: null,
         currentModule: null,
         selectedModule: null,
@@ -4091,10 +4091,8 @@ function initOnlinePresence() {
         console.error('Error setting online presence:', error);
     });
     
-    // Clean up when user leaves
     userRef.onDisconnect().remove();
     
-    // Update lastSeen every 15 seconds
     setInterval(() => {
         if (firebaseSyncEnabled && database) {
             userRef.update({
@@ -4114,7 +4112,9 @@ function updateUserModule(moduleId) {
     const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
     const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
     
-    const sessionStart = parseInt(localStorage.getItem('userSessionStart') || Date.now());
+    let sessionStart = parseInt(localStorage.getItem('userSessionStart') || Date.now());
+    
+    let firstSeen = parseInt(localStorage.getItem('userFirstSeen') || sessionStart);
     
     userRef.update({
         module: moduleId,
@@ -4124,6 +4124,7 @@ function updateUserModule(moduleId) {
         name: userName,
         userId: userId,
         lastSeen: Date.now(),
+        firstSeen: firstSeen,
         sessionStart: sessionStart 
     }).then(() => {
         console.log(`✅ Module ${moduleId} synced to online status with sessionStart: ${new Date(sessionStart).toLocaleTimeString()}`);
@@ -4722,11 +4723,12 @@ function initAuth() {
     });
   });
   
-  document.getElementById('continueAsGuest').addEventListener('click', () => {
+document.getElementById('continueAsGuest').addEventListener('click', () => {
+
     currentUser = { 
-      username: 'სტუმარი ' + Math.floor(Math.random() * 1000), 
-      isGuest: true,
-      progress: {}
+        username: 'სტუმარი ' + Math.floor(Math.random() * 1000), 
+        isGuest: true,
+        progress: {}
     };
     
     document.getElementById('authModal').style.display = 'none';
@@ -4736,15 +4738,14 @@ function initAuth() {
     userName = currentUser.username;
     localStorage.setItem('chatUserName', userName);
     
-
-  initOnlinePresence();
-  
+    initOnlinePresence();
+    
     loadCSV();
     initChat();
     updateTimerDisplay();
     
     showNotification('მოგესალმებით!', false);
-  });
+});
   
   document.getElementById('showLoginFromGuest').addEventListener('click', () => {
     document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -5566,13 +5567,19 @@ function setUserOnline() {
             }
         });
         
-        const sessionStart = parseInt(localStorage.getItem('userSessionStart') || Date.now());
+        let sessionStart = parseInt(localStorage.getItem('userSessionStart') || Date.now());
+        let firstSeen = parseInt(localStorage.getItem('userFirstSeen') || sessionStart);
         
         userRef.set({
             name: userName,
             userId: userId,
             lastSeen: Date.now(),
-            sessionStart: sessionStart // Add this!
+            firstSeen: firstSeen,
+            sessionStart: sessionStart 
+        }).then(() => {
+            console.log(`✅ User online status set with sessionStart: ${new Date(sessionStart).toLocaleTimeString()}`);
+        }).catch(error => {
+            console.error('Error setting user online:', error);
         });
         
         isOnline = true;
@@ -5581,7 +5588,8 @@ function setUserOnline() {
             if (isOnline && firebaseSyncEnabled) {
                 userRef.update({ 
                     lastSeen: Date.now(),
-                    sessionStart: sessionStart // Always preserve it
+                    sessionStart: sessionStart,
+                    firstSeen: firstSeen
                 });
             }
         }, 10000);
