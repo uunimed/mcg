@@ -3905,7 +3905,7 @@ async function handleLogin() {
   bindUserMenuEvents();
   updateTimerDisplay();
   
-  // Add this after successful login
+
 initOnlinePresence();
 
   await loadSelectedModule();
@@ -4055,7 +4055,7 @@ if (!userSessionId) {
     localStorage.setItem('userSessionId', userSessionId);
 }
 
-// Initialize online presence
+
 function initOnlinePresence() {
     if (!firebaseSyncEnabled || !database) return;
     
@@ -4063,7 +4063,7 @@ function initOnlinePresence() {
     const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
     const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
     
-    // Set initial presence
+
     userRef.set({
         userId: userId,
         name: userName,
@@ -4076,10 +4076,10 @@ function initOnlinePresence() {
         lastModule: null
     });
     
-    // Clean up when user leaves
+
     userRef.onDisconnect().remove();
     
-    // Update lastSeen every 15 seconds
+
     setInterval(() => {
         if (firebaseSyncEnabled && database) {
             userRef.update({
@@ -4089,7 +4089,7 @@ function initOnlinePresence() {
     }, 15000);
 }
 
-// Update user's current module in online status
+
 function updateUserModule(moduleId) {
     if (!firebaseSyncEnabled || !database || !moduleId) return;
     
@@ -4247,7 +4247,7 @@ function handleModuleCheckboxClick(clickedCheckbox) {
     const moduleValue = clickedCheckbox.value;
     saveSelectedModule(moduleValue);
     
-    // 👇 ADD THIS LINE
+
     updateUserModule(moduleValue);
     
     updateTopicsVisibility();
@@ -4530,7 +4530,6 @@ function applySelectedModule(savedModule, fromFirebase = false) {
     updateDropdownText(savedModule);
     currentTestType = savedModule;
     
-    // 👇 ADD THIS LINE
     updateUserModule(savedModule);
     
     updateTopicsVisibility();
@@ -4719,7 +4718,7 @@ function initAuth() {
     userName = currentUser.username;
     localStorage.setItem('chatUserName', userName);
     
-      // 👇 ADD THIS LINE RIGHT HERE
+
   initOnlinePresence();
   
     loadCSV();
@@ -4943,7 +4942,7 @@ async function handleSignup() {
     bindUserMenuEvents();
     
     updateTimerDisplay();
-    // Add this after successful signup
+
 initOnlinePresence();
 
     if (allTests.length === 0) {
@@ -5582,23 +5581,23 @@ function sendMessageToFirebase() {
     
     if (!userName) {
         if (currentUser && currentUser.username) {
-            userName = currentUser.username; // რეგისტრირებული მომხმარებლის სახელი
+            userName = currentUser.username; 
         } else {
-            userName = 'სტუმარი N' + Math.floor(Math.random() * 1000); // სტუმარი
+            userName = 'სტუმარი N' + Math.floor(Math.random() * 1000); 
         }
         localStorage.setItem('chatUserName', userName);
     }
     
     const messageData = {
         text: message,
-        author: userName, // აქ იგზავნება სახელი
+        author: userName,
         userId: userId,
         timestamp: Date.now()
     };
     
     chatInput.value = '';
     
-    addMessageToChat(userName, message, true, new Date()); // აქაც სახელი გადაეცემა
+    addMessageToChat(userName, message, true, new Date()); 
     
     saveMessageToLocalStorage(messageData);
     
@@ -7373,7 +7372,7 @@ function startTest() {
 
   if (examMode) {
     startExamMode();
-    if (examCountdown) examCountdown.style.display = 'block'; // Show in exam mode
+    if (examCountdown) examCountdown.style.display = 'block'; 
   } else {
     normalModeContainer.classList.remove('hidden');
     examModeContainer.classList.add('hidden');
@@ -7401,7 +7400,7 @@ function renderCurrentQuestion() {
     createExamTestBoxes();
     renderExamAnswers();
     checkAllQuestionsAnswered();
-    if (examCountdown) examCountdown.style.display = 'block'; // Show in exam mode
+    if (examCountdown) examCountdown.style.display = 'block'; 
   } else {
     questionText.textContent = question.question;
     currentQuestionEl.textContent = currentIndex + 1;
@@ -8202,7 +8201,7 @@ function onModuleSelected(moduleValue) {
   
   currentTestType = moduleValue;
   
-  // 👇 ADD THIS LINE
+
   updateUserModule(moduleValue);
   
   updateTopicsVisibility();
