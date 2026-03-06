@@ -4160,6 +4160,8 @@ function cleanupOldSessions() {
 }
 
 setInterval(cleanupOldSessions, 30000); 
+
+setInterval(cleanupOldSessions, 30000); 
 function updateUserModule(moduleId) {
     if (!firebaseSyncEnabled || !database || !moduleId) return;
     
@@ -8419,6 +8421,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
   
+  window.addEventListener('beforeunload', function() {
+    if (firebaseSyncEnabled && database) {
+        const sessionId = localStorage.getItem('userSessionId');
+        if (sessionId) {
+            fetch(`https://rezidentura-7bfd5-default-rtdb.firebaseio.com/chat/onlineUsers/${sessionId}.json`, {
+                method: 'DELETE',
+                keepalive: true
+            });
+            console.log('📤 Sending removal request on page unload');
+        }
+    }
+});
+
   if (modeSequential) {
     modeSequential.addEventListener('change', () => {
       if (modeSequential.checked && modeExam.checked) {
