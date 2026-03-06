@@ -4058,8 +4058,10 @@ if (!userSessionId) {
 function initOnlinePresence() {
     if (!firebaseSyncEnabled || !database) return;
     
+
     const userSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('userSessionId', userSessionId);
+    
+
     
     const userRef = database.ref(`chat/onlineUsers/${userSessionId}`);
     const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
@@ -4067,14 +4069,14 @@ function initOnlinePresence() {
     
     const sessionStart = Date.now();
     
-    console.log(`🆕 New session started at: ${new Date(sessionStart).toLocaleTimeString()}`);
+    console.log(`🆕 NEW SESSION STARTED AT: ${new Date(sessionStart).toLocaleTimeString()} (ID: ${userSessionId})`);
     
     userRef.set({
         userId: userId,
         name: userName,
         lastSeen: sessionStart,
         firstSeen: sessionStart,
-        sessionStart: sessionStart, 
+        sessionStart: sessionStart,
         module: null,
         currentModule: null,
         selectedModule: null,
@@ -4116,8 +4118,7 @@ function updateUserModule(moduleId) {
     
     console.log(`📌 Updating user module to: ${moduleId}`);
     
-    const userSessionId = localStorage.getItem('userSessionId');
-    if (!userSessionId) return;
+    const userSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     
     const userRef = database.ref(`chat/onlineUsers/${userSessionId}`);
     const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
@@ -4125,7 +4126,7 @@ function updateUserModule(moduleId) {
     
     const sessionStart = Date.now();
     
-    userRef.update({
+    userRef.set({
         module: moduleId,
         currentModule: moduleId,
         selectedModule: moduleId,
@@ -4134,12 +4135,14 @@ function updateUserModule(moduleId) {
         userId: userId,
         lastSeen: Date.now(),
         firstSeen: sessionStart,
-        sessionStart: sessionStart 
+        sessionStart: sessionStart
     }).then(() => {
-        console.log(`✅ Module ${moduleId} synced with new session start: ${new Date(sessionStart).toLocaleTimeString()}`);
+        console.log(`✅ Module ${moduleId} set with new session: ${new Date(sessionStart).toLocaleTimeString()}`);
     }).catch(error => {
         console.error('Error updating module:', error);
     });
+    
+    userRef.onDisconnect().remove();
 }
 
 function checkWrongQuestionsExhausted() {
