@@ -4063,23 +4063,38 @@ function initOnlinePresence() {
     const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
     const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
     
-
+    let sessionStart = localStorage.getItem('userSessionStart');
+    const now = Date.now();
+    
+    if (!sessionStart) {
+        sessionStart = now;
+        localStorage.setItem('userSessionStart', sessionStart);
+        console.log(`🆕 New session started at: ${new Date(sessionStart).toLocaleTimeString()}`);
+    } else {
+        sessionStart = parseInt(sessionStart);
+        console.log(`🔄 Continuing session from: ${new Date(sessionStart).toLocaleTimeString()}`);
+    }
+    
     userRef.set({
         userId: userId,
         name: userName,
-        lastSeen: Date.now(),
-        firstSeen: Date.now(),
-        sessionStart: Date.now(),
+        lastSeen: now,
+        firstSeen: sessionStart, 
+        sessionStart: sessionStart,
         module: null,
         currentModule: null,
         selectedModule: null,
         lastModule: null
+    }).then(() => {
+        console.log(`✅ Online presence set with sessionStart: ${new Date(sessionStart).toLocaleTimeString()}`);
+    }).catch(error => {
+        console.error('Error setting online presence:', error);
     });
     
-
+    // Clean up when user leaves
     userRef.onDisconnect().remove();
     
-
+    // Update lastSeen every 15 seconds
     setInterval(() => {
         if (firebaseSyncEnabled && database) {
             userRef.update({
@@ -4099,6 +4114,8 @@ function updateUserModule(moduleId) {
     const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
     const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
     
+    const sessionStart = parseInt(localStorage.getItem('userSessionStart') || Date.now());
+    
     userRef.update({
         module: moduleId,
         currentModule: moduleId,
@@ -4106,9 +4123,10 @@ function updateUserModule(moduleId) {
         lastModule: moduleId,
         name: userName,
         userId: userId,
-        lastSeen: Date.now()
+        lastSeen: Date.now(),
+        sessionStart: sessionStart 
     }).then(() => {
-        console.log(`✅ Module ${moduleId} synced to online status`);
+        console.log(`✅ Module ${moduleId} synced to online status with sessionStart: ${new Date(sessionStart).toLocaleTimeString()}`);
     }).catch(error => {
         console.error('Error updating module:', error);
     });
@@ -5525,52 +5543,58 @@ function loadLocalMessagesAsFallback() {
 }
 
 function setUserOnline() {
-  if (!firebaseSyncEnabled || !database) return;
-  
-  try {
-    const userRef = database.ref('chat/onlineUsers/' + userId);
+    if (!firebaseSyncEnabled || !database) return;
     
-    database.ref('chat/onlineUsers').once('value').then((snapshot) => {
-      if (snapshot.exists()) {
-        const users = snapshot.val();
-        const now = Date.now();
-        const updates = {};
+    try {
+        const userRef = database.ref('chat/onlineUsers/' + userId);
         
-        Object.keys(users).forEach(key => {
-          if (users[key]?.lastSeen && (now - users[key].lastSeen) > 60000) {
-            updates[key] = null;
-          }
+        database.ref('chat/onlineUsers').once('value').then((snapshot) => {
+            if (snapshot.exists()) {
+                const users = snapshot.val();
+                const now = Date.now();
+                const updates = {};
+                
+                Object.keys(users).forEach(key => {
+                    if (users[key]?.lastSeen && (now - users[key].lastSeen) > 60000) {
+                        updates[key] = null;
+                    }
+                });
+                
+                if (Object.keys(updates).length > 0) {
+                    database.ref('chat/onlineUsers').update(updates);
+                }
+            }
         });
         
-        if (Object.keys(updates).length > 0) {
-          database.ref('chat/onlineUsers').update(updates);
-        }
-      }
-    });
-    
-    userRef.set({
-      name: userName,
-      userId: userId,
-      lastSeen: Date.now()
-    });
-    
-    isOnline = true;
-    
-    setInterval(() => {
-      if (isOnline && firebaseSyncEnabled) {
-        userRef.update({ lastSeen: Date.now() });
-      }
-    }, 10000);
-    
-    window.addEventListener('beforeunload', () => {
-      if (firebaseSyncEnabled) {
-        userRef.remove();
-      }
-      isOnline = false;
-    });
-  } catch (error) {
-    console.error("Error setting user online:", error);
-  }
+        const sessionStart = parseInt(localStorage.getItem('userSessionStart') || Date.now());
+        
+        userRef.set({
+            name: userName,
+            userId: userId,
+            lastSeen: Date.now(),
+            sessionStart: sessionStart // Add this!
+        });
+        
+        isOnline = true;
+        
+        setInterval(() => {
+            if (isOnline && firebaseSyncEnabled) {
+                userRef.update({ 
+                    lastSeen: Date.now(),
+                    sessionStart: sessionStart // Always preserve it
+                });
+            }
+        }, 10000);
+        
+        window.addEventListener('beforeunload', () => {
+            if (firebaseSyncEnabled) {
+                userRef.remove();
+            }
+            isOnline = false;
+        });
+    } catch (error) {
+        console.error("Error setting user online:", error);
+    }
 }
 
 function sendMessageToFirebase() {
