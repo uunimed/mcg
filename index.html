@@ -3905,6 +3905,9 @@ async function handleLogin() {
   bindUserMenuEvents();
   updateTimerDisplay();
   
+  // Add this after successful login
+initOnlinePresence();
+
   await loadSelectedModule();
   
   if (allTests.length === 0) {
@@ -4044,6 +4047,73 @@ function updateUserProgress(questionId, selectedAnswer, isCorrect, isExamMode = 
   }
 }
 
+
+// ==================== ONLINE PRESENCE AND MODULE TRACKING ====================
+let userSessionId = localStorage.getItem('userSessionId');
+if (!userSessionId) {
+    userSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('userSessionId', userSessionId);
+}
+
+// Initialize online presence
+function initOnlinePresence() {
+    if (!firebaseSyncEnabled || !database) return;
+    
+    const userRef = database.ref(`chat/onlineUsers/${userSessionId}`);
+    const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
+    const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
+    
+    // Set initial presence
+    userRef.set({
+        userId: userId,
+        name: userName,
+        lastSeen: Date.now(),
+        firstSeen: Date.now(),
+        sessionStart: Date.now(),
+        module: null,
+        currentModule: null,
+        selectedModule: null,
+        lastModule: null
+    });
+    
+    // Clean up when user leaves
+    userRef.onDisconnect().remove();
+    
+    // Update lastSeen every 15 seconds
+    setInterval(() => {
+        if (firebaseSyncEnabled && database) {
+            userRef.update({
+                lastSeen: Date.now()
+            });
+        }
+    }, 15000);
+}
+
+// Update user's current module in online status
+function updateUserModule(moduleId) {
+    if (!firebaseSyncEnabled || !database || !moduleId) return;
+    
+    console.log(`📌 Updating user module to: ${moduleId}`);
+    
+    const userRef = database.ref(`chat/onlineUsers/${userSessionId}`);
+    const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
+    const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
+    
+    userRef.update({
+        module: moduleId,
+        currentModule: moduleId,
+        selectedModule: moduleId,
+        lastModule: moduleId,
+        name: userName,
+        userId: userId,
+        lastSeen: Date.now()
+    }).then(() => {
+        console.log(`✅ Module ${moduleId} synced to online status`);
+    }).catch(error => {
+        console.error('Error updating module:', error);
+    });
+}
+
 function checkWrongQuestionsExhausted() {
   if (!currentUser || currentUser.isGuest || !currentTestType) return false;
   
@@ -4176,6 +4246,9 @@ function handleModuleCheckboxClick(clickedCheckbox) {
     
     const moduleValue = clickedCheckbox.value;
     saveSelectedModule(moduleValue);
+    
+    // 👇 ADD THIS LINE
+    updateUserModule(moduleValue);
     
     updateTopicsVisibility();
     
@@ -4457,6 +4530,9 @@ function applySelectedModule(savedModule, fromFirebase = false) {
     updateDropdownText(savedModule);
     currentTestType = savedModule;
     
+    // 👇 ADD THIS LINE
+    updateUserModule(savedModule);
+    
     updateTopicsVisibility();
     
     const container = document.getElementById('modulesContainer');
@@ -4643,6 +4719,9 @@ function initAuth() {
     userName = currentUser.username;
     localStorage.setItem('chatUserName', userName);
     
+      // 👇 ADD THIS LINE RIGHT HERE
+  initOnlinePresence();
+  
     loadCSV();
     initChat();
     updateTimerDisplay();
@@ -4864,7 +4943,9 @@ async function handleSignup() {
     bindUserMenuEvents();
     
     updateTimerDisplay();
-    
+    // Add this after successful signup
+initOnlinePresence();
+
     if (allTests.length === 0) {
       console.log("Loading CSV after signup...");
       await loadCSV();
@@ -8120,6 +8201,9 @@ function onModuleSelected(moduleValue) {
   updateDropdownText(moduleValue);
   
   currentTestType = moduleValue;
+  
+  // 👇 ADD THIS LINE
+  updateUserModule(moduleValue);
   
   updateTopicsVisibility();
   
