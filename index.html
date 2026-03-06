@@ -4058,18 +4058,20 @@ if (!userSessionId) {
 function initOnlinePresence() {
     if (!firebaseSyncEnabled || !database) return;
     
-
-    const userSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const userSessionId = localStorage.getItem('userSessionId');
+    if (!userSessionId) {
+        const newSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('userSessionId', newSessionId);
+    }
     
-
-    
-    const userRef = database.ref(`chat/onlineUsers/${userSessionId}`);
-    const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
+    const sessionId = localStorage.getItem('userSessionId');
+    const userRef = database.ref(`chat/onlineUsers/${sessionId}`);
+    const userId = localStorage.getItem('chatUserId') || 'guest_' + sessionId;
     const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
     
     const sessionStart = Date.now();
     
-    console.log(`🆕 NEW SESSION STARTED AT: ${new Date(sessionStart).toLocaleTimeString()} (ID: ${userSessionId})`);
+    console.log(`🆕 NEW SESSION: ${new Date(sessionStart).toLocaleTimeString()} (ID: ${sessionId})`);
     
     userRef.set({
         userId: userId,
@@ -4077,17 +4079,46 @@ function initOnlinePresence() {
         lastSeen: sessionStart,
         firstSeen: sessionStart,
         sessionStart: sessionStart,
-        module: null,
-        currentModule: null,
-        selectedModule: null,
-        lastModule: null
+        module: currentTestType || null,
+        currentModule: currentTestType || null
     }).then(() => {
-        console.log(`✅ Online presence set with sessionStart: ${new Date(sessionStart).toLocaleTimeString()}`);
+        console.log(`✅ Online presence set`);
     }).catch(error => {
         console.error('Error setting online presence:', error);
     });
     
-    userRef.onDisconnect().remove();
+
+    userRef.onDisconnect().remove().then(() => {
+        console.log('✅ onDisconnect handler set up');
+    }).catch(error => {
+        console.error('Error setting onDisconnect:', error);
+    });
+    
+    const handleBeforeUnload = () => {
+        if (firebaseSyncEnabled && database) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('DELETE', `https://rezidentura-7bfd5-default-rtdb.firebaseio.com/chat/onlineUsers/${sessionId}.json`, false);
+            xhr.send();
+            console.log('✅ Removed on beforeunload');
+        }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    window.addEventListener('pagehide', () => {
+        if (firebaseSyncEnabled && database) {
+            userRef.remove();
+            console.log('✅ Removed on pagehide');
+        }
+    });
+    
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            console.log('Tab hidden - will be removed if closed');
+        }
+    });
+    
+    cleanupOldSessions();
     
     if (window.onlinePresenceInterval) {
         clearInterval(window.onlinePresenceInterval);
@@ -4096,23 +4127,39 @@ function initOnlinePresence() {
     window.onlinePresenceInterval = setInterval(() => {
         if (firebaseSyncEnabled && database) {
             userRef.update({
-                lastSeen: Date.now()
+                lastSeen: Date.now(),
+                module: currentTestType || null,
+                currentModule: currentTestType || null
             });
         }
     }, 10000);
+}
+
+function cleanupOldSessions() {
+    if (!firebaseSyncEnabled || !database) return;
     
-    window.addEventListener('beforeunload', function() {
-        if (firebaseSyncEnabled && database) {
-            userRef.remove();
-        }
-        if (window.onlinePresenceInterval) {
-            clearInterval(window.onlinePresenceInterval);
+    const now = Date.now();
+    const TIMEOUT = 60000;
+    
+    database.ref('chat/onlineUsers').once('value', (snapshot) => {
+        const users = snapshot.val() || {};
+        const updates = {};
+        
+        Object.entries(users).forEach(([key, user]) => {
+            if (user && user.lastSeen && (now - user.lastSeen) > TIMEOUT) {
+                updates[key] = null;
+                console.log(`🧹 Cleaning up stale session: ${key}`);
+            }
+        });
+        
+        if (Object.keys(updates).length > 0) {
+            database.ref('chat/onlineUsers').update(updates);
+            console.log(`✅ Cleaned up ${Object.keys(updates).length} stale sessions`);
         }
     });
 }
 
-
-
+setInterval(cleanupOldSessions, 30000); 
 function updateUserModule(moduleId) {
     if (!firebaseSyncEnabled || !database || !moduleId) return;
     
