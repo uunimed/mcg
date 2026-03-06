@@ -4055,31 +4055,25 @@ if (!userSessionId) {
     localStorage.setItem('userSessionId', userSessionId);
 }
 
-
 function initOnlinePresence() {
     if (!firebaseSyncEnabled || !database) return;
+    
+    const userSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('userSessionId', userSessionId);
     
     const userRef = database.ref(`chat/onlineUsers/${userSessionId}`);
     const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
     const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
     
-    let sessionStart = localStorage.getItem('userSessionStart');
-    const now = Date.now();
+    const sessionStart = Date.now();
     
-    if (!sessionStart) {
-        sessionStart = now;
-        localStorage.setItem('userSessionStart', sessionStart);
-        console.log(`🆕 New session started at: ${new Date(sessionStart).toLocaleTimeString()}`);
-    } else {
-        sessionStart = parseInt(sessionStart);
-        console.log(`🔄 Continuing session from: ${new Date(sessionStart).toLocaleTimeString()}`);
-    }
+    console.log(`🆕 New session started at: ${new Date(sessionStart).toLocaleTimeString()}`);
     
     userRef.set({
         userId: userId,
         name: userName,
-        lastSeen: now,
-        firstSeen: sessionStart, 
+        lastSeen: sessionStart,
+        firstSeen: sessionStart,
         sessionStart: sessionStart, 
         module: null,
         currentModule: null,
@@ -4093,14 +4087,28 @@ function initOnlinePresence() {
     
     userRef.onDisconnect().remove();
     
-    setInterval(() => {
+    if (window.onlinePresenceInterval) {
+        clearInterval(window.onlinePresenceInterval);
+    }
+    
+    window.onlinePresenceInterval = setInterval(() => {
         if (firebaseSyncEnabled && database) {
             userRef.update({
                 lastSeen: Date.now()
             });
         }
-    }, 15000);
+    }, 10000);
+    
+    window.addEventListener('beforeunload', function() {
+        if (firebaseSyncEnabled && database) {
+            userRef.remove();
+        }
+        if (window.onlinePresenceInterval) {
+            clearInterval(window.onlinePresenceInterval);
+        }
+    });
 }
+
 
 
 function updateUserModule(moduleId) {
@@ -4108,13 +4116,14 @@ function updateUserModule(moduleId) {
     
     console.log(`📌 Updating user module to: ${moduleId}`);
     
+    const userSessionId = localStorage.getItem('userSessionId');
+    if (!userSessionId) return;
+    
     const userRef = database.ref(`chat/onlineUsers/${userSessionId}`);
     const userName = currentUser?.username || localStorage.getItem('chatUserName') || 'სტუმარი';
     const userId = localStorage.getItem('chatUserId') || 'guest_' + userSessionId;
     
-    let sessionStart = parseInt(localStorage.getItem('userSessionStart') || Date.now());
-    
-    let firstSeen = parseInt(localStorage.getItem('userFirstSeen') || sessionStart);
+    const sessionStart = Date.now();
     
     userRef.update({
         module: moduleId,
@@ -4124,10 +4133,10 @@ function updateUserModule(moduleId) {
         name: userName,
         userId: userId,
         lastSeen: Date.now(),
-        firstSeen: firstSeen,
+        firstSeen: sessionStart,
         sessionStart: sessionStart 
     }).then(() => {
-        console.log(`✅ Module ${moduleId} synced to online status with sessionStart: ${new Date(sessionStart).toLocaleTimeString()}`);
+        console.log(`✅ Module ${moduleId} synced with new session start: ${new Date(sessionStart).toLocaleTimeString()}`);
     }).catch(error => {
         console.error('Error updating module:', error);
     });
