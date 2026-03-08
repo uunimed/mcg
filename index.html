@@ -2,105 +2,226 @@
 <html lang="ka">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>გადამისამართება</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UniMed | გადამისამართება</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        @import url('https://fonts.googleapis.com/css2?family=Fira+GO:wght@300;400;700&display=swap');
+
+        :root {
+            --accent-color: #3498db;
+            --text-main: #2c3e50;
+            --bg-color: #f8faff;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Parara', 'Fira GO', sans-serif; 
+            background-color: var(--bg-color);
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
         }
-        
-        .container {
-            background: rgba(255, 255, 255, 0.1);
+
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .card {
+            position: relative;
+            z-index: 2;
+            width: 85%;
+            max-width: 350px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             padding: 2rem;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.4);
+            text-align: center;
+            animation: cardEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        
+
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            margin: 0 0 1rem 0;
+            font-weight: 700;
         }
-        
-        p {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
+
+        .description {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            font-weight: 300;
         }
-        
-        .timer {
-            font-size: 3rem;
-            font-weight: bold;
-            margin: 1rem 0;
-            color: #ffd700;
-        }
-        
-        .link-container {
-            margin-top: 2rem;
+
+        .redirect-box {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
             padding: 1rem;
-            background: rgba(255, 255, 255, 0.2);
+            margin-bottom: 1.5rem;
+        }
+
+        .status-text {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+
+        .progress-container {
+            height: 6px;
+            background: #eee;
             border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
         }
-        
-        a {
-            color: #ffd700;
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3498db, #5dade2);
+            transition: width 1s linear;
+        }
+
+        .link-text {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--accent-color);
             text-decoration: none;
-            font-weight: bold;
             word-break: break-all;
+            margin-top: 10px;
+            opacity: 0.8;
         }
-        
-        a:hover {
-            text-decoration: underline;
+
+        footer {
+            font-weight: 400;
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .timer-val {
+            font-weight: bold;
+            color: var(--accent-color);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔄 გადამისამართება</h1>
-        <p>თქვენ გადამისამართდებით 3 წამში:</p>
-        <div class="timer" id="timer">3</div>
-        
-        <div class="link-container">
-            <p>📌 ახალი ლინკი:</p>
-            <a href="http://uunimed.github.io/exams" target="_blank" rel="noopener noreferrer">
-                http://uunimed.github.io/exams
-            </a>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="card">
+        <h1>UniMed</h1>
+        <p class="description">
+            გვერდი განახლდა! რეზიდენტურის გამოცდის გარდა, დაემატა სალიცენზიო გამოცდები და ფუნქციები, რომლებიც ნამდვილად გჭირდებათ!
+        </p>
+
+        <div class="redirect-box">
+            <div class="status-text">მიმდინარეობს გადამისამართება...</div>
+            <div class="timer-val"><span id="seconds">5</span> წამი</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="bar"></div>
+            </div>
+
+            <a href="https://uunimed.github.io/exams" class="link-text">uunimed.github.io/exams</a>
         </div>
+
+        <footer>წარმატებულ საგამოცდო პერიოდს გისურვებთ</footer>
     </div>
 
     <script>
-        // დათვლის ტაიმერი
-        let seconds = 3;
-        const timerElement = document.getElementById('timer');
-        
-        // განაახლებს ტაიმერს ყოველ წამში
-        const countdown = setInterval(() => {
-            seconds--;
-            timerElement.textContent = seconds;
-            
-            if (seconds <= 0) {
-                clearInterval(countdown);
-                // გადამისამართება მთავარ გვერდზე
-                window.location.href = 'http://uunimed.github.io/exams';
-                // ახალი ლინკის გახსნა ახალ ტაბში
-                window.open('http://uunimed.github.io/exams', '_blank');
+        const targetURL = "https://uunimed.github.io/exams";
+        let time = 5;
+        const secondsEl = document.getElementById('seconds');
+        const barEl = document.getElementById('bar');
+
+        const timer = setInterval(() => {
+            time--;
+            secondsEl.innerText = time;
+            barEl.style.width = ((5 - time) / 5 * 100) + "%";
+
+            if (time <= 0) {
+                clearInterval(timer);
+                window.location.href = targetURL;
             }
         }, 1000);
-        
-        // დამატებითი უსაფრთხოება: თუ რამე მოხდა ტაიმერთან
-        setTimeout(() => {
-            if (seconds > 0) {
-                window.location.href = 'http://uunimed.github.io/exams';
-                window.open('http://uunimed.github.io/exams', '_blank');
+
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
             }
-        }, 3500); // 3.5 წამი როგორც ბექაფი
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.opacity = Math.random() * 0.5;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.fillStyle = `rgba(52, 152, 219, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createParticles() {
+            for (let i = 0; i < 60; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        createParticles();
+        animate();
     </script>
 </body>
 </html>
