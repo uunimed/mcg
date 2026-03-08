@@ -43,53 +43,62 @@
         .card {
             position: relative;
             z-index: 2;
-            width: 85%;
-            max-width: 350px;
+            width: 90%;
+            max-width: 600px; 
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            padding: 2rem;
-            border-radius: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            padding: 3rem 2rem;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.08);
             border: 1px solid rgba(255,255,255,0.4);
             text-align: center;
             animation: cardEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: all 0.3s ease;
         }
 
         h1 {
-            font-size: 1.8rem;
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
             color: var(--accent-color);
-            margin: 0 0 1rem 0;
+            margin: 0 0 1.5rem 0;
             font-weight: 700;
         }
 
         .description {
-            font-size: 0.95rem;
-            line-height: 1.5;
+            font-size: clamp(0.95rem, 2vw, 1.2rem);
+            line-height: 1.6;
             color: var(--text-main);
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
             font-weight: 300;
+            padding: 0 10px;
         }
 
         .redirect-box {
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 20px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 25px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0,0,0,0.03);
         }
 
         .status-text {
-            font-size: 0.85rem;
+            font-size: clamp(0.85rem, 1.5vw, 1rem);
             color: #7f8c8d;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .timer-val {
+            font-weight: bold;
+            font-size: clamp(1.1rem, 2vw, 1.5rem);
+            color: var(--accent-color);
         }
 
         .progress-container {
-            height: 6px;
+            height: 8px;
             background: #eee;
             border-radius: 10px;
             overflow: hidden;
-            margin: 10px 0;
+            margin: 15px 0;
         }
 
         .progress-bar {
@@ -101,28 +110,34 @@
 
         .link-text {
             display: block;
-            font-size: 0.75rem;
+            font-size: clamp(0.75rem, 1.2vw, 0.9rem);
             color: var(--accent-color);
             text-decoration: none;
             word-break: break-all;
-            margin-top: 10px;
-            opacity: 0.8;
+            margin-top: 12px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .link-text:hover {
+            opacity: 1;
         }
 
         footer {
             font-weight: 400;
             color: #95a5a6;
-            font-size: 0.9rem;
+            font-size: clamp(0.9rem, 1.5vw, 1.1rem);
         }
 
         @keyframes cardEntrance {
-            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        .timer-val {
-            font-weight: bold;
-            color: var(--accent-color);
+        @media (min-width: 768px) {
+            .card {
+                padding: 4rem 3.5rem;
+            }
         }
     </style>
 </head>
@@ -158,8 +173,8 @@
 
         const timer = setInterval(() => {
             time--;
-            secondsEl.innerText = time;
-            barEl.style.width = ((5 - time) / 5 * 100) + "%";
+            if(secondsEl) secondsEl.innerText = time;
+            if(barEl) barEl.style.width = ((5 - time) / 5 * 100) + "%";
 
             if (time <= 0) {
                 clearInterval(timer);
@@ -174,6 +189,8 @@
         function initCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            particles = [];
+            createParticles();
         }
 
         class Particle {
@@ -184,8 +201,8 @@
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
                 this.size = Math.random() * 2 + 0.5;
-                this.speedX = Math.random() * 0.5 - 0.25;
-                this.speedY = Math.random() * 0.5 - 0.25;
+                this.speedX = Math.random() * 0.4 - 0.2;
+                this.speedY = Math.random() * 0.4 - 0.2;
                 this.opacity = Math.random() * 0.5;
             }
             update() {
@@ -204,7 +221,8 @@
         }
 
         function createParticles() {
-            for (let i = 0; i < 60; i++) {
+            const count = window.innerWidth > 1000 ? 120 : 60;
+            for (let i = 0; i < count; i++) {
                 particles.push(new Particle());
             }
         }
@@ -220,7 +238,6 @@
 
         window.addEventListener('resize', initCanvas);
         initCanvas();
-        createParticles();
         animate();
     </script>
 </body>
