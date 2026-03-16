@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ka">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>advanced clock · particles</title>
+    <title>advanced clock · ქართული</title>
     <style>
         * {
             margin: 0;
@@ -16,7 +16,9 @@
             width: 100vw;
             overflow: hidden;
             background-color: #0a0a1a; /* deep dark fallback */
-            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+            /* soft, fat, modern Georgian-friendly font stack */
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans Georgian', 'Noto Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 700; /* bold base, but we'll control per element */
         }
 
         /* canvas fills entire background, behind everything */
@@ -28,7 +30,7 @@
             height: 100%;
             display: block;
             z-index: 0;
-            pointer-events: none; /* so clock can be clicked/selected if needed */
+            pointer-events: none;
         }
 
         /* clock container: full flex center, layered above canvas */
@@ -43,73 +45,77 @@
             justify-content: center;
             z-index: 10;
             color: white;
-            text-shadow: 0 0 20px rgba(0, 180, 255, 0.7), 0 0 40px rgba(100, 0, 255, 0.5);
-            backdrop-filter: blur(0px); /* no blur — keep crisp, but adds depth */
+            text-shadow: 0 0 20px rgba(0, 160, 255, 0.7), 0 0 40px rgba(80, 100, 255, 0.5);
             padding: 1rem;
         }
 
-        /* advanced clock styling */
+        /* clock panel: NO background, just text and subtle shadow */
         .clock-panel {
             text-align: center;
-            background: rgba(10, 10, 25, 0.3);
-            border-radius: 60px;
-            padding: 2.5rem 5rem;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 80px rgba(0, 160, 255, 0.3);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: box-shadow 0.2s ease;
+            /* no background, no blur, no border — only text and its glow */
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: none;
+            box-shadow: none;
+            padding: 0; /* remove extra padding so time is pure */
+            max-width: 95vw;
         }
 
+        /* time in bold, soft and fat */
         .time {
-            font-size: clamp(4rem, 20vw, 11rem);
-            font-weight: 600;
-            letter-spacing: 6px;
-            line-height: 1.2;
+            font-size: clamp(4.5rem, 22vw, 12rem);
+            font-weight: 800; /* extra bold for fat look */
+            letter-spacing: 2px;
+            line-height: 1.1;
             font-variant-numeric: tabular-nums;
             color: #ffffff;
-            text-shadow: 0 0 15px cyan, 0 0 45px blue;
+            text-shadow: 0 0 15px cyan, 0 0 45px #3a7eff;
+            margin: 0;
+            /* softness comes from the font itself and slight glow */
         }
 
+        /* date row: month + year, also bold but a tad lighter */
         .date {
-            font-size: clamp(1.8rem, 7vw, 3.8rem);
-            letter-spacing: 4px;
-            font-weight: 300;
-            text-transform: uppercase;
-            margin-top: 0.4rem;
+            font-size: clamp(2rem, 7vw, 4rem);
+            font-weight: 700; /* bold, but not as heavy as time */
+            letter-spacing: 2px;
+            margin-top: 0.5rem;
             color: #e0f0ff;
-            text-shadow: 0 0 10px #8cb4ff, 0 0 30px #4a6eff;
-            border-top: 1px dashed rgba(255,255,255,0.2);
-            padding-top: 1rem;
-            display: inline-block;
+            text-shadow: 0 0 15px #6a9eff, 0 0 30px #3a62c4;
+            line-height: 1.3;
+            border: none;    /* no extra line */
+            padding: 0;
+            display: block;   /* full width for block */
         }
 
-        .date span {
-            font-weight: 400;
-            color: #b3e0ff;
-        }
-
-        /* small extra details — month and year already inside .date */
+        /* optional subtext — small and thin, but we remove background completely */
         .clock-panel sub {
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-weight: 400; /* light, to contrast with bold time */
             opacity: 0.7;
             display: block;
-            margin-top: 0.75rem;
+            margin-top: 1.2rem;
             letter-spacing: 2px;
-            color: #aac9ff;
+            color: #b0d0ff;
+            text-shadow: 0 0 8px #2f4faf;
+            background: transparent;
         }
 
-        /* responsive fine-tuning */
+        /* all text elements have zero background */
+        .time, .date, sub {
+            background: transparent;
+        }
+
+        /* responsive adjustments */
         @media (max-width: 600px) {
-            .clock-panel {
-                padding: 1.5rem 2rem;
-                border-radius: 40px;
-            }
             .time {
-                letter-spacing: 2px;
+                font-size: clamp(3.8rem, 18vw, 8rem);
+                letter-spacing: 1px;
             }
             .date {
-                letter-spacing: 2px;
+                font-size: clamp(1.6rem, 6vw, 2.8rem);
+                margin-top: 0.3rem;
             }
         }
     </style>
@@ -118,12 +124,14 @@
     <!-- canvas for particles (dark background + moving particles) -->
     <canvas id="particle-canvas"></canvas>
 
-    <!-- clock overlay, centered -->
+    <!-- clock overlay, centered, completely transparent background -->
     <div class="clock-wrapper">
         <div class="clock-panel">
-            <div class="time" id="time">23:59:59</div>
-            <div class="date" id="date">January 01, 2026</div>
-            <sub>· coordinated universal time ·</sub>
+            <!-- time in hh.mm.ss (წუთი & წამი are implied, but we keep format with dots) -->
+            <div class="time" id="time">23.59.59</div>
+            <!-- month year in Georgian: e.g. "მარტი 2026" (month + year)  -->
+            <div class="date" id="date">მარტი 2026</div>
+            <sub>· თბილისის დრო ·</sub>   <!-- "tbilisi time" in Georgian, adds local touch -->
         </div>
     </div>
 
@@ -131,17 +139,17 @@
         (function() {
             "use strict";
 
-            // ---------- PARTICLE BACKGROUND (advanced, dark, moving) ----------
+            // ---------- PARTICLE BACKGROUND (dark, refined, no ugly effects) ----------
             const canvas = document.getElementById('particle-canvas');
             const ctx = canvas.getContext('2d');
 
             let width, height;
             let particles = [];
 
-            const PARTICLE_COUNT = 180; // comfortable amount for density
-            const MAX_RADIUS = 2.2;
-            const MIN_RADIUS = 0.8;
-            const CONNECT_DIST = 140; // connect if closer than this
+            const PARTICLE_COUNT = 150;        // sufficient density
+            const MAX_RADIUS = 2.4;
+            const MIN_RADIUS = 0.9;
+            const CONNECT_DIST = 150;          // connection distance for subtle web
 
             function initParticles() {
                 particles = [];
@@ -149,10 +157,10 @@
                     particles.push({
                         x: Math.random() * width,
                         y: Math.random() * height,
-                        vx: (Math.random() - 0.5) * 0.4,
+                        vx: (Math.random() - 0.5) * 0.35,
                         vy: (Math.random() - 0.5) * 0.25,
                         radius: Math.random() * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS,
-                        baseAlpha: Math.random() * 0.5 + 0.3, // 0.3-0.8
+                        alphaBase: Math.random() * 0.5 + 0.3, // 0.3–0.8
                     });
                 }
             }
@@ -162,7 +170,7 @@
                 height = window.innerHeight;
                 canvas.width = width;
                 canvas.height = height;
-                initParticles(); // redistribute on resize
+                initParticles();
             }
 
             function drawParticles() {
@@ -170,25 +178,24 @@
 
                 ctx.clearRect(0, 0, width, height);
 
-                // dark background with slight gradient depth
-                const gradient = ctx.createLinearGradient(0, 0, width*0.6, height);
-                gradient.addColorStop(0, '#0a0c1a');
-                gradient.addColorStop(0.7, '#11152b');
+                // deep dark gradient (very subtle)
+                const gradient = ctx.createLinearGradient(0, 0, width*0.5, height);
+                gradient.addColorStop(0, '#0b0e1a');
+                gradient.addColorStop(1, '#12172f');
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, width, height);
 
-                // draw connections first (semi-transparent lines)
-                ctx.strokeStyle = 'rgba(100, 180, 255, 0.15)';
-                ctx.lineWidth = 0.8;
+                // faint connections between nearby particles (ethereal)
+                ctx.strokeStyle = 'rgba(90, 160, 255, 0.12)';
+                ctx.lineWidth = 0.7;
                 for (let i = 0; i < particles.length; i++) {
                     for (let j = i + 1; j < particles.length; j++) {
                         const dx = particles[i].x - particles[j].x;
                         const dy = particles[i].y - particles[j].y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist < CONNECT_DIST) {
-                            // opacity based on distance
-                            const op = 0.25 * (1 - dist / CONNECT_DIST);
-                            ctx.strokeStyle = `rgba(150, 210, 255, ${op})`;
+                            const op = 0.18 * (1 - dist / CONNECT_DIST);
+                            ctx.strokeStyle = `rgba(130, 190, 255, ${op})`;
                             ctx.beginPath();
                             ctx.moveTo(particles[i].x, particles[i].y);
                             ctx.lineTo(particles[j].x, particles[j].y);
@@ -197,31 +204,23 @@
                     }
                 }
 
-                // draw particles
+                // draw particles: soft glowing dots
                 for (let p of particles) {
-                    // subtle glow effect (radial gradient per particle)
-                    const grd = ctx.createRadialGradient(p.x, p.y, 0.5, p.x, p.y, p.radius * 4);
-                    grd.addColorStop(0, `rgba(255, 255, 255, ${p.baseAlpha + 0.2})`);
-                    grd.addColorStop(0.5, `rgba(140, 200, 255, ${p.baseAlpha * 0.8})`);
-                    grd.addColorStop(1, `rgba(70, 130, 230, 0)`);
+                    // main glow (radial)
+                    const grd = ctx.createRadialGradient(p.x, p.y, 0.3, p.x, p.y, p.radius * 3.5);
+                    grd.addColorStop(0, `rgba(255, 255, 255, ${p.alphaBase + 0.2})`);
+                    grd.addColorStop(0.6, `rgba(140, 200, 255, ${p.alphaBase * 0.7})`);
+                    grd.addColorStop(1, `rgba(40, 100, 230, 0)`);
 
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius * 2.2, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, p.radius * 2.0, 0, Math.PI * 2);
                     ctx.fillStyle = grd;
                     ctx.fill();
 
-                    // also tiny core
+                    // tiny bright core
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius * 0.8, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, p.radius * 0.9, 0, Math.PI * 2);
                     ctx.fillStyle = `rgba(255, 255, 255, 0.9)`;
-                    ctx.fill();
-                }
-
-                // slight extra stars: few tiny distant dots
-                for (let p of particles.slice(0, 20)) {
-                    ctx.beginPath();
-                    ctx.arc(p.x - 10, p.y - 5, 0.6, 0, 2 * Math.PI);
-                    ctx.fillStyle = 'rgba(210, 230, 255, 0.5)';
                     ctx.fill();
                 }
             }
@@ -231,20 +230,19 @@
                     p.x += p.vx;
                     p.y += p.vy;
 
-                    // wrap around edges
+                    // wrap around edges (infinite feel)
                     if (p.x < 0) p.x = width;
                     if (p.x > width) p.x = 0;
                     if (p.y < 0) p.y = height;
                     if (p.y > height) p.y = 0;
 
-                    // tiny random drift to keep movement organic
-                    if (Math.random() < 0.005) {
-                        p.vx += (Math.random() - 0.5) * 0.06;
-                        p.vy += (Math.random() - 0.5) * 0.06;
-                        // limit velocity
+                    // occasional gentle drift
+                    if (Math.random() < 0.006) {
+                        p.vx += (Math.random() - 0.5) * 0.05;
+                        p.vy += (Math.random() - 0.5) * 0.05;
                         const maxSpeed = 0.5;
-                        if (Math.abs(p.vx) > maxSpeed) p.vx *= 0.95;
-                        if (Math.abs(p.vy) > maxSpeed) p.vy *= 0.95;
+                        if (Math.abs(p.vx) > maxSpeed) p.vx *= 0.96;
+                        if (Math.abs(p.vy) > maxSpeed) p.vy *= 0.96;
                     }
                 }
             }
@@ -258,54 +256,48 @@
                 requestAnimationFrame(animateParticles);
             }
 
-            // initial canvas setup
+            // start particles
             resizeCanvas();
             animateParticles();
 
-            // ---------- ADVANCED CLOCK (hh.mm.ss down month, year) ----------
+            // ---------- ADVANCED CLOCK with Georgian month names ----------
             const timeEl = document.getElementById('time');
             const dateEl = document.getElementById('date');
+
+            // full Georgian month names
+            const monthNamesGE = [
+                'იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი',
+                'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'
+            ];
 
             function updateClock() {
                 const now = new Date();
 
-                // time in hh.mm.ss  (with dot separators)
+                // time in hh.mm.ss (24h format, with dots)
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 const seconds = String(now.getSeconds()).padStart(2, '0');
                 const timeString = `${hours}.${minutes}.${seconds}`;
 
-                // month and year (down month, year as requested)
-                // format: "January 01, 2026" — month full name, day two-digit, year
-                const monthNames = [
-                    'January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'
-                ];
-                const month = monthNames[now.getMonth()];
-                const day = String(now.getDate()).padStart(2, '0');
+                // month and year (down month, year) in Georgian:
+                // example: "მარტი 2026"  (no day number, just month + year as requested)
+                const monthIndex = now.getMonth();
+                const monthName = monthNamesGE[monthIndex];
                 const year = now.getFullYear();
-
-                const dateString = `${month} ${day}, ${year}`;
+                const dateString = `${monthName} ${year}`;
 
                 // update DOM
                 timeEl.textContent = timeString;
                 dateEl.textContent = dateString;
             }
 
-            // initial call and set interval
+            // initial update and set interval
             updateClock();
-            setInterval(updateClock, 500); // smoothness, but we can also do 1000
-            // using 500ms avoids flicker but still precise; feel free to use 1000.
+            setInterval(updateClock, 500); // smooth, but you can change to 1000 if preferred
 
-            // optional: reflow on resize just fine
-            window.addEventListener('resize', () => {
-                // canvas handled by animation loop, but we ensure clock stays centered with css
-                // just trigger update for safety, no need
-            });
+            // ensure canvas resize doesn't affect clock
+            window.addEventListener('resize', () => {});
         })();
     </script>
-
-    <!-- small note: all requirements met: full screen advanced clock (hh.mm.ss, down month year),
-         centered, dark background particles, advanced look -->
 </body>
 </html>
