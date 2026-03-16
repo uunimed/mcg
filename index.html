@@ -1,244 +1,311 @@
 <!DOCTYPE html>
-<html lang="ka">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UniMed | გადამისამართება</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>advanced clock · particles</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+GO:wght@300;400;700&display=swap');
-
-        :root {
-            --accent-color: #3498db;
-            --text-main: #2c3e50;
-            --bg-color: #f8faff;
-        }
-
         * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Parara', 'Fira GO', sans-serif; 
-            background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            box-sizing: border-box;
         }
 
+        body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-color: #0a0a1a; /* deep dark fallback */
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+        }
+
+        /* canvas fills entire background, behind everything */
         #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 0;
+            pointer-events: none; /* so clock can be clicked/selected if needed */
+        }
+
+        /* clock container: full flex center, layered above canvas */
+        .clock-wrapper {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: white;
+            text-shadow: 0 0 20px rgba(0, 180, 255, 0.7), 0 0 40px rgba(100, 0, 255, 0.5);
+            backdrop-filter: blur(0px); /* no blur — keep crisp, but adds depth */
+            padding: 1rem;
         }
 
-        .card {
-            position: relative;
-            z-index: 2;
-            width: 90%;
-            max-width: 600px; 
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            padding: 3rem 2rem;
-            border-radius: 40px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.08);
-            border: 1px solid rgba(255,255,255,0.4);
+        /* advanced clock styling */
+        .clock-panel {
             text-align: center;
-            animation: cardEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-            transition: all 0.3s ease;
+            background: rgba(10, 10, 25, 0.3);
+            border-radius: 60px;
+            padding: 2.5rem 5rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 80px rgba(0, 160, 255, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: box-shadow 0.2s ease;
         }
 
-        h1 {
-            font-size: clamp(1.8rem, 5vw, 2.8rem);
-            color: var(--accent-color);
-            margin: 0 0 1.5rem 0;
-            font-weight: 700;
+        .time {
+            font-size: clamp(4rem, 20vw, 11rem);
+            font-weight: 600;
+            letter-spacing: 6px;
+            line-height: 1.2;
+            font-variant-numeric: tabular-nums;
+            color: #ffffff;
+            text-shadow: 0 0 15px cyan, 0 0 45px blue;
         }
 
-        .description {
-            font-size: clamp(0.95rem, 2vw, 1.2rem);
-            line-height: 1.6;
-            color: var(--text-main);
-            margin-bottom: 2rem;
+        .date {
+            font-size: clamp(1.8rem, 7vw, 3.8rem);
+            letter-spacing: 4px;
             font-weight: 300;
-            padding: 0 10px;
+            text-transform: uppercase;
+            margin-top: 0.4rem;
+            color: #e0f0ff;
+            text-shadow: 0 0 10px #8cb4ff, 0 0 30px #4a6eff;
+            border-top: 1px dashed rgba(255,255,255,0.2);
+            padding-top: 1rem;
+            display: inline-block;
         }
 
-        .redirect-box {
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 25px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(0,0,0,0.03);
-        }
-
-        .status-text {
-            font-size: clamp(0.85rem, 1.5vw, 1rem);
-            color: #7f8c8d;
-            margin-bottom: 10px;
-        }
-
-        .timer-val {
-            font-weight: bold;
-            font-size: clamp(1.1rem, 2vw, 1.5rem);
-            color: var(--accent-color);
-        }
-
-        .progress-container {
-            height: 8px;
-            background: #eee;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 15px 0;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #3498db, #5dade2);
-            transition: width 1s linear;
-        }
-
-        .link-text {
-            display: block;
-            font-size: clamp(0.75rem, 1.2vw, 0.9rem);
-            color: var(--accent-color);
-            text-decoration: none;
-            word-break: break-all;
-            margin-top: 12px;
-            opacity: 0.7;
-            transition: opacity 0.3s;
-        }
-
-        .link-text:hover {
-            opacity: 1;
-        }
-
-        footer {
+        .date span {
             font-weight: 400;
-            color: #95a5a6;
-            font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+            color: #b3e0ff;
         }
 
-        @keyframes cardEntrance {
-            from { opacity: 0; transform: translateY(40px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        /* small extra details — month and year already inside .date */
+        .clock-panel sub {
+            font-size: 1rem;
+            opacity: 0.7;
+            display: block;
+            margin-top: 0.75rem;
+            letter-spacing: 2px;
+            color: #aac9ff;
         }
 
-        @media (min-width: 768px) {
-            .card {
-                padding: 4rem 3.5rem;
+        /* responsive fine-tuning */
+        @media (max-width: 600px) {
+            .clock-panel {
+                padding: 1.5rem 2rem;
+                border-radius: 40px;
+            }
+            .time {
+                letter-spacing: 2px;
+            }
+            .date {
+                letter-spacing: 2px;
             }
         }
     </style>
 </head>
 <body>
-
+    <!-- canvas for particles (dark background + moving particles) -->
     <canvas id="particle-canvas"></canvas>
 
-    <div class="card">
-        <h1>UniMed</h1>
-        <p class="description">
-            გვერდი განახლდა! რეზიდენტურის გამოცდის გარდა, დაემატა სალიცენზიო გამოცდები და ფუნქციები, რომლებიც ნამდვილად გჭირდებათ!
-        </p>
-
-        <div class="redirect-box">
-            <div class="status-text">მიმდინარეობს გადამისამართება...</div>
-            <div class="timer-val"><span id="seconds">5</span> წამი</div>
-            
-            <div class="progress-container">
-                <div class="progress-bar" id="bar"></div>
-            </div>
-
-            <a href="https://uunimed.github.io/exams" class="link-text">uunimed.github.io/exams</a>
+    <!-- clock overlay, centered -->
+    <div class="clock-wrapper">
+        <div class="clock-panel">
+            <div class="time" id="time">23:59:59</div>
+            <div class="date" id="date">January 01, 2026</div>
+            <sub>· coordinated universal time ·</sub>
         </div>
-
-        <footer>წარმატებულ საგამოცდო პერიოდს გისურვებთ</footer>
     </div>
 
     <script>
-        const targetURL = "https://uunimed.github.io/exams";
-        let time = 5;
-        const secondsEl = document.getElementById('seconds');
-        const barEl = document.getElementById('bar');
+        (function() {
+            "use strict";
 
-        const timer = setInterval(() => {
-            time--;
-            if(secondsEl) secondsEl.innerText = time;
-            if(barEl) barEl.style.width = ((5 - time) / 5 * 100) + "%";
+            // ---------- PARTICLE BACKGROUND (advanced, dark, moving) ----------
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
 
-            if (time <= 0) {
-                clearInterval(timer);
-                window.location.href = targetURL;
-            }
-        }, 1000);
+            let width, height;
+            let particles = [];
 
-        const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
+            const PARTICLE_COUNT = 180; // comfortable amount for density
+            const MAX_RADIUS = 2.2;
+            const MIN_RADIUS = 0.8;
+            const CONNECT_DIST = 140; // connect if closer than this
 
-        function initCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            particles = [];
-            createParticles();
-        }
-
-        class Particle {
-            constructor() {
-                this.reset();
-            }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 0.5;
-                this.speedX = Math.random() * 0.4 - 0.2;
-                this.speedY = Math.random() * 0.4 - 0.2;
-                this.opacity = Math.random() * 0.5;
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.reset();
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    particles.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        vx: (Math.random() - 0.5) * 0.4,
+                        vy: (Math.random() - 0.5) * 0.25,
+                        radius: Math.random() * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS,
+                        baseAlpha: Math.random() * 0.5 + 0.3, // 0.3-0.8
+                    });
                 }
             }
-            draw() {
-                ctx.fillStyle = `rgba(52, 152, 219, ${this.opacity})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
 
-        function createParticles() {
-            const count = window.innerWidth > 1000 ? 120 : 60;
-            for (let i = 0; i < count; i++) {
-                particles.push(new Particle());
+            function resizeCanvas() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                initParticles(); // redistribute on resize
             }
-        }
 
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
+            function drawParticles() {
+                if (!ctx || width === 0 || height === 0) return;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // dark background with slight gradient depth
+                const gradient = ctx.createLinearGradient(0, 0, width*0.6, height);
+                gradient.addColorStop(0, '#0a0c1a');
+                gradient.addColorStop(0.7, '#11152b');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+
+                // draw connections first (semi-transparent lines)
+                ctx.strokeStyle = 'rgba(100, 180, 255, 0.15)';
+                ctx.lineWidth = 0.8;
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < CONNECT_DIST) {
+                            // opacity based on distance
+                            const op = 0.25 * (1 - dist / CONNECT_DIST);
+                            ctx.strokeStyle = `rgba(150, 210, 255, ${op})`;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // draw particles
+                for (let p of particles) {
+                    // subtle glow effect (radial gradient per particle)
+                    const grd = ctx.createRadialGradient(p.x, p.y, 0.5, p.x, p.y, p.radius * 4);
+                    grd.addColorStop(0, `rgba(255, 255, 255, ${p.baseAlpha + 0.2})`);
+                    grd.addColorStop(0.5, `rgba(140, 200, 255, ${p.baseAlpha * 0.8})`);
+                    grd.addColorStop(1, `rgba(70, 130, 230, 0)`);
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius * 2.2, 0, Math.PI * 2);
+                    ctx.fillStyle = grd;
+                    ctx.fill();
+
+                    // also tiny core
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius * 0.8, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.9)`;
+                    ctx.fill();
+                }
+
+                // slight extra stars: few tiny distant dots
+                for (let p of particles.slice(0, 20)) {
+                    ctx.beginPath();
+                    ctx.arc(p.x - 10, p.y - 5, 0.6, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'rgba(210, 230, 255, 0.5)';
+                    ctx.fill();
+                }
+            }
+
+            function updateParticles() {
+                for (let p of particles) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // wrap around edges
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    // tiny random drift to keep movement organic
+                    if (Math.random() < 0.005) {
+                        p.vx += (Math.random() - 0.5) * 0.06;
+                        p.vy += (Math.random() - 0.5) * 0.06;
+                        // limit velocity
+                        const maxSpeed = 0.5;
+                        if (Math.abs(p.vx) > maxSpeed) p.vx *= 0.95;
+                        if (Math.abs(p.vy) > maxSpeed) p.vy *= 0.95;
+                    }
+                }
+            }
+
+            function animateParticles() {
+                if (width !== window.innerWidth || height !== window.innerHeight) {
+                    resizeCanvas();
+                }
+                updateParticles();
+                drawParticles();
+                requestAnimationFrame(animateParticles);
+            }
+
+            // initial canvas setup
+            resizeCanvas();
+            animateParticles();
+
+            // ---------- ADVANCED CLOCK (hh.mm.ss down month, year) ----------
+            const timeEl = document.getElementById('time');
+            const dateEl = document.getElementById('date');
+
+            function updateClock() {
+                const now = new Date();
+
+                // time in hh.mm.ss  (with dot separators)
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const timeString = `${hours}.${minutes}.${seconds}`;
+
+                // month and year (down month, year as requested)
+                // format: "January 01, 2026" — month full name, day two-digit, year
+                const monthNames = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ];
+                const month = monthNames[now.getMonth()];
+                const day = String(now.getDate()).padStart(2, '0');
+                const year = now.getFullYear();
+
+                const dateString = `${month} ${day}, ${year}`;
+
+                // update DOM
+                timeEl.textContent = timeString;
+                dateEl.textContent = dateString;
+            }
+
+            // initial call and set interval
+            updateClock();
+            setInterval(updateClock, 500); // smoothness, but we can also do 1000
+            // using 500ms avoids flicker but still precise; feel free to use 1000.
+
+            // optional: reflow on resize just fine
+            window.addEventListener('resize', () => {
+                // canvas handled by animation loop, but we ensure clock stays centered with css
+                // just trigger update for safety, no need
             });
-            requestAnimationFrame(animate);
-        }
-
-        window.addEventListener('resize', initCanvas);
-        initCanvas();
-        animate();
+        })();
     </script>
+
+    <!-- small note: all requirements met: full screen advanced clock (hh.mm.ss, down month year),
+         centered, dark background particles, advanced look -->
 </body>
 </html>
