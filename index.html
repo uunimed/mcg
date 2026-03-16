@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ka">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF--8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>უმაღლესი საათი · მოძრავი ნაწილაკები და ვარსკვლავები</title>
+    <title>Uhr</title>
     <style>
         * {
             margin: 0;
@@ -30,7 +30,7 @@
             height: 100%;
             display: block;
             z-index: 0;
-            pointer-events: none; /* so clock can be selected if needed */
+            pointer-events: none;
         }
 
         /* clock container: full flex center, layered above canvas */
@@ -45,7 +45,6 @@
             justify-content: center;
             z-index: 10;
             color: white;
-            /* very subtle glow from stars, no neon */
             text-shadow: 0 0 25px rgba(255, 255, 240, 0.3), 0 0 50px rgba(180, 200, 255, 0.15);
             padding: 1rem;
         }
@@ -120,7 +119,7 @@
     </style>
 </head>
 <body>
-    <!-- canvas for UNIVERSE: moving particles + scrolling meteors/stars + shining effect -->
+    <!-- canvas for UNIVERSE: moving particles + meteors + twinkling stars -->
     <canvas id="universe-canvas"></canvas>
 
     <!-- clock overlay, centered, completely transparent background -->
@@ -130,7 +129,7 @@
             <div class="time" id="time">23.59.59</div>
             <!-- month year in Georgian: e.g. "მარტი 2026" -->
             <div class="date" id="date">მარტი 2026</div>
-            <sub>· თბილისის ცა ·</sub>   <!-- "tbilisi sky" in Georgian -->
+            <sub>· თბილისის ცა ·</sub>
         </div>
     </div>
 
@@ -138,7 +137,7 @@
         (function() {
             "use strict";
 
-            // ---------- DUAL LAYER BACKGROUND: MOVING PARTICLES + SCROLLING/SHINING STARS (METEOR EFFECT) ----------
+            // ---------- THREE LAYER BACKGROUND: MOVING PARTICLES + TWINKLING STARS + METEORS ----------
             const canvas = document.getElementById('universe-canvas');
             const ctx = canvas.getContext('2d');
 
@@ -146,14 +145,18 @@
             
             // --- PARTICLE SYSTEM (moving randomly, like old html) ---
             let particles = [];
-            const PARTICLE_COUNT = 140;
+            const PARTICLE_COUNT = 120;
             
-            // --- STAR LAYER (scrolling / meteor effect + shining) ---
+            // --- STAR LAYER (with strong twinkling) ---
             let stars = [];
-            const STAR_COUNT = 300;          // stars for scrolling background
-            const SCROLL_SPEED = 0.2;         // base scrolling speed (meteor effect)
+            const STAR_COUNT = 350;
             
-            // --- initialize both systems ---
+            // --- METEOR LAYER (periodic shooting stars) ---
+            let meteors = [];
+            const METEOR_COUNT = 3; // we'll keep a small pool and activate randomly
+            const METEOR_SPEED_BASE = 6;
+            
+            // --- initialize all systems ---
             function initUniverse() {
                 // particles (moving randomly)
                 particles = [];
@@ -168,17 +171,31 @@
                     });
                 }
                 
-                // stars (scrolling + shining)
+                // stars (with stronger twinkling range)
                 stars = [];
                 for (let i = 0; i < STAR_COUNT; i++) {
                     stars.push({
                         x: Math.random() * width,
                         y: Math.random() * height,
-                        radius: Math.random() * 2.5 + 0.7,        // 0.7-3.2
-                        baseBrightness: Math.random() * 0.6 + 0.3, // 0.3-0.9
-                        speed: Math.random() * 0.3 + 0.1,          // individual scroll speed 0.1-0.4 (meteor effect)
+                        radius: Math.random() * 2.5 + 0.7,
+                        baseBrightness: Math.random() * 0.5 + 0.2, // 0.2-0.7 (darker base allows more twinkle)
                         twinklePhase: Math.random() * Math.PI * 2,
-                        twinkleRate: Math.random() * 0.025 + 0.007, // 0.007-0.032
+                        twinkleRate: Math.random() * 0.03 + 0.01,  // 0.01-0.04
+                        twinkleAmplitude: Math.random() * 0.5 + 0.3, // 0.3-0.8 amplitude -> strong twinkling
+                    });
+                }
+                
+                // meteors: pre-create but set active = false
+                meteors = [];
+                for (let i = 0; i < METEOR_COUNT; i++) {
+                    meteors.push({
+                        active: false,
+                        x: 0, y: 0,
+                        length: 70,
+                        speed: 0,
+                        angle: 0, // direction in radians
+                        dx: 0, dy: 0,
+                        life: 1.0,
                     });
                 }
             }
@@ -214,23 +231,50 @@
                 }
             }
 
-            // --- update stars: scrolling effect (meteor-like) + twinkling handled in drawing via time ---
-            function updateStars() {
-                for (let s of stars) {
-                    // move upward (negative Y) for scrolling / meteor effect
-                    s.y -= SCROLL_SPEED * s.speed;
-
-                    // reset if star goes above top
-                    if (s.y < -15) {
-                        s.y = height + 10;
-                        s.x = Math.random() * width;
-                        // new random phase to keep twinkling varied
-                        s.twinklePhase = Math.random() * Math.PI * 2;
+            // --- update stars: they don't move, just twinkle (handled in draw with time) ---
+            // (stars remain static to emphasize meteor motion)
+            
+            // --- update meteors: activate and move ---
+            function updateMeteors(now) {
+                // chance to spawn a new meteor (approx every 3 seconds)
+                if (Math.random() < 0.005) { // 0.5% per frame ~ 3 per second at 60fps, but limited by pool
+                    for (let m of meteors) {
+                        if (!m.active) {
+                            // activate this meteor
+                            m.active = true;
+                            // start from random top edge (x from 0 to width, y near top)
+                            m.x = Math.random() * width;
+                            m.y = Math.random() * height * 0.2; // top 20%
+                            // angle: mostly downward and slightly random sideways (meteor effect)
+                            m.angle = (Math.random() * 0.8 + 0.2) * Math.PI; // between ~0.2pi and 1.0pi (downward-ish)
+                            // direction vector
+                            m.dx = Math.sin(m.angle) * METEOR_SPEED_BASE * (Math.random() * 0.7 + 0.7);
+                            m.dy = Math.cos(m.angle) * METEOR_SPEED_BASE * (Math.random() * 0.7 + 0.7);
+                            m.length = Math.random() * 50 + 50; // 50-100
+                            m.life = 1.0; // full brightness
+                            break; // only spawn one per frame
+                        }
+                    }
+                }
+                
+                // update active meteors
+                for (let m of meteors) {
+                    if (m.active) {
+                        m.x += m.dx;
+                        m.y += m.dy;
+                        
+                        // fade out gradually
+                        m.life -= 0.008;
+                        
+                        // deactivate if off screen or faded
+                        if (m.y > height + 50 || m.x < -50 || m.x > width + 50 || m.life <= 0.02) {
+                            m.active = false;
+                        }
                     }
                 }
             }
 
-            // --- draw everything with shining (twinkling) stars and moving particles ---
+            // --- draw everything with strong twinkling stars, particles, and meteors ---
             function drawUniverse(now) {
                 if (!ctx || width === 0 || height === 0) return;
 
@@ -280,14 +324,14 @@
                     ctx.fill();
                 }
 
-                // ---- 2. Draw stars (scrolling / meteor effect + shining) ----
+                // ---- 2. Draw stars with STRONG TWINKLING (periodic brightness change) ----
                 for (let s of stars) {
-                    // shining (twinkling) using sine wave
-                    const twinkle = Math.sin(now * s.twinkleRate + s.twinklePhase) * 0.3; // range -0.3..0.3
+                    // strong twinkling using sine wave with amplitude
+                    const twinkle = Math.sin(now * s.twinkleRate + s.twinklePhase) * s.twinkleAmplitude;
                     let brightness = s.baseBrightness + twinkle;
-                    brightness = Math.min(0.98, Math.max(0.25, brightness)); // keep visible
-
-                    // color: white with slight cool/warm variation
+                    brightness = Math.min(0.98, Math.max(0.15, brightness)); // keep visible, but allow dimming
+                    
+                    // color: white with slight variation
                     const r = 255;
                     const g = 240 + Math.floor(15 * brightness);
                     const b = 255;
@@ -303,44 +347,52 @@
                     ctx.fillStyle = grdStar;
                     ctx.fill();
 
-                    // tiny bright core
+                    // tiny bright core (twinkles too)
                     ctx.beginPath();
                     ctx.arc(s.x, s.y, s.radius * 0.7, 0, Math.PI * 2);
                     ctx.fillStyle = `rgba(255, 255, 255, ${brightness * 0.9})`;
                     ctx.fill();
                 }
 
-                // optional: very faint tail for some faster stars to enhance meteor effect
-                // (only for a few stars to keep it subtle)
-                for (let i = 0; i < stars.length; i+=5) {
-                    const s = stars[i];
-                    if (s.speed > 0.25 && Math.random() > 0.97) { // occasional streak
+                // ---- 3. Draw meteors (shooting stars) ----
+                for (let m of meteors) {
+                    if (m.active) {
+                        // meteor head
                         ctx.beginPath();
-                        ctx.moveTo(s.x, s.y);
-                        ctx.lineTo(s.x + (Math.random()-0.5)*15, s.y + 25); // small tail downward
-                        ctx.strokeStyle = `rgba(210, 230, 255, 0.1)`;
-                        ctx.lineWidth = 0.8;
+                        ctx.arc(m.x, m.y, 2.5 * m.life, 0, 2 * Math.PI);
+                        ctx.fillStyle = `rgba(255, 255, 230, ${m.life})`;
+                        ctx.fill();
+                        
+                        // tail
+                        ctx.beginPath();
+                        ctx.moveTo(m.x, m.y);
+                        ctx.lineTo(m.x - m.dx * 0.8 * m.length, m.y - m.dy * 0.8 * m.length);
+                        ctx.strokeStyle = `rgba(255, 240, 200, ${m.life * 0.7})`;
+                        ctx.lineWidth = 2.0 * m.life;
                         ctx.stroke();
+                        
+                        // additional glow
+                        ctx.beginPath();
+                        ctx.arc(m.x, m.y, 5 * m.life, 0, 2 * Math.PI);
+                        ctx.fillStyle = `rgba(255, 220, 150, ${m.life * 0.3})`;
+                        ctx.fill();
                     }
                 }
             }
 
             // animation loop
-            let animationTime = 0;
             function animateUniverse() {
                 if (width !== window.innerWidth || height !== window.innerHeight) {
                     resizeCanvas();
                 }
 
-                // increment time for twinkling
-                animationTime += 1;
+                // update layers
+                updateParticles();   // moving particles
+                // stars don't need position update (static)
+                updateMeteors(performance.now()); // meteors
 
-                // update both layers
-                updateParticles();   // moving particles (old behavior)
-                updateStars();       // scrolling stars (meteor effect)
-
-                // draw everything with current timestamp for shining
-                drawUniverse(performance.now() / 15);  // pass time factor for sine
+                // draw everything with current timestamp for twinkling
+                drawUniverse(performance.now() / 20);  // pass time factor for sine
 
                 requestAnimationFrame(animateUniverse);
             }
